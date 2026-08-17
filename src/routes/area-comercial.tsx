@@ -35,8 +35,9 @@ export const Route = createFileRoute("/area-comercial")({
 
 function AreaComercial() {
   const fila = requests.filter((r) => r.status !== "concluido");
-  const [selectedId, setSelectedId] = useState(fila[0]?.id ?? requests[0].id);
-  const selected = requests.find((r) => r.id === selectedId)!;
+  const [selectedId, setSelectedId] = useState(fila[0]?.id ?? requests[0]?.id ?? "");
+  const selected = requests.find((r) => r.id === selectedId) ?? requests[0]!;
+
 
   const emAnalise = requests.filter((r) => r.status === "em_analise" || r.status === "pendente");
   const aguardando = requests.filter((r) => r.status === "aguardando_comercial");

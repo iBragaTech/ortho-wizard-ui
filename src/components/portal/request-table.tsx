@@ -63,7 +63,7 @@ export function RequestTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <Button asChild size="sm" variant="ghost">
-                      <Link to="/solicitacoes/$id" params={{ id: r.id }}>
+                      <Link to="/orcamentos/$id" params={{ id: r.id }}>
                         Visualizar <ArrowRight className="h-4 w-4" />
                       </Link>
                     </Button>

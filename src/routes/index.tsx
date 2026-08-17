@@ -51,7 +51,7 @@ function Dashboard() {
         description="Visão geral das solicitações de orçamento de consultas particulares."
         actions={
           <Button asChild>
-            <Link to="/solicitacoes">
+            <Link to="/orcamentos">
               Ver solicitações <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -118,7 +118,7 @@ function Dashboard() {
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
           <h2 className="truncate text-lg font-semibold text-foreground">Solicitações recentes</h2>
           <Button asChild variant="ghost" size="sm">
-            <Link to="/solicitacoes">Ver todas</Link>
+            <Link to="/orcamentos">Ver todas</Link>
           </Button>
         </div>
         <RequestTable requests={requests.slice(0, 6)} />

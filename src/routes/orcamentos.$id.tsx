@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency, requests, timelineEvents } from "@/data/mock";
 
-export const Route = createFileRoute("/solicitacoes/$id")({
+export const Route = createFileRoute("/orcamentos/$id")({
   head: () => ({
     meta: [
       { title: "Detalhes da solicitação — Portal de Orçamentos" },
@@ -42,7 +42,7 @@ function RequestDetail() {
   return (
     <AppShell>
       <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit text-muted-foreground">
-        <Link to="/solicitacoes">
+        <Link to="/orcamentos">
           <ArrowLeft className="h-4 w-4" /> Voltar
         </Link>
       </Button>

@@ -10,7 +10,7 @@ import { SearchAndFilters, type Filters } from "@/components/portal/search-and-f
 import { NewRequestDialog } from "@/components/portal/new-request-dialog";
 import { formatCurrency, requests, totalOf } from "@/data/mock";
 
-export const Route = createFileRoute("/orcamentos/")({
+export const Route = createFileRoute("/orcamentos")({
   head: () => ({
     meta: [
       { title: "Orçamentos — Portal de Orçamentos" },

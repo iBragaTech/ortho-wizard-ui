@@ -10,11 +10,24 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AreaMedicoRouteImport } from './routes/area-medico'
+import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as SolicitacoesIndexRouteImport } from './routes/solicitacoes.index'
+import { Route as SolicitacoesIdRouteImport } from './routes/solicitacoes.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AreaMedicoRoute = AreaMedicoRouteImport.update({
+  id: '/area-medico',
+  path: '/area-medico',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrcamentosRoute = OrcamentosRouteImport.update({
+  id: '/orcamentos',
+  path: '/orcamentos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SolicitacoesIndexRoute = SolicitacoesIndexRouteImport.update({
@@ -22,30 +35,59 @@ const SolicitacoesIndexRoute = SolicitacoesIndexRouteImport.update({
   path: '/solicitacoes/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SolicitacoesIdRoute = SolicitacoesIdRouteImport.update({
+  id: '/solicitacoes/$id',
+  path: '/solicitacoes/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/area-medico': typeof AreaMedicoRoute
+  '/orcamentos': typeof OrcamentosRoute
+  '/solicitacoes/$id': typeof SolicitacoesIdRoute
   '/solicitacoes/': typeof SolicitacoesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/area-medico': typeof AreaMedicoRoute
+  '/orcamentos': typeof OrcamentosRoute
+  '/solicitacoes/$id': typeof SolicitacoesIdRoute
   '/solicitacoes': typeof SolicitacoesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/area-medico': typeof AreaMedicoRoute
+  '/orcamentos': typeof OrcamentosRoute
+  '/solicitacoes/$id': typeof SolicitacoesIdRoute
   '/solicitacoes/': typeof SolicitacoesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/solicitacoes/'
+  fullPaths:
+    | '/'
+    | '/area-medico'
+    | '/orcamentos'
+    | '/solicitacoes/$id'
+    | '/solicitacoes/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/solicitacoes'
-  id: '__root__' | '/' | '/solicitacoes/'
+  to:
+    '/' | '/area-medico' | '/orcamentos' | '/solicitacoes/$id' | '/solicitacoes'
+  id:
+    | '__root__'
+    | '/'
+    | '/area-medico'
+    | '/orcamentos'
+    | '/solicitacoes/$id'
+    | '/solicitacoes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AreaMedicoRoute: typeof AreaMedicoRoute
+  OrcamentosRoute: typeof OrcamentosRoute
+  SolicitacoesIdRoute: typeof SolicitacoesIdRoute
   SolicitacoesIndexRoute: typeof SolicitacoesIndexRoute
 }
 
@@ -58,6 +100,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/area-medico': {
+      id: '/area-medico'
+      path: '/area-medico'
+      fullPath: '/area-medico'
+      preLoaderRoute: typeof AreaMedicoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orcamentos': {
+      id: '/orcamentos'
+      path: '/orcamentos'
+      fullPath: '/orcamentos'
+      preLoaderRoute: typeof OrcamentosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/solicitacoes/': {
       id: '/solicitacoes/'
       path: '/solicitacoes'
@@ -65,11 +121,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SolicitacoesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/solicitacoes/$id': {
+      id: '/solicitacoes/$id'
+      path: '/solicitacoes/$id'
+      fullPath: '/solicitacoes/$id'
+      preLoaderRoute: typeof SolicitacoesIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AreaMedicoRoute: AreaMedicoRoute,
+  OrcamentosRoute: OrcamentosRoute,
+  SolicitacoesIdRoute: SolicitacoesIdRoute,
   SolicitacoesIndexRoute: SolicitacoesIndexRoute,
 }
 export const routeTree = rootRouteImport

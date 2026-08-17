@@ -49,9 +49,9 @@ const UsuariosRoute = UsuariosRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const OrcamentosIndexRoute = OrcamentosIndexRouteImport.update({
-  id: '/orcamentos/',
-  path: '/orcamentos/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => OrcamentosRoute,
 } as any)
 const OrcamentosIdRoute = OrcamentosIdRouteImport.update({
   id: '/orcamentos/$id',
@@ -131,7 +131,6 @@ export interface RootRouteChildren {
   MedicosRoute: typeof MedicosRoute
   UsuariosRoute: typeof UsuariosRoute
   OrcamentosIdRoute: typeof OrcamentosIdRoute
-  OrcamentosIndexRoute: typeof OrcamentosIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -180,10 +179,10 @@ declare module '@tanstack/react-router' {
     }
     '/orcamentos/': {
       id: '/orcamentos/'
-      path: '/orcamentos'
+      path: '/'
       fullPath: '/orcamentos/'
       preLoaderRoute: typeof OrcamentosIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof OrcamentosRoute
     }
     '/orcamentos/$id': {
       id: '/orcamentos/$id'
@@ -203,7 +202,6 @@ const rootRouteChildren: RootRouteChildren = {
   MedicosRoute: MedicosRoute,
   UsuariosRoute: UsuariosRoute,
   OrcamentosIdRoute: OrcamentosIdRoute,
-  OrcamentosIndexRoute: OrcamentosIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

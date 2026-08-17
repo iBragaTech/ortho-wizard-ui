@@ -39,7 +39,6 @@ import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  
   { to: "/orcamentos", label: "Orçamentos", icon: FileText },
   { to: "/area-medico", label: "Área do Médico", icon: Stethoscope },
   { to: "/area-comercial", label: "Área Comercial", icon: Briefcase },
@@ -50,7 +49,6 @@ const nav = [
 
 const titles: Record<string, string> = {
   "/": "Dashboard",
-  
   "/orcamentos": "Orçamentos",
   "/area-medico": "Área do Médico",
   "/area-comercial": "Área Comercial",

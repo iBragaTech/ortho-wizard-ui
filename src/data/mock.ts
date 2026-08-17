@@ -384,8 +384,9 @@ export function totalOf(r: ConsultationRequest): number | null {
 }
 
 export function medicalFeesTotal(r: ConsultationRequest): number | null {
-  const numericFields = [r.honorariosMedicos, r.diaria, r.cti, r.fisioterapia];
+  const numericFields = [r.honorariosMedicos, r.diaria, r.cti];
   if (numericFields.every((v) => v === null)) return null;
   return numericFields.reduce<number>((acc, v) => acc + (v ?? 0), 0);
 }
+
 

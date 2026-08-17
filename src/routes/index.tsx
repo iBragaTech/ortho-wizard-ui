@@ -116,7 +116,7 @@ function Dashboard() {
 
       <section className="space-y-3">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-          <h2 className="truncate text-lg font-semibold text-foreground">Solicitações recentes</h2>
+          <h2 className="truncate text-lg font-semibold text-foreground">Orçamentos recentes</h2>
           <Button asChild variant="ghost" size="sm">
             <Link to="/orcamentos">Ver todas</Link>
           </Button>

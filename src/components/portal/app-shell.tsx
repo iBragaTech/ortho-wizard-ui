@@ -12,7 +12,6 @@ import {
   Users,
   UserRound,
   FileText,
-  ClipboardList,
   Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

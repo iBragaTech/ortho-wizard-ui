@@ -27,6 +27,14 @@ export interface ConsultationRequest {
   data: string;
   status: RequestStatus;
   honorariosMedicos: number | null;
+  diaria: number | null;
+  cti: number | null;
+  opme: string;
+  anatomoPatologico: string;
+  reservaSangue: string;
+  equipeMultidisciplinar: string;
+  fisioterapia: number | null;
+  tempoBloco: string;
   obsMedico: string;
   valorHospitalar: number | null;
   obsComercial: string;
@@ -69,6 +77,14 @@ export const requests: ConsultationRequest[] = [
     data: "12/08/2026",
     status: "aguardando_medico",
     honorariosMedicos: null,
+    diaria: null,
+    cti: null,
+    opme: "",
+    anatomoPatologico: "",
+    reservaSangue: "",
+    equipeMultidisciplinar: "",
+    fisioterapia: null,
+    tempoBloco: "",
     obsMedico: "",
     valorHospitalar: null,
     obsComercial: "",
@@ -92,6 +108,14 @@ export const requests: ConsultationRequest[] = [
     data: "11/08/2026",
     status: "aguardando_comercial",
     honorariosMedicos: 850,
+    diaria: 320,
+    cti: null,
+    opme: "Placa de titânio para osteossíntese – 2 unidades – Fornecedor: Ortosintese Brasil",
+    anatomoPatologico: "",
+    reservaSangue: "",
+    equipeMultidisciplinar: "",
+    fisioterapia: 6,
+    tempoBloco: "1h30",
     obsMedico: "Inclui avaliação de exames de imagem prévios.",
     valorHospitalar: null,
     obsComercial: "",
@@ -115,6 +139,14 @@ export const requests: ConsultationRequest[] = [
     data: "10/08/2026",
     status: "concluido",
     honorariosMedicos: 620,
+    diaria: null,
+    cti: null,
+    opme: "",
+    anatomoPatologico: "Biópsia de pele – 1 lâmina – Laboratório: Patolab",
+    reservaSangue: "",
+    equipeMultidisciplinar: "",
+    fisioterapia: null,
+    tempoBloco: "",
     obsMedico: "Consulta padrão, sem procedimentos adicionais.",
     valorHospitalar: 340,
     obsComercial: "Taxa de sala ambulatorial incluída.",
@@ -138,6 +170,14 @@ export const requests: ConsultationRequest[] = [
     data: "10/08/2026",
     status: "em_analise",
     honorariosMedicos: null,
+    diaria: null,
+    cti: null,
+    opme: "",
+    anatomoPatologico: "",
+    reservaSangue: "",
+    equipeMultidisciplinar: "",
+    fisioterapia: null,
+    tempoBloco: "",
     obsMedico: "",
     valorHospitalar: null,
     obsComercial: "",
@@ -161,6 +201,14 @@ export const requests: ConsultationRequest[] = [
     data: "09/08/2026",
     status: "pendente",
     honorariosMedicos: null,
+    diaria: null,
+    cti: null,
+    opme: "",
+    anatomoPatologico: "",
+    reservaSangue: "",
+    equipeMultidisciplinar: "",
+    fisioterapia: null,
+    tempoBloco: "",
     obsMedico: "",
     valorHospitalar: null,
     obsComercial: "",
@@ -184,6 +232,14 @@ export const requests: ConsultationRequest[] = [
     data: "08/08/2026",
     status: "concluido",
     honorariosMedicos: 780,
+    diaria: 280,
+    cti: null,
+    opme: "",
+    anatomoPatologico: "",
+    reservaSangue: "",
+    equipeMultidisciplinar: "",
+    fisioterapia: 4,
+    tempoBloco: "",
     obsMedico: "Avaliação pós-operatória.",
     valorHospitalar: 410,
     obsComercial: "Sem materiais adicionais.",
@@ -207,6 +263,14 @@ export const requests: ConsultationRequest[] = [
     data: "07/08/2026",
     status: "aguardando_medico",
     honorariosMedicos: null,
+    diaria: null,
+    cti: null,
+    opme: "",
+    anatomoPatologico: "",
+    reservaSangue: "",
+    equipeMultidisciplinar: "",
+    fisioterapia: null,
+    tempoBloco: "",
     obsMedico: "",
     valorHospitalar: null,
     obsComercial: "",
@@ -230,6 +294,14 @@ export const requests: ConsultationRequest[] = [
     data: "06/08/2026",
     status: "aguardando_medico",
     honorariosMedicos: null,
+    diaria: null,
+    cti: null,
+    opme: "",
+    anatomoPatologico: "",
+    reservaSangue: "",
+    equipeMultidisciplinar: "",
+    fisioterapia: null,
+    tempoBloco: "",
     obsMedico: "",
     valorHospitalar: null,
     obsComercial: "",
@@ -309,4 +381,10 @@ export const metrics = {
 export function totalOf(r: ConsultationRequest): number | null {
   if (r.honorariosMedicos === null && r.valorHospitalar === null) return null;
   return (r.honorariosMedicos ?? 0) + (r.valorHospitalar ?? 0);
+}
+
+export function medicalFeesTotal(r: ConsultationRequest): number | null {
+  const numericFields = [r.honorariosMedicos, r.diaria, r.cti, r.fisioterapia];
+  if (numericFields.every((v) => v === null)) return null;
+  return numericFields.reduce((acc, v) => acc + (v ?? 0), 0);
 }

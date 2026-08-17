@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/portal/empty-state";
 import { DoctorFeeDialog } from "@/components/portal/doctor-fee-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatCurrency, requests, type ConsultationRequest } from "@/data/mock";
+import { formatCurrency, medicalFeesTotal, requests, type ConsultationRequest } from "@/data/mock";
 
 export const Route = createFileRoute("/area-medico")({
   head: () => ({
@@ -44,11 +44,9 @@ function RequestRow({ request }: { request: ConsultationRequest }) {
         </div>
       </div>
       <div className="flex flex-col items-stretch gap-2 sm:items-end">
-        {request.honorariosMedicos !== null ? (
-          <p className="text-sm font-semibold text-foreground sm:text-right">
-            {formatCurrency(request.honorariosMedicos)}
-          </p>
-        ) : null}
+        <p className="text-sm font-semibold text-foreground sm:text-right">
+          {formatCurrency(medicalFeesTotal(request))}
+        </p>
         <DoctorFeeDialog request={request} />
       </div>
     </div>

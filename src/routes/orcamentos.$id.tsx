@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { formatCurrency, requests, timelineEvents } from "@/data/mock";
+import { formatCurrency, medicalFeesTotal, requests, timelineEvents } from "@/data/mock";
 
 export const Route = createFileRoute("/orcamentos/$id")({
   head: () => ({
@@ -91,16 +91,87 @@ function RequestDetail() {
                 />
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="honorarios">Honorário</Label>
+                    <Input
+                      id="honorarios"
+                      placeholder="R$ 0,00"
+                      defaultValue={
+                        request.honorariosMedicos !== null
+                          ? formatCurrency(request.honorariosMedicos)
+                          : ""
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="diaria">Diária</Label>
+                    <Input
+                      id="diaria"
+                      placeholder="R$ 0,00"
+                      defaultValue={request.diaria !== null ? formatCurrency(request.diaria) : ""}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="cti">CTI</Label>
+                    <Input
+                      id="cti"
+                      placeholder="R$ 0,00"
+                      defaultValue={request.cti !== null ? formatCurrency(request.cti) : ""}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="fisioterapia">Fisioterapia (quantidade)</Label>
+                    <Input
+                      id="fisioterapia"
+                      type="number"
+                      placeholder="Ex.: 4"
+                      defaultValue={request.fisioterapia !== null ? String(request.fisioterapia) : ""}
+                    />
+                  </div>
+                  <div className="grid gap-2 sm:col-span-2">
+                    <Label htmlFor="tempo-bloco">Tempo de bloco</Label>
+                    <Input
+                      id="tempo-bloco"
+                      placeholder="Ex.: 2h30"
+                      defaultValue={request.tempoBloco}
+                    />
+                  </div>
+                </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="honorarios">Valor dos honorários</Label>
-                  <Input
-                    id="honorarios"
-                    placeholder="R$ 0,00"
-                    defaultValue={
-                      request.honorariosMedicos !== null
-                        ? formatCurrency(request.honorariosMedicos)
-                        : ""
-                    }
+                  <Label htmlFor="opme">OPME (descrição detalhada do item, quantidade e fornecedor)</Label>
+                  <Textarea
+                    id="opme"
+                    rows={2}
+                    placeholder="Sem informações"
+                    defaultValue={request.opme}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="anatomo">Anatomo Patológico</Label>
+                  <Textarea
+                    id="anatomo"
+                    rows={2}
+                    placeholder="Sem informações"
+                    defaultValue={request.anatomoPatologico}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="sangue">Reserva de sangue (material e quantidade)</Label>
+                  <Textarea
+                    id="sangue"
+                    rows={2}
+                    placeholder="Sem informações"
+                    defaultValue={request.reservaSangue}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="equipe">Equipe multidisciplinar</Label>
+                  <Textarea
+                    id="equipe"
+                    rows={2}
+                    placeholder="Sem informações"
+                    defaultValue={request.equipeMultidisciplinar}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -154,7 +225,7 @@ function RequestDetail() {
 
         <div className="space-y-6">
           <FinancialSummary
-            honorarios={request.honorariosMedicos}
+            honorarios={medicalFeesTotal(request)}
             hospitalar={request.valorHospitalar}
           />
 

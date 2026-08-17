@@ -48,11 +48,11 @@ function Dashboard() {
     <AppShell>
       <PageHeader
         title="Dashboard"
-        description="Visão geral das solicitações de orçamento de consultas particulares."
+        description="Visão geral dos orçamentos de consultas particulares."
         actions={
           <Button asChild>
             <Link to="/orcamentos">
-              Ver solicitações <ArrowRight className="h-4 w-4" />
+              Ver orçamentos <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
         }

@@ -12,7 +12,6 @@ import {
   Users,
   UserRound,
   FileText,
-  ClipboardList,
   Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,7 +39,6 @@ import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/solicitacoes", label: "Solicitações", icon: ClipboardList },
   { to: "/orcamentos", label: "Orçamentos", icon: FileText },
   { to: "/area-medico", label: "Área do Médico", icon: Stethoscope },
   { to: "/area-comercial", label: "Área Comercial", icon: Briefcase },
@@ -51,7 +49,6 @@ const nav = [
 
 const titles: Record<string, string> = {
   "/": "Dashboard",
-  "/solicitacoes": "Solicitações",
   "/orcamentos": "Orçamentos",
   "/area-medico": "Área do Médico",
   "/area-comercial": "Área Comercial",
@@ -113,7 +110,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const base = "/" + (pathname.split("/")[1] ?? "");
   const title = titles[base] ?? titles[pathname] ?? "Portal";
-  const isDetail = pathname.startsWith("/solicitacoes/") && pathname !== "/solicitacoes";
+  const isDetail = pathname.startsWith("/orcamentos/") && pathname !== "/orcamentos";
 
   return (
     <div className="min-h-screen bg-background">
@@ -151,7 +148,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <BreadcrumbItem>
                     {isDetail ? (
                       <BreadcrumbLink asChild>
-                        <Link to="/solicitacoes">Solicitações</Link>
+                        <Link to="/orcamentos">Orçamentos</Link>
                       </BreadcrumbLink>
                     ) : (
                       <BreadcrumbPage>{title}</BreadcrumbPage>

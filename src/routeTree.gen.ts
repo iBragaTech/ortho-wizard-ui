@@ -16,8 +16,7 @@ import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as MedicosRouteImport } from './routes/medicos'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as UsuariosRouteImport } from './routes/usuarios'
-import { Route as SolicitacoesIndexRouteImport } from './routes/solicitacoes.index'
-import { Route as SolicitacoesIdRouteImport } from './routes/solicitacoes.$id'
+import { Route as OrcamentosIdRouteImport } from './routes/orcamentos.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -54,15 +53,10 @@ const UsuariosRoute = UsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SolicitacoesIndexRoute = SolicitacoesIndexRouteImport.update({
-  id: '/solicitacoes/',
-  path: '/solicitacoes/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SolicitacoesIdRoute = SolicitacoesIdRouteImport.update({
-  id: '/solicitacoes/$id',
-  path: '/solicitacoes/$id',
-  getParentRoute: () => rootRouteImport,
+const OrcamentosIdRoute = OrcamentosIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => OrcamentosRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -71,10 +65,9 @@ export interface FileRoutesByFullPath {
   '/area-medico': typeof AreaMedicoRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/medicos': typeof MedicosRoute
-  '/orcamentos': typeof OrcamentosRoute
+  '/orcamentos': typeof OrcamentosRouteWithChildren
   '/usuarios': typeof UsuariosRoute
-  '/solicitacoes/$id': typeof SolicitacoesIdRoute
-  '/solicitacoes/': typeof SolicitacoesIndexRoute
+  '/orcamentos/$id': typeof OrcamentosIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -82,10 +75,9 @@ export interface FileRoutesByTo {
   '/area-medico': typeof AreaMedicoRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/medicos': typeof MedicosRoute
-  '/orcamentos': typeof OrcamentosRoute
+  '/orcamentos': typeof OrcamentosRouteWithChildren
   '/usuarios': typeof UsuariosRoute
-  '/solicitacoes/$id': typeof SolicitacoesIdRoute
-  '/solicitacoes': typeof SolicitacoesIndexRoute
+  '/orcamentos/$id': typeof OrcamentosIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -94,10 +86,9 @@ export interface FileRoutesById {
   '/area-medico': typeof AreaMedicoRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/medicos': typeof MedicosRoute
-  '/orcamentos': typeof OrcamentosRoute
+  '/orcamentos': typeof OrcamentosRouteWithChildren
   '/usuarios': typeof UsuariosRoute
-  '/solicitacoes/$id': typeof SolicitacoesIdRoute
-  '/solicitacoes/': typeof SolicitacoesIndexRoute
+  '/orcamentos/$id': typeof OrcamentosIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -109,8 +100,7 @@ export interface FileRouteTypes {
     | '/medicos'
     | '/orcamentos'
     | '/usuarios'
-    | '/solicitacoes/$id'
-    | '/solicitacoes/'
+    | '/orcamentos/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -120,8 +110,7 @@ export interface FileRouteTypes {
     | '/medicos'
     | '/orcamentos'
     | '/usuarios'
-    | '/solicitacoes/$id'
-    | '/solicitacoes'
+    | '/orcamentos/$id'
   id:
     | '__root__'
     | '/'
@@ -131,8 +120,7 @@ export interface FileRouteTypes {
     | '/medicos'
     | '/orcamentos'
     | '/usuarios'
-    | '/solicitacoes/$id'
-    | '/solicitacoes/'
+    | '/orcamentos/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -141,10 +129,8 @@ export interface RootRouteChildren {
   AreaMedicoRoute: typeof AreaMedicoRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   MedicosRoute: typeof MedicosRoute
-  OrcamentosRoute: typeof OrcamentosRoute
+  OrcamentosRoute: typeof OrcamentosRouteWithChildren
   UsuariosRoute: typeof UsuariosRoute
-  SolicitacoesIdRoute: typeof SolicitacoesIdRoute
-  SolicitacoesIndexRoute: typeof SolicitacoesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -198,22 +184,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsuariosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/solicitacoes/': {
-      id: '/solicitacoes/'
-      path: '/solicitacoes'
-      fullPath: '/solicitacoes/'
-      preLoaderRoute: typeof SolicitacoesIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/solicitacoes/$id': {
-      id: '/solicitacoes/$id'
-      path: '/solicitacoes/$id'
-      fullPath: '/solicitacoes/$id'
-      preLoaderRoute: typeof SolicitacoesIdRouteImport
-      parentRoute: typeof rootRouteImport
+    '/orcamentos/$id': {
+      id: '/orcamentos/$id'
+      path: '/$id'
+      fullPath: '/orcamentos/$id'
+      preLoaderRoute: typeof OrcamentosIdRouteImport
+      parentRoute: typeof OrcamentosRoute
     }
   }
 }
+
+interface OrcamentosRouteChildren {
+  OrcamentosIdRoute: typeof OrcamentosIdRoute
+}
+
+const OrcamentosRouteChildren: OrcamentosRouteChildren = {
+  OrcamentosIdRoute: OrcamentosIdRoute,
+}
+
+const OrcamentosRouteWithChildren = OrcamentosRoute._addFileChildren(
+  OrcamentosRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -221,10 +212,8 @@ const rootRouteChildren: RootRouteChildren = {
   AreaMedicoRoute: AreaMedicoRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   MedicosRoute: MedicosRoute,
-  OrcamentosRoute: OrcamentosRoute,
+  OrcamentosRoute: OrcamentosRouteWithChildren,
   UsuariosRoute: UsuariosRoute,
-  SolicitacoesIdRoute: SolicitacoesIdRoute,
-  SolicitacoesIndexRoute: SolicitacoesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

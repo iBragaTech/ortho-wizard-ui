@@ -38,7 +38,7 @@ export function RequestCard({ request }: { request: ConsultationRequest }) {
           </p>
         </div>
         <Button asChild size="sm" variant="outline">
-          <Link to="/solicitacoes/$id" params={{ id: request.id }}>
+          <Link to="/orcamentos/$id" params={{ id: request.id }}>
             Visualizar <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>

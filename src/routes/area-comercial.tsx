@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { formatCurrency, requests } from "@/data/mock";
+import { formatCurrency, medicalFeesTotal, requests } from "@/data/mock";
 
 export const Route = createFileRoute("/area-comercial")({
   head: () => ({
@@ -42,6 +42,8 @@ function AreaComercial() {
   const emAnalise = requests.filter((r) => r.status === "em_analise" || r.status === "pendente");
   const aguardando = requests.filter((r) => r.status === "aguardando_comercial");
   const concluidos = requests.filter((r) => r.status === "concluido");
+
+  const medicoPreenchido = selected.honorariosMedicos !== null;
 
   return (
     <AppShell>
@@ -107,14 +109,39 @@ function AreaComercial() {
                 <InfoField label="Tipo de consulta" value={selected.tipoConsulta} />
                 <InfoField label="Data desejada" value={selected.dataDesejada} />
                 <InfoField
-                  label="Honorários médicos"
-                  value={formatCurrency(selected.honorariosMedicos)}
+                  label="Total médico"
+                  value={formatCurrency(medicalFeesTotal(selected))}
                 />
                 <InfoField
-                  label="Observação do médico"
-                  value={selected.obsMedico || "Sem observações"}
+                  label="Status do médico"
+                  value={medicoPreenchido ? "Preenchido" : "Aguardando médico"}
                 />
               </dl>
+
+              {medicoPreenchido ? (
+                <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Detalhamento médico
+                  </p>
+                  <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <InfoField label="Honorário" value={formatCurrency(selected.honorariosMedicos)} />
+                    <InfoField label="Diária" value={formatCurrency(selected.diaria)} />
+                    <InfoField label="CTI" value={formatCurrency(selected.cti)} />
+                    <InfoField label="Fisioterapia" value={selected.fisioterapia !== null ? `${selected.fisioterapia} sessões` : "—"} />
+                    <InfoField label="Tempo de bloco" value={selected.tempoBloco || "—"} />
+                    <InfoField label="OPME" value={selected.opme || "—"} />
+                    <InfoField label="Anatomo Patológico" value={selected.anatomoPatologico || "—"} />
+                    <InfoField label="Reserva de sangue" value={selected.reservaSangue || "—"} />
+                    <InfoField label="Equipe multidisciplinar" value={selected.equipeMultidisciplinar || "—"} />
+                  </dl>
+                  {selected.obsMedico ? (
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground">Observação do médico</p>
+                      <p className="mt-1 text-sm text-foreground">{selected.obsMedico}</p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </CardContent>
           </Card>
 
@@ -154,7 +181,7 @@ function AreaComercial() {
           </Card>
 
           <FinancialSummary
-            honorarios={selected.honorariosMedicos}
+            honorarios={medicalFeesTotal(selected)}
             hospitalar={selected.valorHospitalar}
           />
         </div>

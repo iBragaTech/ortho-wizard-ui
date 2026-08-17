@@ -16,6 +16,7 @@ import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as MedicosRouteImport } from './routes/medicos'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as UsuariosRouteImport } from './routes/usuarios'
+import { Route as OrcamentosIndexRouteImport } from './routes/orcamentos.index'
 import { Route as SolicitacoesIndexRouteImport } from './routes/solicitacoes.index'
 import { Route as SolicitacoesIdRouteImport } from './routes/solicitacoes.$id'
 
@@ -54,6 +55,11 @@ const UsuariosRoute = UsuariosRouteImport.update({
   path: '/usuarios',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OrcamentosIndexRoute = OrcamentosIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OrcamentosRoute,
+} as any)
 const SolicitacoesIndexRoute = SolicitacoesIndexRouteImport.update({
   id: '/solicitacoes/',
   path: '/solicitacoes/',
@@ -71,9 +77,10 @@ export interface FileRoutesByFullPath {
   '/area-medico': typeof AreaMedicoRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/medicos': typeof MedicosRoute
-  '/orcamentos': typeof OrcamentosRoute
+  '/orcamentos': typeof OrcamentosRouteWithChildren
   '/usuarios': typeof UsuariosRoute
   '/solicitacoes/$id': typeof SolicitacoesIdRoute
+  '/orcamentos/': typeof OrcamentosIndexRoute
   '/solicitacoes/': typeof SolicitacoesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -82,9 +89,9 @@ export interface FileRoutesByTo {
   '/area-medico': typeof AreaMedicoRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/medicos': typeof MedicosRoute
-  '/orcamentos': typeof OrcamentosRoute
   '/usuarios': typeof UsuariosRoute
   '/solicitacoes/$id': typeof SolicitacoesIdRoute
+  '/orcamentos': typeof OrcamentosIndexRoute
   '/solicitacoes': typeof SolicitacoesIndexRoute
 }
 export interface FileRoutesById {
@@ -94,9 +101,10 @@ export interface FileRoutesById {
   '/area-medico': typeof AreaMedicoRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/medicos': typeof MedicosRoute
-  '/orcamentos': typeof OrcamentosRoute
+  '/orcamentos': typeof OrcamentosRouteWithChildren
   '/usuarios': typeof UsuariosRoute
   '/solicitacoes/$id': typeof SolicitacoesIdRoute
+  '/orcamentos/': typeof OrcamentosIndexRoute
   '/solicitacoes/': typeof SolicitacoesIndexRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +118,7 @@ export interface FileRouteTypes {
     | '/orcamentos'
     | '/usuarios'
     | '/solicitacoes/$id'
+    | '/orcamentos/'
     | '/solicitacoes/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -118,9 +127,9 @@ export interface FileRouteTypes {
     | '/area-medico'
     | '/configuracoes'
     | '/medicos'
-    | '/orcamentos'
     | '/usuarios'
     | '/solicitacoes/$id'
+    | '/orcamentos'
     | '/solicitacoes'
   id:
     | '__root__'
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/orcamentos'
     | '/usuarios'
     | '/solicitacoes/$id'
+    | '/orcamentos/'
     | '/solicitacoes/'
   fileRoutesById: FileRoutesById
 }
@@ -141,7 +151,7 @@ export interface RootRouteChildren {
   AreaMedicoRoute: typeof AreaMedicoRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   MedicosRoute: typeof MedicosRoute
-  OrcamentosRoute: typeof OrcamentosRoute
+  OrcamentosRoute: typeof OrcamentosRouteWithChildren
   UsuariosRoute: typeof UsuariosRoute
   SolicitacoesIdRoute: typeof SolicitacoesIdRoute
   SolicitacoesIndexRoute: typeof SolicitacoesIndexRoute
@@ -198,6 +208,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsuariosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/orcamentos/': {
+      id: '/orcamentos/'
+      path: '/'
+      fullPath: '/orcamentos/'
+      preLoaderRoute: typeof OrcamentosIndexRouteImport
+      parentRoute: typeof OrcamentosRoute
+    }
     '/solicitacoes/': {
       id: '/solicitacoes/'
       path: '/solicitacoes'
@@ -215,13 +232,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface OrcamentosRouteChildren {
+  OrcamentosIndexRoute: typeof OrcamentosIndexRoute
+}
+
+const OrcamentosRouteChildren: OrcamentosRouteChildren = {
+  OrcamentosIndexRoute: OrcamentosIndexRoute,
+}
+
+const OrcamentosRouteWithChildren = OrcamentosRoute._addFileChildren(
+  OrcamentosRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AreaComercialRoute: AreaComercialRoute,
   AreaMedicoRoute: AreaMedicoRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   MedicosRoute: MedicosRoute,
-  OrcamentosRoute: OrcamentosRoute,
+  OrcamentosRoute: OrcamentosRouteWithChildren,
   UsuariosRoute: UsuariosRoute,
   SolicitacoesIdRoute: SolicitacoesIdRoute,
   SolicitacoesIndexRoute: SolicitacoesIndexRoute,

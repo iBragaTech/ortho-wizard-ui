@@ -36,7 +36,10 @@ export function buildQuoteHtml(
 <style>
   @page { size: A4; margin: 16mm; }
   * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: #1b2733; margin: 0; font-size: 12px; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: #1b2733; font-size: 12px;
+         max-width: 780px; margin: 0 auto; padding: 32px 24px 48px; background: #fff; }
+  @media screen { html { background: #eef2f6; } body { margin: 24px auto; box-shadow: 0 2px 16px rgba(15,76,129,.12); } }
+  @media print { body { max-width: none; margin: 0; padding: 0; box-shadow: none; } }
   header { border-bottom: 3px solid #1668b3; padding-bottom: 12px; margin-bottom: 20px; }
   .inst { font-size: 18px; font-weight: 700; color: #0f4c81; }
   .inst-meta { color: #5b6b7b; font-size: 11px; margin-top: 4px; line-height: 1.5; }

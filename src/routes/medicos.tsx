@@ -30,7 +30,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { doctors, especialidades } from "@/data/mock";
+import { especialidades } from "@/data/mock";
+import { useCreateDoctor, useDoctors } from "@/lib/data/hooks";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/medicos")({
@@ -115,6 +116,8 @@ function NewDoctorDialog() {
 }
 
 function MedicosPage() {
+  const { data: doctors = [] } = useDoctors();
+
   return (
     <AppShell>
       <PageHeader

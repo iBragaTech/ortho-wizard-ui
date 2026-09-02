@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { users } from "@/data/mock";
+import { usePortalUsers } from "@/lib/data/hooks";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/usuarios")({
@@ -58,6 +58,8 @@ const perfilStyle: Record<string, string> = {
 };
 
 function UsuariosPage() {
+  const { data: users = [] } = usePortalUsers();
+
   return (
     <AppShell>
       <PageHeader

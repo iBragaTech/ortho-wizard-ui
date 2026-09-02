@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateRequest } from "@/lib/data/hooks";
+import { OpmeSelect, formatOpmeSelection } from "@/components/portal/opme-select";
 
 const empty = {
   nome: "",
@@ -23,7 +24,6 @@ const empty = {
   procedimento: "",
   diariaEnf: "",
   diariaCti: "",
-  opme: "",
   anatomo: "",
   sangue: "",
   multidisciplinar: "",
@@ -33,6 +33,7 @@ const empty = {
 export function NewRequestDialog({ trigger }: { trigger: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
+  const [opme, setOpme] = useState<string[]>([]);
   const create = useCreateRequest();
 
   const set = (key: keyof typeof empty) => (value: string) =>
@@ -47,7 +48,7 @@ export function NewRequestDialog({ trigger }: { trigger: ReactNode }) {
       form.procedimento && `Código do procedimento: ${form.procedimento}`,
       form.diariaEnf && `Diária Enf/Ap: ${form.diariaEnf}`,
       form.diariaCti && `Diária CTI: ${form.diariaCti}`,
-      form.opme && `OPME: ${form.opme}`,
+      opme.length > 0 && `OPME: ${formatOpmeSelection(opme)}`,
       form.anatomo && `Anatomo patológico: ${form.anatomo}`,
       form.sangue && `Reserva de sangue: ${form.sangue}`,
       form.multidisciplinar && `Equipe multidisciplinar/Fisioterapia: ${form.multidisciplinar}`,
@@ -66,6 +67,7 @@ export function NewRequestDialog({ trigger }: { trigger: ReactNode }) {
       });
       toast.success("Orçamento criado e enviado ao médico.");
       setForm(empty);
+      setOpme([]);
       setOpen(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível criar o orçamento.");
@@ -161,14 +163,11 @@ export function NewRequestDialog({ trigger }: { trigger: ReactNode }) {
                 />
               </div>
               <div className="grid gap-2 sm:col-span-2">
-                <Label htmlFor="opme">OPME</Label>
-                <Textarea
-                  id="opme"
-                  rows={2}
-                  placeholder="Materiais e órteses previstos"
-                  value={form.opme}
-                  onChange={(e) => set("opme")(e.target.value)}
-                />
+                <Label>OPME</Label>
+                <OpmeSelect value={opme} onChange={setOpme} />
+                <p className="text-xs text-muted-foreground">
+                  Catálogo demonstrativo — será substituído pela tabela de OPME do banco corporativo.
+                </p>
               </div>
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="anamoto">Anamoto patológico</Label>

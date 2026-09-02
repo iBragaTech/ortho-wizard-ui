@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -11,13 +13,73 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { formatCurrency, type ConsultationRequest } from "@/data/mock";
+import { type ConsultationRequest } from "@/data/mock";
+import { useSaveDoctorFees } from "@/lib/data/hooks";
+
+function toNumber(value: string): number | null {
+  const clean = value.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  if (!clean.trim()) return null;
+  const n = Number(clean);
+  return Number.isFinite(n) ? n : null;
+}
+
+function fromNumber(value: number | null): string {
+  return value === null ? "" : String(value);
+}
 
 export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
   const filled = request.honorariosMedicos !== null;
+  const [open, setOpen] = useState(false);
+  const save = useSaveDoctorFees();
+
+  const initial = {
+    honorario: fromNumber(request.honorariosMedicos),
+    diaria: fromNumber(request.diaria),
+    cti: fromNumber(request.cti),
+    fisioterapia: request.fisioterapia !== null ? String(request.fisioterapia) : "",
+    tempoBloco: request.tempoBloco,
+    opme: request.opme,
+    anatomo: request.anatomoPatologico,
+    sangue: request.reservaSangue,
+    equipe: request.equipeMultidisciplinar,
+    obs: request.obsMedico,
+  };
+  const [form, setForm] = useState(initial);
+
+  useEffect(() => {
+    if (open) setForm(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, request.id]);
+
+  const set = (key: keyof typeof initial) => (value: string) =>
+    setForm((f) => ({ ...f, [key]: value }));
+
+  async function handleSave() {
+    try {
+      await save.mutateAsync({
+        id: request.id,
+        input: {
+          honorariosMedicos: toNumber(form.honorario),
+          diaria: toNumber(form.diaria),
+          cti: toNumber(form.cti),
+          opme: form.opme,
+          anatomoPatologico: form.anatomo,
+          reservaSangue: form.sangue,
+          equipeMultidisciplinar: form.equipe,
+          fisioterapia: form.fisioterapia ? Number(form.fisioterapia) : null,
+          tempoBloco: form.tempoBloco,
+          obsMedico: form.obs,
+        },
+      });
+      toast.success("Honorários enviados ao Comercial.");
+      setOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível salvar os honorários.");
+    }
+  }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant={filled ? "outline" : "default"} size="sm" className="w-full sm:w-auto">
           {filled ? "Revisar honorários" : "Preencher honorários"}
@@ -27,13 +89,13 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
         <DialogHeader>
           <DialogTitle>Preenchimento médico</DialogTitle>
           <DialogDescription>
-            {request.numero} · {request.paciente.nome} — formulário demonstrativo, sem persistência.
+            {request.numero} · {request.paciente.nome}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-6">
           <section className="grid gap-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Valores médicos
             </h3>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -41,24 +103,27 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
                 <Label htmlFor="honorario">Honorário</Label>
                 <Input
                   id="honorario"
-                  placeholder="R$ 0,00"
-                  defaultValue={filled ? formatCurrency(request.honorariosMedicos) : ""}
+                  placeholder="0,00"
+                  value={form.honorario}
+                  onChange={(e) => set("honorario")(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="diaria">Diária</Label>
                 <Input
                   id="diaria"
-                  placeholder="R$ 0,00"
-                  defaultValue={request.diaria !== null ? formatCurrency(request.diaria) : ""}
+                  placeholder="0,00"
+                  value={form.diaria}
+                  onChange={(e) => set("diaria")(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="cti">CTI</Label>
                 <Input
                   id="cti"
-                  placeholder="R$ 0,00"
-                  defaultValue={request.cti !== null ? formatCurrency(request.cti) : ""}
+                  placeholder="0,00"
+                  value={form.cti}
+                  onChange={(e) => set("cti")(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -67,7 +132,8 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
                   id="fisioterapia"
                   type="number"
                   placeholder="Ex.: 4"
-                  defaultValue={request.fisioterapia !== null ? String(request.fisioterapia) : ""}
+                  value={form.fisioterapia}
+                  onChange={(e) => set("fisioterapia")(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -75,14 +141,15 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
                 <Input
                   id="tempo-bloco"
                   placeholder="Ex.: 2h30"
-                  defaultValue={request.tempoBloco}
+                  value={form.tempoBloco}
+                  onChange={(e) => set("tempoBloco")(e.target.value)}
                 />
               </div>
             </div>
           </section>
 
           <section className="grid gap-4">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Procedimento e materiais
             </h3>
             <div className="grid gap-4">
@@ -92,7 +159,8 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
                   id="opme"
                   rows={3}
                   placeholder="Descreva o item, a quantidade e o fornecedor"
-                  defaultValue={request.opme}
+                  value={form.opme}
+                  onChange={(e) => set("opme")(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -100,8 +168,8 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
                 <Textarea
                   id="anatomo"
                   rows={2}
-                  placeholder="Descrição do anatomo patológico"
-                  defaultValue={request.anatomoPatologico}
+                  value={form.anatomo}
+                  onChange={(e) => set("anatomo")(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -109,8 +177,8 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
                 <Textarea
                   id="sangue"
                   rows={2}
-                  placeholder="Ex.: 2 concentrados de hemácias"
-                  defaultValue={request.reservaSangue}
+                  value={form.sangue}
+                  onChange={(e) => set("sangue")(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -118,8 +186,8 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
                 <Textarea
                   id="equipe"
                   rows={2}
-                  placeholder="Ex.: Fisioterapia 2x/dia, Nutricionista 1x"
-                  defaultValue={request.equipeMultidisciplinar}
+                  value={form.equipe}
+                  onChange={(e) => set("equipe")(e.target.value)}
                 />
               </div>
             </div>
@@ -130,15 +198,19 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
             <Textarea
               id="observacao"
               rows={3}
-              placeholder="Informações adicionais sobre a consulta ou procedimento"
-              defaultValue={request.obsMedico}
+              value={form.obs}
+              onChange={(e) => set("obs")(e.target.value)}
             />
           </section>
         </div>
 
         <DialogFooter className="flex-col gap-2 sm:flex-row">
-          <Button variant="outline" className="w-full sm:w-auto">Cancelar</Button>
-          <Button className="w-full sm:w-auto">Enviar ao Comercial</Button>
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+          <Button className="w-full sm:w-auto" onClick={handleSave} disabled={save.isPending}>
+            {save.isPending ? "Salvando..." : "Enviar ao Comercial"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

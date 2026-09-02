@@ -8,7 +8,8 @@ import { EmptyState } from "@/components/portal/empty-state";
 import { MetricCard } from "@/components/portal/metric-card";
 import { SearchAndFilters, type Filters } from "@/components/portal/search-and-filters";
 import { NewRequestDialog } from "@/components/portal/new-request-dialog";
-import { formatCurrency, requests, totalOf } from "@/data/mock";
+import { formatCurrency, totalOf } from "@/data/mock";
+import { useRequests } from "@/lib/data/hooks";
 
 export const Route = createFileRoute("/orcamentos/")({
   head: () => ({
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/orcamentos/")({
 });
 
 function OrcamentosPage() {
+  const { data: requests = [] } = useRequests();
   const [filters, setFilters] = useState<Filters>({
     busca: "",
     status: "todos",
@@ -56,7 +58,7 @@ function OrcamentosPage() {
           return false;
         return true;
       }),
-    [filters],
+    [filters, requests],
   );
 
   return (

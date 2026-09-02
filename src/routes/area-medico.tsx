@@ -8,7 +8,8 @@ import { EmptyState } from "@/components/portal/empty-state";
 import { DoctorFeeDialog } from "@/components/portal/doctor-fee-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatCurrency, medicalFeesTotal, requests, type ConsultationRequest } from "@/data/mock";
+import { formatCurrency, medicalFeesTotal, type ConsultationRequest } from "@/data/mock";
+import { useRequests } from "@/lib/data/hooks";
 
 export const Route = createFileRoute("/area-medico")({
   head: () => ({
@@ -54,6 +55,7 @@ function RequestRow({ request }: { request: ConsultationRequest }) {
 }
 
 function AreaMedico() {
+  const { data: requests = [] } = useRequests();
   const meus = requests;
   const aguardando = meus.filter((r) => r.honorariosMedicos === null);
   const preenchidas = meus.filter((r) => r.honorariosMedicos !== null);

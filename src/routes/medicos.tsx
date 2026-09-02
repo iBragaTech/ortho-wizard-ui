@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { AppShell } from "@/components/portal/app-shell";
 import { PageHeader } from "@/components/portal/page-header";
@@ -30,7 +32,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { doctors, especialidades } from "@/data/mock";
+import { especialidades } from "@/data/mock";
+import { useCreateDoctor, useDoctors } from "@/lib/data/hooks";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/medicos")({
@@ -68,8 +71,31 @@ function ActiveBadge({ ativo }: { ativo: boolean }) {
 }
 
 function NewDoctorDialog() {
+  const [open, setOpen] = useState(false);
+  const [nome, setNome] = useState("");
+  const [crm, setCrm] = useState("");
+  const [especialidade, setEspecialidade] = useState("");
+  const create = useCreateDoctor();
+
+  async function handleSave() {
+    if (!nome.trim() || !crm.trim() || !especialidade) {
+      toast.error("Preencha nome, CRM e especialidade.");
+      return;
+    }
+    try {
+      await create.mutateAsync({ nome: nome.trim(), crm: crm.trim(), especialidade });
+      toast.success("Médico cadastrado.");
+      setNome("");
+      setCrm("");
+      setEspecialidade("");
+      setOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível cadastrar.");
+    }
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="w-full sm:w-auto">
           <Plus className="h-4 w-4" /> Novo médico
@@ -78,20 +104,20 @@ function NewDoctorDialog() {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Novo médico</DialogTitle>
-          <DialogDescription>Cadastro demonstrativo — sem persistência nesta etapa.</DialogDescription>
+          <DialogDescription>O cadastro é salvo no banco do portal.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="nome-medico">Nome</Label>
-            <Input id="nome-medico" placeholder="Nome completo" />
+            <Input id="nome-medico" placeholder="Nome completo" value={nome} onChange={(e) => setNome(e.target.value)} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="crm">CRM</Label>
-            <Input id="crm" placeholder="CRM-SP 000000" />
+            <Input id="crm" placeholder="CRM-SP 000000" value={crm} onChange={(e) => setCrm(e.target.value)} />
           </div>
           <div className="grid gap-2">
             <Label>Especialidade</Label>
-            <Select>
+            <Select value={especialidade} onValueChange={setEspecialidade}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
               </SelectTrigger>
@@ -105,9 +131,13 @@ function NewDoctorDialog() {
             </Select>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline">Cancelar</Button>
-          <Button>Cadastrar</Button>
+        <DialogFooter className="flex-col gap-2 sm:flex-row">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+          <Button className="w-full sm:w-auto" onClick={handleSave} disabled={create.isPending}>
+            {create.isPending ? "Salvando..." : "Cadastrar"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -115,6 +145,8 @@ function NewDoctorDialog() {
 }
 
 function MedicosPage() {
+  const { data: doctors = [] } = useDoctors();
+
   return (
     <AppShell>
       <PageHeader

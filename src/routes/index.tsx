@@ -15,7 +15,7 @@ import { MetricCard } from "@/components/portal/metric-card";
 import { RequestTable } from "@/components/portal/request-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { metrics, requests } from "@/data/mock";
+import { useRequests } from "@/lib/data/hooks";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -44,6 +44,15 @@ const flow = [
 ];
 
 function Dashboard() {
+  const { data: requests = [] } = useRequests();
+  const metrics = {
+    pendentes: requests.filter((r) => r.status === "pendente").length,
+    emAnalise: requests.filter((r) => r.status === "em_analise").length,
+    aguardandoMedico: requests.filter((r) => r.status === "aguardando_medico").length,
+    aguardandoComercial: requests.filter((r) => r.status === "aguardando_comercial").length,
+    concluidos: requests.filter((r) => r.status === "concluido").length,
+  };
+
   return (
     <AppShell>
       <PageHeader

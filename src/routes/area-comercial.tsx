@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { createFileRoute } from "@tanstack/react-router";
 import { Briefcase, CheckCircle2, Search } from "lucide-react";
 import { AppShell } from "@/components/portal/app-shell";
@@ -13,7 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { formatCurrency, medicalFeesTotal, requests } from "@/data/mock";
+import { formatCurrency, medicalFeesTotal } from "@/data/mock";
+import { useRequests, useSaveHospitalValue } from "@/lib/data/hooks";
 
 export const Route = createFileRoute("/area-comercial")({
   head: () => ({
@@ -33,17 +35,51 @@ export const Route = createFileRoute("/area-comercial")({
   component: AreaComercial,
 });
 
+function toNumber(value: string): number | null {
+  const clean = value.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  if (!clean.trim()) return null;
+  const n = Number(clean);
+  return Number.isFinite(n) ? n : null;
+}
+
 function AreaComercial() {
+  const { data: requests = [] } = useRequests();
+  const saveHospital = useSaveHospitalValue();
   const fila = requests.filter((r) => r.status !== "concluido");
-  const [selectedId, setSelectedId] = useState(fila[0]?.id ?? requests[0]?.id ?? "");
-  const selected = requests.find((r) => r.id === selectedId) ?? requests[0]!;
+  const [selectedId, setSelectedId] = useState("");
+  const selected = requests.find((r) => r.id === selectedId) ?? fila[0] ?? requests[0];
+  const [valor, setValor] = useState("");
+  const [obs, setObs] = useState("");
+
+  useEffect(() => {
+    setValor(selected?.valorHospitalar !== null && selected?.valorHospitalar !== undefined ? String(selected.valorHospitalar) : "");
+    setObs(selected?.obsComercial ?? "");
+  }, [selected?.id]);
 
 
   const emAnalise = requests.filter((r) => r.status === "em_analise" || r.status === "pendente");
   const aguardando = requests.filter((r) => r.status === "aguardando_comercial");
   const concluidos = requests.filter((r) => r.status === "concluido");
 
-  const medicoPreenchido = selected.honorariosMedicos !== null;
+  const medicoPreenchido = selected?.honorariosMedicos != null;
+
+  async function concluir() {
+    if (!selected) return;
+    try {
+      await saveHospital.mutateAsync({ id: selected.id, valor: toNumber(valor), obs });
+      toast.success("Orçamento concluído.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível salvar.");
+    }
+  }
+
+  if (!selected) {
+    return (
+      <AppShell>
+        <PageHeader title="Área Comercial" description="Nenhum orçamento na fila." />
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -154,12 +190,9 @@ function AreaComercial() {
                 <Label htmlFor="valor-hospitalar">Valor hospitalar</Label>
                 <Input
                   id="valor-hospitalar"
-                  placeholder="R$ 0,00"
-                  defaultValue={
-                    selected.valorHospitalar !== null
-                      ? formatCurrency(selected.valorHospitalar)
-                      : ""
-                  }
+                  placeholder="0,00"
+                  value={valor}
+                  onChange={(e) => setValor(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -168,14 +201,14 @@ function AreaComercial() {
                   id="obs-com"
                   rows={3}
                   placeholder="Taxas, materiais e demais informações"
-                  defaultValue={selected.obsComercial}
+                  value={obs}
+                  onChange={(e) => setObs(e.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                <Button variant="outline" className="w-full sm:w-auto">
-                  Salvar rascunho
+                <Button className="w-full sm:w-auto" onClick={concluir} disabled={saveHospital.isPending}>
+                  {saveHospital.isPending ? "Salvando..." : "Concluir orçamento"}
                 </Button>
-                <Button className="w-full sm:w-auto">Concluir orçamento</Button>
               </div>
             </CardContent>
           </Card>

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Briefcase, Info, Stethoscope } from "lucide-react";
 import { AppShell } from "@/components/portal/app-shell";
 import { PageHeader } from "@/components/portal/page-header";
@@ -11,7 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { formatCurrency, medicalFeesTotal, requests, timelineEvents } from "@/data/mock";
+import { formatCurrency, medicalFeesTotal } from "@/data/mock";
+import { useRequest, useTimeline } from "@/lib/data/hooks";
 
 export const Route = createFileRoute("/orcamentos/$id")({
   head: () => ({
@@ -28,16 +29,29 @@ export const Route = createFileRoute("/orcamentos/$id")({
       },
     ],
   }),
-  loader: ({ params }) => {
-    const request = requests.find((r) => r.id === params.id);
-    if (!request) throw notFound();
-    return { request };
-  },
   component: RequestDetail,
 });
 
 function RequestDetail() {
-  const { request } = Route.useLoaderData();
+  const { id } = Route.useParams();
+  const { data: request, isLoading } = useRequest(id);
+  const { data: timelineEvents = [] } = useTimeline(id);
+
+  if (isLoading) {
+    return (
+      <AppShell>
+        <p className="text-sm text-muted-foreground">Carregando orçamento...</p>
+      </AppShell>
+    );
+  }
+
+  if (!request) {
+    return (
+      <AppShell>
+        <p className="text-sm text-muted-foreground">Orçamento não encontrado.</p>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>

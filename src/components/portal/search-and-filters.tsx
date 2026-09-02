@@ -7,7 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { doctors, especialidades, statusLabels, type RequestStatus } from "@/data/mock";
+import { especialidades, statusLabels, type RequestStatus } from "@/data/mock";
+import { useDoctors } from "@/lib/data/hooks";
 
 export interface Filters {
   busca: string;
@@ -24,6 +25,7 @@ export function SearchAndFilters({
   filters: Filters;
   onChange: (f: Filters) => void;
 }) {
+  const { data: doctors = [] } = useDoctors();
   const set = (key: keyof Filters) => (value: string) => onChange({ ...filters, [key]: value });
 
   return (

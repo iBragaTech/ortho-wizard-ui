@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Briefcase, Info, Stethoscope } from "lucide-react";
+import { ArrowLeft, Briefcase, Download, FileText, Info, Stethoscope } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/portal/app-shell";
 import { PageHeader } from "@/components/portal/page-header";
 import { PatientInfoCard, InfoField } from "@/components/portal/patient-info-card";
@@ -12,7 +13,14 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency, medicalFeesTotal } from "@/data/mock";
-import { useRequest, useTimeline } from "@/lib/data/hooks";
+import { useRequest, useTimeline, useSettings } from "@/lib/data/hooks";
+import { openQuoteDocument, downloadQuoteFile } from "@/lib/quote-document";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/orcamentos/$id")({
   head: () => ({
@@ -36,6 +44,7 @@ function RequestDetail() {
   const { id } = Route.useParams();
   const { data: request, isLoading } = useRequest(id);
   const { data: timelineEvents = [] } = useTimeline(id);
+  const { data: settings } = useSettings();
 
   if (isLoading) {
     return (
@@ -53,6 +62,14 @@ function RequestDetail() {
     );
   }
 
+  const institution = settings ?? {
+    nome: "",
+    cnpj: "",
+    endereco: "",
+    telefone: "",
+    emailNotificacoes: "",
+  };
+
   return (
     <AppShell>
       <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit text-muted-foreground">
@@ -64,7 +81,36 @@ function RequestDetail() {
       <PageHeader
         title={request.numero}
         description={`${request.paciente.nome} · ${request.especialidade}`}
-        actions={<StatusBadge status={request.status} className="px-3 py-1.5 text-sm" />}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={request.status} className="px-3 py-1.5 text-sm" />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="sm">
+                  <FileText className="h-4 w-4" /> Gerar arquivo do paciente
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={() => {
+                    const ok = openQuoteDocument(request, institution);
+                    if (!ok) toast.error("Permita pop-ups para abrir o documento.");
+                  }}
+                >
+                  <FileText className="h-4 w-4" /> Visualizar / Salvar em PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    downloadQuoteFile(request, institution);
+                    toast.success("Arquivo do orçamento baixado.");
+                  }}
+                >
+                  <Download className="h-4 w-4" /> Baixar arquivo para enviar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">

@@ -91,6 +91,11 @@ function unwrap<T>(res: { data: T | null; error: { message: string } | null }): 
   return res.data as NonNullable<T>;
 }
 
+function unwrapId(res: { data: any; error: { message: string } | null }): { id: string } {
+  if (res.error) throw new Error(res.error.message);
+  return res.data as { id: string };
+}
+
 export interface NewRequestInput {
   nome: string;
   nascimento: string; // yyyy-mm-dd
@@ -137,7 +142,7 @@ export const repository = {
   },
 
   async createRequest(input: NewRequestInput): Promise<string> {
-    const patient = unwrap(
+    const patient = unwrapId(
       await supabase
         .from("patients")
         .upsert(
@@ -154,7 +159,7 @@ export const repository = {
     );
 
     const numero = `SOL-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000 + 1000)}`;
-    const created = unwrap(
+    const created = unwrapId(
       await supabase
         .from("consultation_requests")
         .insert({

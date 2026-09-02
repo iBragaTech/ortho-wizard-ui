@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { AppShell } from "@/components/portal/app-shell";
 import { PageHeader } from "@/components/portal/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useSaveSettings, useSettings } from "@/lib/data/hooks";
 
 export const Route = createFileRoute("/configuracoes")({
   head: () => ({
@@ -39,11 +42,38 @@ function Toggle({ title, description }: { title: string; description: string }) 
 }
 
 function ConfiguracoesPage() {
+  const { data: settings } = useSettings();
+  const save = useSaveSettings();
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    if (settings) {
+      setNome(settings.nome);
+      setEmail(settings.emailNotificacoes);
+    }
+  }, [settings]);
+
+  async function handleSave() {
+    try {
+      await save.mutateAsync({
+        nome,
+        cnpj: settings?.cnpj ?? "",
+        endereco: settings?.endereco ?? "",
+        telefone: settings?.telefone ?? "",
+        emailNotificacoes: email,
+      });
+      toast.success("Configurações salvas.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível salvar.");
+    }
+  }
+
   return (
     <AppShell>
       <PageHeader
         title="Configurações"
-        description="Preferências demonstrativas do portal. Nenhuma alteração é salva nesta etapa."
+        description="Dados da instituição e preferências de notificação do portal."
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -54,13 +84,15 @@ function ConfiguracoesPage() {
           <CardContent className="space-y-4">
             <div className="grid gap-2">
               <Label htmlFor="inst">Nome do hospital</Label>
-              <Input id="inst" defaultValue="Hospital Modelo (exemplo)" />
+              <Input id="inst" value={nome} onChange={(e) => setNome(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="contato">E-mail de contato</Label>
-              <Input id="contato" defaultValue="orcamentos@hospital.exemplo" />
+              <Input id="contato" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
-            <Button className="w-full sm:w-auto">Salvar alterações</Button>
+            <Button className="w-full sm:w-auto" onClick={handleSave} disabled={save.isPending}>
+              {save.isPending ? "Salvando..." : "Salvar alterações"}
+            </Button>
           </CardContent>
         </Card>
 

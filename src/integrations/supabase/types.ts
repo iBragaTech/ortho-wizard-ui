@@ -14,7 +14,269 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      consultation_requests: {
+        Row: {
+          anatomo_patologico: string | null
+          created_at: string
+          cti: number | null
+          data_desejada: string | null
+          diaria: number | null
+          doctor_id: string | null
+          equipe_multidisciplinar: string | null
+          especialidade: string | null
+          fisioterapia: number | null
+          honorarios_medicos: number | null
+          id: string
+          numero: string
+          obs_comercial: string | null
+          obs_medico: string | null
+          observacoes: string | null
+          opme: string | null
+          patient_id: string
+          preenchido_comercial_em: string | null
+          preenchido_medico_em: string | null
+          reserva_sangue: string | null
+          status: Database["public"]["Enums"]["request_status"]
+          tempo_bloco: string | null
+          tipo_consulta: string | null
+          updated_at: string
+          valor_hospitalar: number | null
+        }
+        Insert: {
+          anatomo_patologico?: string | null
+          created_at?: string
+          cti?: number | null
+          data_desejada?: string | null
+          diaria?: number | null
+          doctor_id?: string | null
+          equipe_multidisciplinar?: string | null
+          especialidade?: string | null
+          fisioterapia?: number | null
+          honorarios_medicos?: number | null
+          id?: string
+          numero: string
+          obs_comercial?: string | null
+          obs_medico?: string | null
+          observacoes?: string | null
+          opme?: string | null
+          patient_id: string
+          preenchido_comercial_em?: string | null
+          preenchido_medico_em?: string | null
+          reserva_sangue?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          tempo_bloco?: string | null
+          tipo_consulta?: string | null
+          updated_at?: string
+          valor_hospitalar?: number | null
+        }
+        Update: {
+          anatomo_patologico?: string | null
+          created_at?: string
+          cti?: number | null
+          data_desejada?: string | null
+          diaria?: number | null
+          doctor_id?: string | null
+          equipe_multidisciplinar?: string | null
+          especialidade?: string | null
+          fisioterapia?: number | null
+          honorarios_medicos?: number | null
+          id?: string
+          numero?: string
+          obs_comercial?: string | null
+          obs_medico?: string | null
+          observacoes?: string | null
+          opme?: string | null
+          patient_id?: string
+          preenchido_comercial_em?: string | null
+          preenchido_medico_em?: string | null
+          reserva_sangue?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          tempo_bloco?: string | null
+          tipo_consulta?: string | null
+          updated_at?: string
+          valor_hospitalar?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_requests_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultation_requests_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctors: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          crm: string
+          especialidade: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          crm: string
+          especialidade: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          crm?: string
+          especialidade?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      institution_settings: {
+        Row: {
+          cnpj: string | null
+          email_notificacoes: string | null
+          endereco: string | null
+          id: number
+          nome: string | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          cnpj?: string | null
+          email_notificacoes?: string | null
+          endereco?: string | null
+          id?: number
+          nome?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cnpj?: string | null
+          email_notificacoes?: string | null
+          endereco?: string | null
+          id?: number
+          nome?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      patients: {
+        Row: {
+          cpf: string
+          created_at: string
+          email: string | null
+          id: string
+          nascimento: string | null
+          nome: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          cpf: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          nascimento?: string | null
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cpf?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          nascimento?: string | null
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      portal_users: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          perfil: Database["public"]["Enums"]["user_profile"]
+          ultimo_acesso: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          nome: string
+          perfil: Database["public"]["Enums"]["user_profile"]
+          ultimo_acesso?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          perfil?: Database["public"]["Enums"]["user_profile"]
+          ultimo_acesso?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      request_events: {
+        Row: {
+          concluido: boolean
+          criado_em: string
+          descricao: string | null
+          id: string
+          ordem: number
+          request_id: string
+          titulo: string
+        }
+        Insert: {
+          concluido?: boolean
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          request_id: string
+          titulo: string
+        }
+        Update: {
+          concluido?: boolean
+          criado_em?: string
+          descricao?: string | null
+          id?: string
+          ordem?: number
+          request_id?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +285,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      request_status:
+        | "pendente"
+        | "em_analise"
+        | "aguardando_medico"
+        | "aguardando_comercial"
+        | "concluido"
+      user_profile: "administrador" | "comercial" | "medico"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +418,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      request_status: [
+        "pendente",
+        "em_analise",
+        "aguardando_medico",
+        "aguardando_comercial",
+        "concluido",
+      ],
+      user_profile: ["administrador", "comercial", "medico"],
+    },
   },
 } as const

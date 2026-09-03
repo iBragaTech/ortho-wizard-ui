@@ -77,6 +77,9 @@ export function NewRequestDialog({
     }
 
     const opmeTexto = opme.length > 0 ? formatOpmeSelection(opme) : "";
+    const categoriaTexto = form.categoriaConvenio
+      ? `Categoria do convênio: ${CONVENIO_CATEGORIAS.find((c) => c.codigo === form.categoriaConvenio)?.nome ?? form.categoriaConvenio}`
+      : "";
     const principalTexto = procedimento[0] ? formatProcedure(procedimento[0]) : "";
     const adicionaisTexto = adicionais.length > 0 ? formatProcedureSelection(adicionais) : "";
 

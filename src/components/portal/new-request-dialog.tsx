@@ -22,19 +22,38 @@ const empty = {
   cpf: "",
   telefone: "",
   procedimento: "",
+  // Campos do Comercial
   diariaEnf: "",
   diariaCti: "",
   anatomo: "",
   sangue: "",
   multidisciplinar: "",
   bloco: "",
+  // Campos do Médico
+  honorario: "",
+  diaria: "",
+  cti: "",
+  fisioterapia: "",
+  obsMedico: "",
 };
 
-export function NewRequestDialog({ trigger }: { trigger: ReactNode }) {
+function toNumber(value: string): number | null {
+  const parsed = Number(value.replace(/\./g, "").replace(",", "."));
+  return value.trim() === "" || Number.isNaN(parsed) ? null : parsed;
+}
+
+export function NewRequestDialog({
+  trigger,
+  origem = "comercial",
+}: {
+  trigger: ReactNode;
+  origem?: "comercial" | "medico";
+}) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
   const [opme, setOpme] = useState<string[]>([]);
   const create = useCreateRequest();
+  const isMedico = origem === "medico";
 
   const set = (key: keyof typeof empty) => (value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -44,18 +63,25 @@ export function NewRequestDialog({ trigger }: { trigger: ReactNode }) {
       toast.error("Informe ao menos nome e CPF do paciente.");
       return;
     }
-    const observacoes = [
-      form.procedimento && `Código do procedimento: ${form.procedimento}`,
-      form.diariaEnf && `Diária Enf/Ap: ${form.diariaEnf}`,
-      form.diariaCti && `Diária CTI: ${form.diariaCti}`,
-      opme.length > 0 && `OPME: ${formatOpmeSelection(opme)}`,
-      form.anatomo && `Anatomo patológico: ${form.anatomo}`,
-      form.sangue && `Reserva de sangue: ${form.sangue}`,
-      form.multidisciplinar && `Equipe multidisciplinar/Fisioterapia: ${form.multidisciplinar}`,
-      form.bloco && `Tempo de bloco: ${form.bloco}`,
-    ]
-      .filter(Boolean)
-      .join("\n");
+
+    const opmeTexto = opme.length > 0 ? formatOpmeSelection(opme) : "";
+
+    const observacoes = isMedico
+      ? [form.procedimento && `Código do procedimento: ${form.procedimento}`]
+          .filter(Boolean)
+          .join("\n")
+      : [
+          form.procedimento && `Código do procedimento: ${form.procedimento}`,
+          form.diariaEnf && `Diária Enf/Ap: ${form.diariaEnf}`,
+          form.diariaCti && `Diária CTI: ${form.diariaCti}`,
+          opmeTexto && `OPME: ${opmeTexto}`,
+          form.anatomo && `Anatomo patológico: ${form.anatomo}`,
+          form.sangue && `Reserva de sangue: ${form.sangue}`,
+          form.multidisciplinar && `Equipe multidisciplinar/Fisioterapia: ${form.multidisciplinar}`,
+          form.bloco && `Tempo de bloco: ${form.bloco}`,
+        ]
+          .filter(Boolean)
+          .join("\n");
 
     try {
       await create.mutateAsync({
@@ -64,8 +90,29 @@ export function NewRequestDialog({ trigger }: { trigger: ReactNode }) {
         cpf: form.cpf.trim(),
         telefone: form.telefone.trim(),
         observacoes,
+        origem,
+        ...(isMedico
+          ? {
+              medico: {
+                honorariosMedicos: toNumber(form.honorario),
+                diaria: toNumber(form.diaria),
+                cti: toNumber(form.cti),
+                opme: opmeTexto,
+                anatomoPatologico: form.anatomo,
+                reservaSangue: form.sangue,
+                equipeMultidisciplinar: form.multidisciplinar,
+                fisioterapia: toNumber(form.fisioterapia),
+                tempoBloco: form.bloco,
+                obsMedico: form.obsMedico,
+              },
+            }
+          : {}),
       });
-      toast.success("Orçamento criado e enviado ao médico.");
+      toast.success(
+        isMedico
+          ? "Orçamento criado e enviado ao Comercial."
+          : "Orçamento criado e enviado ao médico.",
+      );
       setForm(empty);
       setOpme([]);
       setOpen(false);
@@ -81,7 +128,9 @@ export function NewRequestDialog({ trigger }: { trigger: ReactNode }) {
         <DialogHeader>
           <DialogTitle>Novo orçamento</DialogTitle>
           <DialogDescription>
-            Os dados são salvos no banco e o orçamento segue para preenchimento do médico.
+            {isMedico
+              ? "Preencha os dados médicos. O orçamento segue para o Comercial completar os valores hospitalares."
+              : "Os dados são salvos no banco e o orçamento segue para preenchimento do médico."}
           </DialogDescription>
         </DialogHeader>
 
@@ -141,46 +190,97 @@ export function NewRequestDialog({ trigger }: { trigger: ReactNode }) {
 
           <section className="grid gap-4">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Dados do procedimento
+              {isMedico ? "Dados médicos" : "Dados do procedimento"}
             </h3>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="diaria-enf">Diária Enf / Ap</Label>
-                <Input
-                  id="diaria-enf"
-                  placeholder="Quantidade de diárias"
-                  value={form.diariaEnf}
-                  onChange={(e) => set("diariaEnf")(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="diaria-cti">Diária CTI</Label>
-                <Input
-                  id="diaria-cti"
-                  placeholder="Quantidade de diárias"
-                  value={form.diariaCti}
-                  onChange={(e) => set("diariaCti")(e.target.value)}
-                />
-              </div>
+              {isMedico ? (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="honorario">Honorário (R$)</Label>
+                    <Input
+                      id="honorario"
+                      inputMode="decimal"
+                      placeholder="0,00"
+                      value={form.honorario}
+                      onChange={(e) => set("honorario")(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="diaria">Diária (R$)</Label>
+                    <Input
+                      id="diaria"
+                      inputMode="decimal"
+                      placeholder="0,00"
+                      value={form.diaria}
+                      onChange={(e) => set("diaria")(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="cti">CTI (R$)</Label>
+                    <Input
+                      id="cti"
+                      inputMode="decimal"
+                      placeholder="0,00"
+                      value={form.cti}
+                      onChange={(e) => set("cti")(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="fisioterapia">Fisioterapia (quantidade)</Label>
+                    <Input
+                      id="fisioterapia"
+                      inputMode="numeric"
+                      placeholder="Ex.: 10"
+                      value={form.fisioterapia}
+                      onChange={(e) => set("fisioterapia")(e.target.value)}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="grid gap-2">
+                    <Label htmlFor="diaria-enf">Diária Enf / Ap</Label>
+                    <Input
+                      id="diaria-enf"
+                      placeholder="Quantidade de diárias"
+                      value={form.diariaEnf}
+                      onChange={(e) => set("diariaEnf")(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="diaria-cti">Diária CTI</Label>
+                    <Input
+                      id="diaria-cti"
+                      placeholder="Quantidade de diárias"
+                      value={form.diariaCti}
+                      onChange={(e) => set("diariaCti")(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+
               <div className="grid gap-2 sm:col-span-2">
-                <Label>OPME</Label>
+                <Label>OPME{isMedico ? " (item, quantidade e fornecedor)" : ""}</Label>
                 <OpmeSelect value={opme} onChange={setOpme} />
                 <p className="text-xs text-muted-foreground">
                   Catálogo demonstrativo — será substituído pela tabela de OPME do banco corporativo.
                 </p>
               </div>
+
               <div className="grid gap-2 sm:col-span-2">
-                <Label htmlFor="anamoto">Anamoto patológico</Label>
+                <Label htmlFor="anamoto">{isMedico ? "Anatomo Patológico" : "Anamoto patológico"}</Label>
                 <Textarea
                   id="anamoto"
                   rows={2}
-                  placeholder="Descrição do anamoto patológico"
+                  placeholder="Descrição"
                   value={form.anatomo}
                   onChange={(e) => set("anatomo")(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="sangue">Reserva de sangue</Label>
+                <Label htmlFor="sangue">
+                  {isMedico ? "Reserva de sangue (material e quantidade)" : "Reserva de sangue"}
+                </Label>
                 <Input
                   id="sangue"
                   placeholder="Ex.: 2 concentrados de hemácias"
@@ -189,7 +289,9 @@ export function NewRequestDialog({ trigger }: { trigger: ReactNode }) {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="multidisciplinar">Equipe multidisciplinar/Fisioterapia</Label>
+                <Label htmlFor="multidisciplinar">
+                  {isMedico ? "Equipe multidisciplinar" : "Equipe multidisciplinar/Fisioterapia"}
+                </Label>
                 <Input
                   id="multidisciplinar"
                   placeholder="Ex.: Fisioterapia 2x/dia"
@@ -206,6 +308,19 @@ export function NewRequestDialog({ trigger }: { trigger: ReactNode }) {
                   onChange={(e) => set("bloco")(e.target.value)}
                 />
               </div>
+
+              {isMedico ? (
+                <div className="grid gap-2 sm:col-span-2">
+                  <Label htmlFor="obs-medico">Observações do médico</Label>
+                  <Textarea
+                    id="obs-medico"
+                    rows={2}
+                    placeholder="Informações adicionais para o Comercial"
+                    value={form.obsMedico}
+                    onChange={(e) => set("obsMedico")(e.target.value)}
+                  />
+                </div>
+              ) : null}
             </div>
           </section>
         </div>
@@ -215,7 +330,11 @@ export function NewRequestDialog({ trigger }: { trigger: ReactNode }) {
             Cancelar
           </Button>
           <Button className="w-full sm:w-auto" onClick={handleSubmit} disabled={create.isPending}>
-            {create.isPending ? "Salvando..." : "Criar orçamento"}
+            {create.isPending
+              ? "Salvando..."
+              : isMedico
+                ? "Criar e enviar ao Comercial"
+                : "Criar orçamento"}
           </Button>
         </DialogFooter>
       </DialogContent>

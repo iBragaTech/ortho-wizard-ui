@@ -15,6 +15,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateRequest } from "@/lib/data/hooks";
 import { OpmeSelect, formatOpmeSelection } from "@/components/portal/opme-select";
+import { ProcedureSelect } from "@/components/portal/procedure-select";
+import { formatProcedure, formatProcedureSelection } from "@/data/procedure-catalog";
 
 const empty = {
   nome: "",

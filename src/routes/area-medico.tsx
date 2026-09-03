@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, ClipboardList, History, Stethoscope } from "lucide-react";
+import { CheckCircle2, ClipboardList, History, Plus, Stethoscope } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { NewRequestDialog } from "@/components/portal/new-request-dialog";
 import { AppShell } from "@/components/portal/app-shell";
 import { PageHeader } from "@/components/portal/page-header";
 import { MetricCard } from "@/components/portal/metric-card";

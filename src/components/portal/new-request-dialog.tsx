@@ -13,6 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CONVENIO_CATEGORIAS } from "@/data/convenio-catalog";
 import { useCreateRequest } from "@/lib/data/hooks";
 import { OpmeSelect, formatOpmeSelection } from "@/components/portal/opme-select";
 import { ProcedureSelect } from "@/components/portal/procedure-select";
@@ -23,6 +31,7 @@ const empty = {
   nascimento: "",
   cpf: "",
   telefone: "",
+  categoriaConvenio: "",
   // Campos do Comercial
   diariaEnf: "",
   diariaCti: "",
@@ -68,17 +77,22 @@ export function NewRequestDialog({
     }
 
     const opmeTexto = opme.length > 0 ? formatOpmeSelection(opme) : "";
+    const categoriaTexto = form.categoriaConvenio
+      ? `Categoria do convênio: ${CONVENIO_CATEGORIAS.find((c) => c.codigo === form.categoriaConvenio)?.nome ?? form.categoriaConvenio}`
+      : "";
     const principalTexto = procedimento[0] ? formatProcedure(procedimento[0]) : "";
     const adicionaisTexto = adicionais.length > 0 ? formatProcedureSelection(adicionais) : "";
 
     const observacoes = isMedico
       ? [
+          categoriaTexto,
           principalTexto && `Procedimento principal: ${principalTexto}`,
           adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,
         ]
           .filter(Boolean)
           .join("\n")
       : [
+          categoriaTexto,
           principalTexto && `Procedimento principal: ${principalTexto}`,
           adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,
           form.diariaEnf && `Diária Enf/Ap: ${form.diariaEnf}`,
@@ -188,6 +202,27 @@ export function NewRequestDialog({
                   value={form.telefone}
                   onChange={(e) => set("telefone")(e.target.value)}
                 />
+              </div>
+              <div className="grid gap-2 sm:col-span-2">
+                <Label htmlFor="categoria-convenio">Categoria do convênio</Label>
+                <Select
+                  value={form.categoriaConvenio}
+                  onValueChange={(value) => set("categoriaConvenio")(value)}
+                >
+                  <SelectTrigger id="categoria-convenio">
+                    <SelectValue placeholder="Selecione a categoria do convênio" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CONVENIO_CATEGORIAS.map((c) => (
+                      <SelectItem key={c.codigo} value={c.codigo}>
+                        {c.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Lista demonstrativa — será substituída pelas categorias do banco corporativo.
+                </p>
               </div>
               <div className="grid gap-2 sm:col-span-2">
                 <Label>Procedimento principal</Label>

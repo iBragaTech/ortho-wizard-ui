@@ -105,6 +105,10 @@ export interface NewRequestInput {
   tipoConsulta?: string;
   dataDesejada?: string; // yyyy-mm-dd
   observacoes?: string;
+  // Quando o próprio médico cria o orçamento, ele já informa os dados médicos
+  // e o orçamento segue direto para o setor Comercial.
+  origem?: "comercial" | "medico";
+  medico?: DoctorFeesInput;
 }
 
 export interface DoctorFeesInput {

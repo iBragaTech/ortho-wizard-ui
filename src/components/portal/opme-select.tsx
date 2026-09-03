@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -68,10 +68,40 @@ export function OpmeSelect({
           align="start"
         >
           <Command>
-            <CommandInput placeholder="Buscar por código, item ou fornecedor..." />
+            <CommandInput
+              placeholder="Buscar ou digitar um item de OPME..."
+              value={query}
+              onValueChange={setQuery}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && canAddCustom) {
+                  e.preventDefault();
+                  addCustom();
+                }
+              }}
+            />
             <CommandList>
-              <CommandEmpty>Nenhum item encontrado.</CommandEmpty>
-              <CommandGroup>
+              <CommandEmpty>
+                {trimmed ? (
+                  <button
+                    type="button"
+                    onClick={addCustom}
+                    className="mx-auto flex items-center gap-2 rounded-md px-2 py-1 text-sm text-primary hover:underline"
+                  >
+                    <Plus className="h-4 w-4" /> Adicionar "{trimmed}"
+                  </button>
+                ) : (
+                  "Nenhum item encontrado."
+                )}
+              </CommandEmpty>
+              {canAddCustom ? (
+                <CommandGroup heading="Item digitado">
+                  <CommandItem value={`__custom__ ${trimmed}`} onSelect={addCustom}>
+                    <Plus className="h-4 w-4" />
+                    <span className="truncate">Adicionar "{trimmed}"</span>
+                  </CommandItem>
+                </CommandGroup>
+              ) : null}
+              <CommandGroup heading="Catálogo">
                 {items.map((item) => (
                   <CommandItem
                     key={item.codigo}

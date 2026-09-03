@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AreaComercialRouteImport } from './routes/area-comercial'
 import { Route as AreaMedicoRouteImport } from './routes/area-medico'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as MedicosRouteImport } from './routes/medicos'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
 import { Route as UsuariosRouteImport } from './routes/usuarios'
@@ -37,6 +38,11 @@ const AreaMedicoRoute = AreaMedicoRouteImport.update({
 const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
   id: '/configuracoes',
   path: '/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MedicosRoute = MedicosRouteImport.update({
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/area-comercial': typeof AreaComercialRoute
   '/area-medico': typeof AreaMedicoRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/login': typeof LoginRoute
   '/medicos': typeof MedicosRoute
   '/orcamentos': typeof OrcamentosRouteWithChildren
   '/usuarios': typeof UsuariosRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/area-comercial': typeof AreaComercialRoute
   '/area-medico': typeof AreaMedicoRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/login': typeof LoginRoute
   '/medicos': typeof MedicosRoute
   '/usuarios': typeof UsuariosRoute
   '/orcamentos/$id': typeof OrcamentosIdRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/area-comercial': typeof AreaComercialRoute
   '/area-medico': typeof AreaMedicoRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/login': typeof LoginRoute
   '/medicos': typeof MedicosRoute
   '/orcamentos': typeof OrcamentosRouteWithChildren
   '/usuarios': typeof UsuariosRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/area-comercial'
     | '/area-medico'
     | '/configuracoes'
+    | '/login'
     | '/medicos'
     | '/orcamentos'
     | '/usuarios'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/area-comercial'
     | '/area-medico'
     | '/configuracoes'
+    | '/login'
     | '/medicos'
     | '/usuarios'
     | '/orcamentos/$id'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/area-comercial'
     | '/area-medico'
     | '/configuracoes'
+    | '/login'
     | '/medicos'
     | '/orcamentos'
     | '/usuarios'
@@ -138,6 +150,7 @@ export interface RootRouteChildren {
   AreaComercialRoute: typeof AreaComercialRoute
   AreaMedicoRoute: typeof AreaMedicoRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
+  LoginRoute: typeof LoginRoute
   MedicosRoute: typeof MedicosRoute
   OrcamentosRoute: typeof OrcamentosRouteWithChildren
   UsuariosRoute: typeof UsuariosRoute
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes'
       fullPath: '/configuracoes'
       preLoaderRoute: typeof ConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/medicos': {
@@ -230,6 +250,7 @@ const rootRouteChildren: RootRouteChildren = {
   AreaComercialRoute: AreaComercialRoute,
   AreaMedicoRoute: AreaMedicoRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
+  LoginRoute: LoginRoute,
   MedicosRoute: MedicosRoute,
   OrcamentosRoute: OrcamentosRouteWithChildren,
   UsuariosRoute: UsuariosRoute,

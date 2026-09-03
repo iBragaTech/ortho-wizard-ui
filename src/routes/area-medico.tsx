@@ -64,7 +64,17 @@ function AreaMedico() {
     <AppShell>
       <PageHeader
         title={`Olá, ${medico}`}
-        description="Acompanhe as solicitações que dependem do seu preenchimento de honorários."
+        description="Crie orçamentos com os dados médicos e acompanhe os que dependem do seu preenchimento."
+        actions={
+          <NewRequestDialog
+            origem="medico"
+            trigger={
+              <Button>
+                <Plus className="h-4 w-4" /> Novo orçamento
+              </Button>
+            }
+          />
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-3">

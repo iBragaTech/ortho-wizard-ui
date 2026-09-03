@@ -12,8 +12,8 @@ import {
   Users,
   UserRound,
   FileText,
-  Activity,
 } from "lucide-react";
+import logoHorizontal from "@/assets/logo-horizontal.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";

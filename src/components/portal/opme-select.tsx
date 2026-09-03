@@ -22,11 +22,26 @@ export function OpmeSelect({
   onChange: (value: string[]) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const items = useMemo(() => listOpmeItems(), []);
-  const selected = items.filter((i) => value.includes(i.codigo));
+  const selected = value.map(
+    (code) => items.find((i) => i.codigo === code) ?? { codigo: code, descricao: code, fornecedor: "Digitado manualmente", custom: true as const },
+  );
 
   function toggle(codigo: string) {
     onChange(value.includes(codigo) ? value.filter((c) => c !== codigo) : [...value, codigo]);
+  }
+
+  const trimmed = query.trim();
+  const canAddCustom =
+    trimmed.length > 0 &&
+    !items.some((i) => `${i.codigo} ${i.descricao} ${i.fornecedor}`.toLowerCase() === trimmed.toLowerCase()) &&
+    !value.some((v) => v.toLowerCase() === trimmed.toLowerCase());
+
+  function addCustom() {
+    if (!canAddCustom) return;
+    onChange([...value, trimmed]);
+    setQuery("");
   }
 
   return (

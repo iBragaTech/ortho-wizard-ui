@@ -66,16 +66,15 @@ function LoginPage() {
   return (
     <main className="grid min-h-screen bg-muted/40 lg:grid-cols-2">
       <section className="hidden flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex">
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary-foreground/15">
-            <Activity className="h-5 w-5" />
-          </span>
-          <div>
-            <p className="text-sm font-semibold">Portal de Orçamentos</p>
-            <p className="text-xs opacity-80">Consultas particulares</p>
-          </div>
+        <div className="w-fit rounded-xl bg-card p-4">
+          <img
+            src={logoStacked.url}
+            alt="Hospital Evangélico de Belo Horizonte"
+            className="h-24 w-auto object-contain"
+          />
         </div>
         <div className="max-w-md space-y-4">
+          <span className="inline-block h-1 w-16 rounded-full bg-brand-accent" />
           <h1 className="text-3xl font-semibold leading-tight">
             Orçamentos hospitalares com fluxo claro do início ao fim
           </h1>
@@ -90,10 +89,16 @@ function LoginPage() {
       <section className="flex items-center justify-center px-4 py-10 sm:px-8">
         <Card className="w-full max-w-md">
           <CardHeader>
+            <img
+              src={logoHorizontal.url}
+              alt="Hospital Evangélico de Belo Horizonte"
+              className="mb-4 h-10 w-auto object-contain object-left lg:hidden"
+            />
             <CardTitle>Entrar no portal</CardTitle>
             <CardDescription>Use o e-mail e a senha cadastrados para você.</CardDescription>
           </CardHeader>
           <CardContent>
+
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>

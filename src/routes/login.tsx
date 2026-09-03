@@ -1,20 +1,12 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Activity, Briefcase, LogIn, Stethoscope, UserCog } from "lucide-react";
+import { Activity, LogIn, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { usePortalUsers } from "@/lib/data/hooks";
-import { PERFIS, useSession, type Perfil } from "@/lib/auth/session";
-import { cn } from "@/lib/utils";
+import { repository } from "@/lib/data/repository";
+import { useSession } from "@/lib/auth/session";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
@@ -23,58 +15,52 @@ export const Route = createFileRoute("/login")({
       { title: "Entrar — Portal de Orçamentos de Consultas" },
       {
         name: "description",
-        content: "Acesse o portal interno escolhendo seu perfil: administrador, comercial ou médico.",
+        content: "Acesse o portal interno com seu e-mail e senha cadastrados na instituição.",
       },
       { property: "og:title", content: "Entrar — Portal de Orçamentos de Consultas" },
       {
         property: "og:description",
         content: "Área de acesso do portal hospitalar de orçamentos de consultas particulares.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: LoginPage,
 });
 
-const perfilIcon: Record<Perfil, typeof UserCog> = {
-  Administrador: UserCog,
-  Comercial: Briefcase,
-  "Médico": Stethoscope,
-};
-
-const perfilDesc: Record<Perfil, string> = {
-  Administrador: "Acesso completo ao portal",
-  Comercial: "Valores hospitalares e fila comercial",
-  "Médico": "Honorários médicos das solicitações",
-};
-
 function LoginPage() {
   const navigate = useNavigate();
   const { user, ready, signIn } = useSession();
-  const { data: users = [], isLoading } = usePortalUsers();
-  const [perfil, setPerfil] = useState<Perfil>("Administrador");
-  const [userId, setUserId] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (ready && user) void navigate({ to: "/", replace: true });
   }, [ready, user, navigate]);
 
-  const doPerfil = users.filter((u) => u.perfil === perfil && u.ativo);
-
-  useEffect(() => {
-    setUserId(doPerfil[0]?.id ?? "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [perfil, users.length]);
-
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const selected = doPerfil.find((u) => u.id === userId);
-    if (!selected) {
-      toast.error("Selecione um usuário para entrar.");
+    if (!email.trim() || !senha) {
+      toast.error("Informe e-mail e senha.");
       return;
     }
-    signIn({ id: selected.id, nome: selected.nome, email: selected.email, perfil });
-    toast.success(`Bem-vindo(a), ${selected.nome.split(" ")[0]}!`);
-    void navigate({ to: "/", replace: true });
+    setLoading(true);
+    try {
+      const found = await repository.signIn(email.trim(), senha);
+      if (!found) {
+        toast.error("E-mail ou senha inválidos.");
+        return;
+      }
+      signIn(found);
+      toast.success(`Bem-vindo(a), ${found.nome.split(" ")[0]}!`);
+      void navigate({ to: "/", replace: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Não foi possível entrar.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -105,84 +91,43 @@ function LoginPage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Entrar no portal</CardTitle>
-            <CardDescription>Escolha o perfil de acesso e o usuário.</CardDescription>
+            <CardDescription>Use o e-mail e a senha cadastrados para você.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label>Perfil de acesso</Label>
-                <div className="grid gap-2">
-                  {PERFIS.map((p) => {
-                    const Icon = perfilIcon[p];
-                    const active = perfil === p;
-                    return (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => setPerfil(p)}
-                        aria-pressed={active}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg border p-3 text-left transition-colors",
-                          active
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:bg-accent",
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "grid h-9 w-9 shrink-0 place-items-center rounded-lg",
-                            active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
-                          )}
-                        >
-                          <Icon className="h-4 w-4" />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block text-sm font-medium text-foreground">{p}</span>
-                          <span className="block truncate text-xs text-muted-foreground">
-                            {perfilDesc[p]}
-                          </span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="usuario">Usuário</Label>
-                <Select value={userId} onValueChange={setUserId} disabled={isLoading || doPerfil.length === 0}>
-                  <SelectTrigger id="usuario">
-                    <SelectValue
-                      placeholder={
-                        isLoading
-                          ? "Carregando usuários..."
-                          : doPerfil.length === 0
-                            ? "Nenhum usuário com este perfil"
-                            : "Selecione o usuário"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {doPerfil.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>
-                        {u.nome} — {u.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="nome@hospital.com.br"
+                  autoComplete="username"
+                  autoFocus
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="senha">Senha</Label>
-                <Input id="senha" type="password" placeholder="••••••••" autoComplete="current-password" />
-                <p className="text-xs text-muted-foreground">
-                  Protótipo: a senha ainda não é validada.
-                </p>
+                <Input
+                  id="senha"
+                  type="password"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
               </div>
 
-              <Button type="submit" className="w-full">
-                <LogIn className="h-4 w-4" /> Entrar
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
+                Entrar
               </Button>
+
+              <p className="text-center text-xs text-muted-foreground">
+                O perfil de acesso é definido pelo cadastro do usuário no portal.
+              </p>
             </form>
           </CardContent>
         </Card>

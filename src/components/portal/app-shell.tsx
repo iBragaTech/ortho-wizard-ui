@@ -50,7 +50,7 @@ const nav = [
 
 const titles: Record<string, string> = {
   "/": "Dashboard",
-  "/orcamentos": "Orçamentos",
+  "/orcamentos": "Orçamentos 9999999999",
   "/area-medico": "Área do Médico",
   "/area-comercial": "Área Comercial",
   "/medicos": "Médicos",

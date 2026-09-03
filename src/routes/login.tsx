@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Activity, LogIn, Loader2 } from "lucide-react";
+import { LogIn, Loader2 } from "lucide-react";
+import logoStacked from "@/assets/logo-stacked.png.asset.json";
+import logoHorizontal from "@/assets/logo-horizontal.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";

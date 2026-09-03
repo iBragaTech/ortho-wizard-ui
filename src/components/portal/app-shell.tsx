@@ -12,8 +12,8 @@ import {
   Users,
   UserRound,
   FileText,
-  Activity,
 } from "lucide-react";
+import logoHorizontal from "@/assets/logo-horizontal.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -64,17 +64,17 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const items = nav.filter((item) => (ACESSO[item.to] ?? []).includes(user?.perfil as Perfil));
   return (
     <div className="flex h-full flex-col bg-sidebar">
-      <div className="flex items-center gap-3 px-5 py-5">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
-          <Activity className="h-5 w-5" />
-        </span>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-sidebar-foreground">
-            Portal de Orçamentos
-          </p>
-          <p className="truncate text-xs text-muted-foreground">Consultas particulares</p>
-        </div>
+      <div className="px-5 py-5">
+        <img
+          src={logoHorizontal.url}
+          alt="Hospital Evangélico de Belo Horizonte"
+          className="h-11 w-auto object-contain object-left"
+        />
+        <p className="mt-3 truncate text-xs font-medium text-muted-foreground">
+          Portal de Orçamentos · Consultas particulares
+        </p>
       </div>
+
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
         {items.map((item) => (

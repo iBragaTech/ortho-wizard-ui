@@ -24,7 +24,6 @@ const empty = {
   cpf: "",
   telefone: "",
   // Campos do Comercial
-  // Campos do Comercial
   diariaEnf: "",
   diariaCti: "",
   anatomo: "",
@@ -99,7 +98,7 @@ export function NewRequestDialog({
         nascimento: form.nascimento,
         cpf: form.cpf.trim(),
         telefone: form.telefone.trim(),
-        especialidade: principalTexto || undefined,
+        especialidade: principalTexto,
         observacoes,
         origem,
         ...(isMedico

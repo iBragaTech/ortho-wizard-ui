@@ -178,14 +178,26 @@ export function NewRequestDialog({
                   onChange={(e) => set("telefone")(e.target.value)}
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="procedimento">Código do procedimento</Label>
-                <Input
-                  id="procedimento"
-                  placeholder="Ex.: 3.10.01.012-3"
-                  value={form.procedimento}
-                  onChange={(e) => set("procedimento")(e.target.value)}
+              <div className="grid gap-2 sm:col-span-2">
+                <Label>Procedimento principal</Label>
+                <ProcedureSelect
+                  value={procedimento}
+                  onChange={setProcedimento}
+                  placeholder="Pesquisar procedimento principal..."
                 />
+              </div>
+              <div className="grid gap-2 sm:col-span-2">
+                <Label>Procedimentos adicionais</Label>
+                <ProcedureSelect
+                  value={adicionais}
+                  onChange={setAdicionais}
+                  multiple
+                  placeholder="Pesquisar procedimentos adicionais..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Catálogo demonstrativo — será substituído pela tabela de procedimentos do banco
+                  corporativo.
+                </p>
               </div>
             </div>
           </section>

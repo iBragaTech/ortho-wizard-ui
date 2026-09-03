@@ -15,13 +15,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateRequest } from "@/lib/data/hooks";
 import { OpmeSelect, formatOpmeSelection } from "@/components/portal/opme-select";
+import { ProcedureSelect } from "@/components/portal/procedure-select";
+import { formatProcedure, formatProcedureSelection } from "@/data/procedure-catalog";
 
 const empty = {
   nome: "",
   nascimento: "",
   cpf: "",
   telefone: "",
-  procedimento: "",
   // Campos do Comercial
   diariaEnf: "",
   diariaCti: "",
@@ -52,6 +53,8 @@ export function NewRequestDialog({
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
   const [opme, setOpme] = useState<string[]>([]);
+  const [procedimento, setProcedimento] = useState<string[]>([]);
+  const [adicionais, setAdicionais] = useState<string[]>([]);
   const create = useCreateRequest();
   const isMedico = origem === "medico";
 
@@ -65,13 +68,19 @@ export function NewRequestDialog({
     }
 
     const opmeTexto = opme.length > 0 ? formatOpmeSelection(opme) : "";
+    const principalTexto = procedimento[0] ? formatProcedure(procedimento[0]) : "";
+    const adicionaisTexto = adicionais.length > 0 ? formatProcedureSelection(adicionais) : "";
 
     const observacoes = isMedico
-      ? [form.procedimento && `Código do procedimento: ${form.procedimento}`]
+      ? [
+          principalTexto && `Procedimento principal: ${principalTexto}`,
+          adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,
+        ]
           .filter(Boolean)
           .join("\n")
       : [
-          form.procedimento && `Código do procedimento: ${form.procedimento}`,
+          principalTexto && `Procedimento principal: ${principalTexto}`,
+          adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,
           form.diariaEnf && `Diária Enf/Ap: ${form.diariaEnf}`,
           form.diariaCti && `Diária CTI: ${form.diariaCti}`,
           opmeTexto && `OPME: ${opmeTexto}`,
@@ -89,6 +98,7 @@ export function NewRequestDialog({
         nascimento: form.nascimento,
         cpf: form.cpf.trim(),
         telefone: form.telefone.trim(),
+        especialidade: principalTexto,
         observacoes,
         origem,
         ...(isMedico
@@ -115,6 +125,9 @@ export function NewRequestDialog({
       );
       setForm(empty);
       setOpme([]);
+      setProcedimento([]);
+      setAdicionais([]);
+
       setOpen(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível criar o orçamento.");
@@ -176,14 +189,26 @@ export function NewRequestDialog({
                   onChange={(e) => set("telefone")(e.target.value)}
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="procedimento">Código do procedimento</Label>
-                <Input
-                  id="procedimento"
-                  placeholder="Ex.: 3.10.01.012-3"
-                  value={form.procedimento}
-                  onChange={(e) => set("procedimento")(e.target.value)}
+              <div className="grid gap-2 sm:col-span-2">
+                <Label>Procedimento principal</Label>
+                <ProcedureSelect
+                  value={procedimento}
+                  onChange={setProcedimento}
+                  placeholder="Pesquisar procedimento principal..."
                 />
+              </div>
+              <div className="grid gap-2 sm:col-span-2">
+                <Label>Procedimentos adicionais</Label>
+                <ProcedureSelect
+                  value={adicionais}
+                  onChange={setAdicionais}
+                  multiple
+                  placeholder="Pesquisar procedimentos adicionais..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Catálogo demonstrativo — será substituído pela tabela de procedimentos do banco
+                  corporativo.
+                </p>
               </div>
             </div>
           </section>

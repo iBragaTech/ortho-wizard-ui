@@ -214,6 +214,7 @@ export type Database = {
           id: string
           nome: string
           perfil: Database["public"]["Enums"]["user_profile"]
+          senha_hash: string | null
           ultimo_acesso: string | null
           updated_at: string
         }
@@ -224,6 +225,7 @@ export type Database = {
           id?: string
           nome: string
           perfil: Database["public"]["Enums"]["user_profile"]
+          senha_hash?: string | null
           ultimo_acesso?: string | null
           updated_at?: string
         }
@@ -234,6 +236,7 @@ export type Database = {
           id?: string
           nome?: string
           perfil?: Database["public"]["Enums"]["user_profile"]
+          senha_hash?: string | null
           ultimo_acesso?: string | null
           updated_at?: string
         }
@@ -282,7 +285,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      definir_senha: {
+        Args: { p_senha: string; p_user_id: string }
+        Returns: undefined
+      }
+      verificar_login: {
+        Args: { p_email: string; p_senha: string }
+        Returns: {
+          email: string
+          id: string
+          nome: string
+          perfil: Database["public"]["Enums"]["user_profile"]
+        }[]
+      }
     }
     Enums: {
       request_status:

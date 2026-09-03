@@ -23,7 +23,7 @@ const empty = {
   nascimento: "",
   cpf: "",
   telefone: "",
-  procedimento: "",
+  // Campos do Comercial
   // Campos do Comercial
   diariaEnf: "",
   diariaCti: "",

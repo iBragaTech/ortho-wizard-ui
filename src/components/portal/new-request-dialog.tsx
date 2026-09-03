@@ -13,6 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CONVENIO_CATEGORIAS } from "@/data/convenio-catalog";
 import { useCreateRequest } from "@/lib/data/hooks";
 import { OpmeSelect, formatOpmeSelection } from "@/components/portal/opme-select";
 import { ProcedureSelect } from "@/components/portal/procedure-select";
@@ -23,6 +31,7 @@ const empty = {
   nascimento: "",
   cpf: "",
   telefone: "",
+  categoriaConvenio: "",
   // Campos do Comercial
   diariaEnf: "",
   diariaCti: "",

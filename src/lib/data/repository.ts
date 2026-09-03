@@ -105,6 +105,10 @@ export interface NewRequestInput {
   tipoConsulta?: string;
   dataDesejada?: string; // yyyy-mm-dd
   observacoes?: string;
+  // Quando o próprio médico cria o orçamento, ele já informa os dados médicos
+  // e o orçamento segue direto para o setor Comercial.
+  origem?: "comercial" | "medico";
+  medico?: DoctorFeesInput;
 }
 
 export interface DoctorFeesInput {
@@ -159,6 +163,23 @@ export const repository = {
     );
 
     const numero = `SOL-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000 + 1000)}`;
+    const porMedico = input.origem === "medico" && !!input.medico;
+    const dadosMedicos = porMedico
+      ? {
+          honorarios_medicos: input.medico!.honorariosMedicos,
+          diaria: input.medico!.diaria,
+          cti: input.medico!.cti,
+          opme: input.medico!.opme,
+          anatomo_patologico: input.medico!.anatomoPatologico,
+          reserva_sangue: input.medico!.reservaSangue,
+          equipe_multidisciplinar: input.medico!.equipeMultidisciplinar,
+          fisioterapia: input.medico!.fisioterapia,
+          tempo_bloco: input.medico!.tempoBloco,
+          obs_medico: input.medico!.obsMedico,
+          preenchido_medico_em: new Date().toISOString(),
+        }
+      : {};
+
     const created = unwrapId(
       await supabase
         .from("consultation_requests")
@@ -169,16 +190,25 @@ export const repository = {
           tipo_consulta: input.tipoConsulta || null,
           data_desejada: input.dataDesejada || null,
           observacoes: input.observacoes || null,
-          status: "aguardando_medico",
+          status: porMedico ? "aguardando_comercial" : "aguardando_medico",
+          ...dadosMedicos,
         })
         .select("id")
         .single(),
     );
 
-    await supabase.from("request_events").insert([
-      { request_id: created.id, titulo: "Solicitação criada", descricao: "Registrada no portal", ordem: 1 },
-      { request_id: created.id, titulo: "Solicitação enviada ao médico", descricao: "Encaminhada para preenchimento de honorários", ordem: 2 },
-    ]);
+    await supabase.from("request_events").insert(
+      porMedico
+        ? [
+            { request_id: created.id, titulo: "Solicitação criada", descricao: "Registrada pelo médico responsável", ordem: 1 },
+            { request_id: created.id, titulo: "Honorários preenchidos", descricao: "Valores informados na criação pelo médico", ordem: 3 },
+            { request_id: created.id, titulo: "Enviada ao Comercial", descricao: "Aguardando valores hospitalares", ordem: 4 },
+          ]
+        : [
+            { request_id: created.id, titulo: "Solicitação criada", descricao: "Registrada no portal", ordem: 1 },
+            { request_id: created.id, titulo: "Solicitação enviada ao médico", descricao: "Encaminhada para preenchimento de honorários", ordem: 2 },
+          ],
+    );
 
     return created.id;
   },

@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, ClipboardList, History, Stethoscope } from "lucide-react";
+import { CheckCircle2, ClipboardList, History, Plus, Stethoscope } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { NewRequestDialog } from "@/components/portal/new-request-dialog";
 import { AppShell } from "@/components/portal/app-shell";
 import { PageHeader } from "@/components/portal/page-header";
 import { MetricCard } from "@/components/portal/metric-card";
@@ -64,7 +66,17 @@ function AreaMedico() {
     <AppShell>
       <PageHeader
         title={`Olá, ${medico}`}
-        description="Acompanhe as solicitações que dependem do seu preenchimento de honorários."
+        description="Crie orçamentos com os dados médicos e acompanhe os que dependem do seu preenchimento."
+        actions={
+          <NewRequestDialog
+            origem="medico"
+            trigger={
+              <Button>
+                <Plus className="h-4 w-4" /> Novo orçamento
+              </Button>
+            }
+          />
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-3">

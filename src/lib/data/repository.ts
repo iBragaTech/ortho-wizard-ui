@@ -270,6 +270,30 @@ export const repository = {
     }));
   },
 
+  // Valida e-mail + senha no banco (função verificar_login, hash bcrypt/pgcrypto).
+  async signIn(email: string, senha: string) {
+    const { data, error } = await (supabase as any).rpc("verificar_login", {
+      p_email: email,
+      p_senha: senha,
+    });
+    if (error) throw new Error(error.message);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) return null;
+    const labels: Record<string, PortalUser["perfil"]> = {
+      administrador: "Administrador",
+      comercial: "Comercial",
+      medico: "Médico",
+    };
+    return {
+      id: row.id as string,
+      nome: row.nome as string,
+      email: row.email as string,
+      perfil: (labels[row.perfil] ?? "Comercial") as PortalUser["perfil"],
+    };
+  },
+
+
+
   async getTimeline(requestId: string): Promise<TimelineEvent[]> {
     const data = unwrap(
       await supabase

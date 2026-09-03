@@ -54,6 +54,8 @@ export function NewRequestDialog({
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(empty);
   const [opme, setOpme] = useState<string[]>([]);
+  const [procedimento, setProcedimento] = useState<string[]>([]);
+  const [adicionais, setAdicionais] = useState<string[]>([]);
   const create = useCreateRequest();
   const isMedico = origem === "medico";
 
@@ -67,13 +69,19 @@ export function NewRequestDialog({
     }
 
     const opmeTexto = opme.length > 0 ? formatOpmeSelection(opme) : "";
+    const principalTexto = procedimento[0] ? formatProcedure(procedimento[0]) : "";
+    const adicionaisTexto = adicionais.length > 0 ? formatProcedureSelection(adicionais) : "";
 
     const observacoes = isMedico
-      ? [form.procedimento && `Código do procedimento: ${form.procedimento}`]
+      ? [
+          principalTexto && `Procedimento principal: ${principalTexto}`,
+          adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,
+        ]
           .filter(Boolean)
           .join("\n")
       : [
-          form.procedimento && `Código do procedimento: ${form.procedimento}`,
+          principalTexto && `Procedimento principal: ${principalTexto}`,
+          adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,
           form.diariaEnf && `Diária Enf/Ap: ${form.diariaEnf}`,
           form.diariaCti && `Diária CTI: ${form.diariaCti}`,
           opmeTexto && `OPME: ${opmeTexto}`,
@@ -91,6 +99,7 @@ export function NewRequestDialog({
         nascimento: form.nascimento,
         cpf: form.cpf.trim(),
         telefone: form.telefone.trim(),
+        especialidade: principalTexto || undefined,
         observacoes,
         origem,
         ...(isMedico
@@ -117,6 +126,9 @@ export function NewRequestDialog({
       );
       setForm(empty);
       setOpme([]);
+      setProcedimento([]);
+      setAdicionais([]);
+
       setOpen(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível criar o orçamento.");

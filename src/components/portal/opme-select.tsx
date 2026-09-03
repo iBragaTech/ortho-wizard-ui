@@ -133,7 +133,7 @@ export function OpmeSelect({
           {selected.map((item) => (
             <Badge key={item.codigo} variant="secondary" className="max-w-full gap-1 py-1">
               <span className="truncate">
-                {item.codigo} · {item.descricao}
+                {"custom" in item ? item.descricao : `${item.codigo} · ${item.descricao}`}
               </span>
               <button
                 type="button"

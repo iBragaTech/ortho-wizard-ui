@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState, type ReactNode } from "react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Bell,
   Briefcase,
@@ -36,8 +36,6 @@ import {
 import { UserAvatar } from "./user-avatar";
 import { ACESSO, useSession, type Perfil } from "@/lib/auth/session";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { ShieldAlert } from "lucide-react";
 
 const nav = [

@@ -119,7 +119,7 @@ function RequestDetail() {
 
           <Card className="shadow-card">
             <CardHeader>
-              <CardTitle className="text-base">Dados da consulta</CardTitle>
+              <CardTitle role="heading" aria-level={2} className="text-base">Dados da consulta</CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
               <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -142,7 +142,7 @@ function RequestDetail() {
           <div className="grid gap-6 xl:grid-cols-2">
             <Card className="shadow-card">
               <CardHeader className="gap-2">
-                <CardTitle className="flex items-center gap-2 text-base">
+                <CardTitle role="heading" aria-level={2} className="flex items-center gap-2 text-base">
                   <Stethoscope className="h-4 w-4 text-accent-foreground" /> Honorários médicos
                 </CardTitle>
                 <StatusBadge
@@ -248,7 +248,7 @@ function RequestDetail() {
 
             <Card className="shadow-card">
               <CardHeader className="gap-2">
-                <CardTitle className="flex items-center gap-2 text-base">
+                <CardTitle role="heading" aria-level={2} className="flex items-center gap-2 text-base">
                   <Briefcase className="h-4 w-4 text-accent-foreground" /> Valores hospitalares
                 </CardTitle>
                 <StatusBadge
@@ -291,7 +291,7 @@ function RequestDetail() {
 
           <Card className="shadow-card">
             <CardHeader className="gap-2">
-              <CardTitle className="text-base">Histórico</CardTitle>
+              <CardTitle role="heading" aria-level={2} className="text-base">Histórico</CardTitle>
               <p className="inline-flex w-fit items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
                 <Info className="h-3.5 w-3.5" /> Representação inicial do fluxo
               </p>

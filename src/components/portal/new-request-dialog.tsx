@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -33,6 +34,7 @@ const empty = {
   telefone: "",
   categoriaConvenio: "",
   // Campos do Comercial
+  acomodacao: "",
   diariaEnf: "",
   diariaCti: "",
   anatomo: "",
@@ -64,6 +66,7 @@ export function NewRequestDialog({
   const [opme, setOpme] = useState<string[]>([]);
   const [procedimento, setProcedimento] = useState<string[]>([]);
   const [adicionais, setAdicionais] = useState<string[]>([]);
+  const [temCti, setTemCti] = useState(false);
   const create = useCreateRequest();
   const isMedico = origem === "medico";
 
@@ -95,8 +98,10 @@ export function NewRequestDialog({
           categoriaTexto,
           principalTexto && `Procedimento principal: ${principalTexto}`,
           adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,
+          form.acomodacao &&
+            `Acomodação: ${form.acomodacao === "enfermaria" ? "Enfermaria" : "Apartamento"}`,
           form.diariaEnf && `Diária Enf/Ap: ${form.diariaEnf}`,
-          form.diariaCti && `Diária CTI: ${form.diariaCti}`,
+          temCti && form.diariaCti && `Diária CTI: ${form.diariaCti}`,
           opmeTexto && `OPME: ${opmeTexto}`,
           form.anatomo && `Anatomo patológico: ${form.anatomo}`,
           form.sangue && `Reserva de sangue: ${form.sangue}`,
@@ -138,6 +143,7 @@ export function NewRequestDialog({
           : "Orçamento criado e enviado ao médico.",
       );
       setForm(empty);
+      setTemCti(false);
       setOpme([]);
       setProcedimento([]);
       setAdicionais([]);
@@ -299,6 +305,29 @@ export function NewRequestDialog({
               ) : (
                 <>
                   <div className="grid gap-2">
+                    <Label>Tipo de acomodação</Label>
+                    <div className="flex items-center gap-6 pt-1">
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={form.acomodacao === "enfermaria"}
+                          onCheckedChange={(c) =>
+                            set("acomodacao")(c ? "enfermaria" : "")
+                          }
+                        />
+                        Enfermaria
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={form.acomodacao === "apartamento"}
+                          onCheckedChange={(c) =>
+                            set("acomodacao")(c ? "apartamento" : "")
+                          }
+                        />
+                        Apartamento
+                      </label>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
                     <Label htmlFor="diaria-enf">Diária Enf / Ap</Label>
                     <Input
                       id="diaria-enf"
@@ -307,15 +336,29 @@ export function NewRequestDialog({
                       onChange={(e) => set("diariaEnf")(e.target.value)}
                     />
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="diaria-cti">Diária CTI</Label>
-                    <Input
-                      id="diaria-cti"
-                      placeholder="Quantidade de diárias"
-                      value={form.diariaCti}
-                      onChange={(e) => set("diariaCti")(e.target.value)}
-                    />
+                  <div className="grid gap-2 sm:col-span-2">
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={temCti}
+                        onCheckedChange={(c) => {
+                          setTemCti(Boolean(c));
+                          if (!c) set("diariaCti")("");
+                        }}
+                      />
+                      Possui CTI
+                    </label>
                   </div>
+                  {temCti && (
+                    <div className="grid gap-2">
+                      <Label htmlFor="diaria-cti">Diária CTI</Label>
+                      <Input
+                        id="diaria-cti"
+                        placeholder="Quantidade de diárias"
+                        value={form.diariaCti}
+                        onChange={(e) => set("diariaCti")(e.target.value)}
+                      />
+                    </div>
+                  )}
                 </>
               )}
 

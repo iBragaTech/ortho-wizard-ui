@@ -36,10 +36,29 @@ function NotFoundComponent() {
   );
 }
 
+function isStaleChunkError(error: Error) {
+  const msg = String(error?.message ?? "");
+  return (
+    msg.includes("Failed to fetch dynamically imported module") ||
+    msg.includes("error loading dynamically imported module") ||
+    msg.includes("Importing a module script failed")
+  );
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
+    // Após um novo deploy, o navegador pode manter arquivos antigos em cache.
+    // Nesse caso recarregamos a página uma única vez para buscar a versão nova.
+    if (isStaleChunkError(error) && typeof window !== "undefined") {
+      const key = "portal.reloaded-stale-chunk";
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, "1");
+        window.location.reload();
+        return;
+      }
+    }
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 

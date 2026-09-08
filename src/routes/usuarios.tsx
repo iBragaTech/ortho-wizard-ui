@@ -57,6 +57,112 @@ const perfilStyle: Record<string, string> = {
   Médico: "bg-success-soft text-success ring-success/25",
 };
 
+function NewUserDialog() {
+  const [open, setOpen] = useState(false);
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [perfil, setPerfil] = useState<"Administrador" | "Comercial" | "Médico" | "">("");
+  const [senha, setSenha] = useState("");
+  const create = useCreateUser();
+
+  async function handleSave() {
+    if (!nome.trim() || !email.trim() || !perfil) {
+      toast.error("Preencha nome, e-mail e perfil.");
+      return;
+    }
+    if (senha.trim().length < 6) {
+      toast.error("A senha inicial precisa ter pelo menos 6 caracteres.");
+      return;
+    }
+    try {
+      await create.mutateAsync({
+        nome: nome.trim(),
+        email: email.trim(),
+        perfil,
+        senha: senha.trim(),
+      });
+      toast.success("Usuário cadastrado.");
+      setNome("");
+      setEmail("");
+      setPerfil("");
+      setSenha("");
+      setOpen(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível cadastrar.");
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="w-full sm:w-auto">
+          <Plus className="h-4 w-4" /> Novo usuário
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Novo usuário</DialogTitle>
+          <DialogDescription>
+            O usuário poderá entrar no portal com o e-mail e a senha inicial informados.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="nome-usuario">Nome</Label>
+            <Input
+              id="nome-usuario"
+              placeholder="Nome completo"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="email-usuario">E-mail</Label>
+            <Input
+              id="email-usuario"
+              type="email"
+              placeholder="nome@hospital.exemplo"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label>Perfil</Label>
+            <Select value={perfil} onValueChange={(v) => setPerfil(v as typeof perfil)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Administrador">Administrador</SelectItem>
+                <SelectItem value="Comercial">Comercial</SelectItem>
+                <SelectItem value="Médico">Médico</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="senha-usuario">Senha inicial</Label>
+            <Input
+              id="senha-usuario"
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter className="flex-col gap-2 sm:flex-row">
+          <Button variant="outline" className="w-full sm:w-auto" onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+          <Button className="w-full sm:w-auto" onClick={handleSave} disabled={create.isPending}>
+            {create.isPending ? "Salvando..." : "Cadastrar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function UsuariosPage() {
   const { data: users = [] } = usePortalUsers();
 
@@ -64,52 +170,10 @@ function UsuariosPage() {
     <AppShell>
       <PageHeader
         title="Usuários"
-        description="Perfis de acesso ao portal. A autenticação real será implementada em etapa futura."
-        actions={
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="w-full sm:w-auto">
-                <Plus className="h-4 w-4" /> Novo usuário
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Novo usuário</DialogTitle>
-                <DialogDescription>
-                  Cadastro demonstrativo — sem autenticação nesta etapa.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="nome-usuario">Nome</Label>
-                  <Input id="nome-usuario" placeholder="Nome completo" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="email-usuario">E-mail</Label>
-                  <Input id="email-usuario" type="email" placeholder="nome@hospital.exemplo" />
-                </div>
-                <div className="grid gap-2">
-                  <Label>Perfil</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Administrador">Administrador</SelectItem>
-                      <SelectItem value="Comercial">Comercial</SelectItem>
-                      <SelectItem value="Médico">Médico</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline">Cancelar</Button>
-                <Button>Cadastrar</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        }
+        description="Perfis de acesso ao portal, com e-mail e senha para entrar no sistema."
+        actions={<NewUserDialog />}
       />
+
 
       <div className="grid gap-3 md:hidden">
         {users.map((u) => (

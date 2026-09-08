@@ -285,6 +285,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      criar_usuario: {
+        Args: {
+          p_email: string
+          p_nome: string
+          p_perfil: Database["public"]["Enums"]["user_profile"]
+          p_senha: string
+        }
+        Returns: {
+          email: string
+          id: string
+          nome: string
+          perfil: Database["public"]["Enums"]["user_profile"]
+        }[]
+      }
       definir_senha: {
         Args: { p_senha: string; p_user_id: string }
         Returns: undefined

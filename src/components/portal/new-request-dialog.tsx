@@ -143,6 +143,7 @@ export function NewRequestDialog({
           : "Orçamento criado e enviado ao médico.",
       );
       setForm(empty);
+      setTemCti(false);
       setOpme([]);
       setProcedimento([]);
       setAdicionais([]);

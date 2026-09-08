@@ -322,6 +322,26 @@ export const repository = {
     };
   },
 
+  // Cadastra usuário do portal com senha inicial (hash bcrypt no banco).
+  async createUser(input: {
+    nome: string;
+    email: string;
+    perfil: PortalUser["perfil"];
+    senha: string;
+  }): Promise<void> {
+    const perfilDb: Record<string, string> = {
+      Administrador: "administrador",
+      Comercial: "comercial",
+      "Médico": "medico",
+    };
+    const { error } = await (supabase as any).rpc("criar_usuario", {
+      p_nome: input.nome,
+      p_email: input.email,
+      p_perfil: perfilDb[input.perfil] ?? "comercial",
+      p_senha: input.senha,
+    });
+    if (error) throw new Error(error.message);
+  },
 
 
   async getTimeline(requestId: string): Promise<TimelineEvent[]> {

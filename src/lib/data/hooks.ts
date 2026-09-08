@@ -70,6 +70,20 @@ export function useCreateDoctor() {
   });
 }
 
+export function useCreateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: {
+      nome: string;
+      email: string;
+      perfil: "Administrador" | "Comercial" | "Médico";
+      senha: string;
+    }) => repository.createUser(input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["portal_users"] }),
+  });
+}
+
+
 export function useSaveSettings() {
   const qc = useQueryClient();
   return useMutation({

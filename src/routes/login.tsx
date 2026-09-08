@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { LogIn, Loader2 } from "lucide-react";
-import logoStacked from "@/assets/logo-stacked.png.asset.json";
-import logoHorizontal from "@/assets/logo-horizontal.png.asset.json";
+import logoStacked from "@/assets/logo-stacked.png";
+import logoHorizontal from "@/assets/logo-horizontal.png";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -70,7 +70,7 @@ function LoginPage() {
       <section className="hidden flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex">
         <div className="w-fit rounded-xl bg-card p-4">
           <img
-            src={logoStacked.url}
+            src={logoStacked}
             alt="Hospital Evangélico de Belo Horizonte"
             className="h-24 w-auto object-contain"
           />
@@ -92,7 +92,7 @@ function LoginPage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <img
-              src={logoHorizontal.url}
+              src={logoHorizontal}
               alt="Hospital Evangélico de Belo Horizonte"
               className="mb-4 h-10 w-auto object-contain object-left lg:hidden"
             />

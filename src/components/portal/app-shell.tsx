@@ -13,7 +13,7 @@ import {
   UserRound,
   FileText,
 } from "lucide-react";
-import logoHorizontal from "@/assets/logo-horizontal.png.asset.json";
+import logoHorizontal from "@/assets/logo-horizontal.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -66,7 +66,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex h-full flex-col bg-sidebar">
       <div className="px-5 py-5">
         <img
-          src={logoHorizontal.url}
+          src={logoHorizontal}
           alt="Hospital Evangélico de Belo Horizonte"
           className="h-11 w-auto object-contain object-left"
         />

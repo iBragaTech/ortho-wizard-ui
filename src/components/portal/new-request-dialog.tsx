@@ -299,6 +299,29 @@ export function NewRequestDialog({
               ) : (
                 <>
                   <div className="grid gap-2">
+                    <Label>Tipo de acomodação</Label>
+                    <div className="flex items-center gap-6 pt-1">
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={form.acomodacao === "enfermaria"}
+                          onCheckedChange={(c) =>
+                            set("acomodacao")(c ? "enfermaria" : "")
+                          }
+                        />
+                        Enfermaria
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={form.acomodacao === "apartamento"}
+                          onCheckedChange={(c) =>
+                            set("acomodacao")(c ? "apartamento" : "")
+                          }
+                        />
+                        Apartamento
+                      </label>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
                     <Label htmlFor="diaria-enf">Diária Enf / Ap</Label>
                     <Input
                       id="diaria-enf"
@@ -307,15 +330,29 @@ export function NewRequestDialog({
                       onChange={(e) => set("diariaEnf")(e.target.value)}
                     />
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="diaria-cti">Diária CTI</Label>
-                    <Input
-                      id="diaria-cti"
-                      placeholder="Quantidade de diárias"
-                      value={form.diariaCti}
-                      onChange={(e) => set("diariaCti")(e.target.value)}
-                    />
+                  <div className="grid gap-2 sm:col-span-2">
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={temCti}
+                        onCheckedChange={(c) => {
+                          setTemCti(Boolean(c));
+                          if (!c) set("diariaCti")("");
+                        }}
+                      />
+                      Possui CTI
+                    </label>
                   </div>
+                  {temCti && (
+                    <div className="grid gap-2">
+                      <Label htmlFor="diaria-cti">Diária CTI</Label>
+                      <Input
+                        id="diaria-cti"
+                        placeholder="Quantidade de diárias"
+                        value={form.diariaCti}
+                        onChange={(e) => set("diariaCti")(e.target.value)}
+                      />
+                    </div>
+                  )}
                 </>
               )}
 

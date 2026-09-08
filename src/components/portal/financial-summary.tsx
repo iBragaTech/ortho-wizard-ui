@@ -13,7 +13,7 @@ export function FinancialSummary({
   return (
     <div className="overflow-hidden rounded-xl border border-primary/20 bg-primary-soft/60 shadow-card">
       <div className="border-b border-primary/15 px-5 py-4">
-        <h3 className="text-sm font-semibold text-accent-foreground">Resumo financeiro</h3>
+        <h2 className="text-sm font-semibold text-accent-foreground">Resumo financeiro</h2>
         <p className="text-xs text-muted-foreground">Valores demonstrativos desta etapa</p>
       </div>
       <dl className="divide-y divide-primary/10 px-5">

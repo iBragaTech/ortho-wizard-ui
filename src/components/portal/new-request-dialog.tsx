@@ -33,6 +33,7 @@ const empty = {
   telefone: "",
   categoriaConvenio: "",
   // Campos do Comercial
+  acomodacao: "",
   diariaEnf: "",
   diariaCti: "",
   anatomo: "",

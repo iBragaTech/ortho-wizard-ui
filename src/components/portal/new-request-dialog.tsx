@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -65,6 +66,7 @@ export function NewRequestDialog({
   const [opme, setOpme] = useState<string[]>([]);
   const [procedimento, setProcedimento] = useState<string[]>([]);
   const [adicionais, setAdicionais] = useState<string[]>([]);
+  const [temCti, setTemCti] = useState(false);
   const create = useCreateRequest();
   const isMedico = origem === "medico";
 
@@ -96,8 +98,10 @@ export function NewRequestDialog({
           categoriaTexto,
           principalTexto && `Procedimento principal: ${principalTexto}`,
           adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,
+          form.acomodacao &&
+            `Acomodação: ${form.acomodacao === "enfermaria" ? "Enfermaria" : "Apartamento"}`,
           form.diariaEnf && `Diária Enf/Ap: ${form.diariaEnf}`,
-          form.diariaCti && `Diária CTI: ${form.diariaCti}`,
+          temCti && form.diariaCti && `Diária CTI: ${form.diariaCti}`,
           opmeTexto && `OPME: ${opmeTexto}`,
           form.anatomo && `Anatomo patológico: ${form.anatomo}`,
           form.sangue && `Reserva de sangue: ${form.sangue}`,

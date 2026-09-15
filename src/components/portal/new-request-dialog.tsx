@@ -92,6 +92,7 @@ export function NewRequestDialog({
 
     const observacoes = isMedico
       ? [
+          convenioTexto,
           categoriaTexto,
           principalTexto && `Procedimento principal: ${principalTexto}`,
           adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,
@@ -99,6 +100,7 @@ export function NewRequestDialog({
           .filter(Boolean)
           .join("\n")
       : [
+          convenioTexto,
           categoriaTexto,
           principalTexto && `Procedimento principal: ${principalTexto}`,
           adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,

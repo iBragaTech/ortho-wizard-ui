@@ -216,6 +216,15 @@ export function NewRequestDialog({
                 />
               </div>
               <div className="grid gap-2 sm:col-span-2">
+                <Label htmlFor="convenio">Convênio</Label>
+                <Input
+                  id="convenio"
+                  placeholder="Nome do convênio ou operadora"
+                  value={form.convenio}
+                  onChange={(e) => set("convenio")(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="categoria-convenio">Categoria do convênio</Label>
                 <Select
                   value={form.categoriaConvenio}

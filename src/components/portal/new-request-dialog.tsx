@@ -32,6 +32,7 @@ const empty = {
   nascimento: "",
   cpf: "",
   telefone: "",
+  convenio: "",
   categoriaConvenio: "",
   // Campos do Comercial
   acomodacao: "",
@@ -80,6 +81,9 @@ export function NewRequestDialog({
     }
 
     const opmeTexto = opme.length > 0 ? formatOpmeSelection(opme) : "";
+    const convenioTexto = form.convenio.trim()
+      ? `Convênio: ${form.convenio.trim()}`
+      : "";
     const categoriaTexto = form.categoriaConvenio
       ? `Categoria do convênio: ${CONVENIO_CATEGORIAS.find((c) => c.codigo === form.categoriaConvenio)?.nome ?? form.categoriaConvenio}`
       : "";
@@ -88,6 +92,7 @@ export function NewRequestDialog({
 
     const observacoes = isMedico
       ? [
+          convenioTexto,
           categoriaTexto,
           principalTexto && `Procedimento principal: ${principalTexto}`,
           adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,
@@ -95,6 +100,7 @@ export function NewRequestDialog({
           .filter(Boolean)
           .join("\n")
       : [
+          convenioTexto,
           categoriaTexto,
           principalTexto && `Procedimento principal: ${principalTexto}`,
           adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,
@@ -207,6 +213,15 @@ export function NewRequestDialog({
                   placeholder="(00) 00000-0000"
                   value={form.telefone}
                   onChange={(e) => set("telefone")(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2 sm:col-span-2">
+                <Label htmlFor="convenio">Convênio</Label>
+                <Input
+                  id="convenio"
+                  placeholder="Nome do convênio ou operadora"
+                  value={form.convenio}
+                  onChange={(e) => set("convenio")(e.target.value)}
                 />
               </div>
               <div className="grid gap-2 sm:col-span-2">

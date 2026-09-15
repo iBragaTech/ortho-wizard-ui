@@ -32,6 +32,7 @@ const empty = {
   nascimento: "",
   cpf: "",
   telefone: "",
+  convenio: "",
   categoriaConvenio: "",
   // Campos do Comercial
   acomodacao: "",
@@ -80,6 +81,9 @@ export function NewRequestDialog({
     }
 
     const opmeTexto = opme.length > 0 ? formatOpmeSelection(opme) : "";
+    const convenioTexto = form.convenio.trim()
+      ? `Convênio: ${form.convenio.trim()}`
+      : "";
     const categoriaTexto = form.categoriaConvenio
       ? `Categoria do convênio: ${CONVENIO_CATEGORIAS.find((c) => c.codigo === form.categoriaConvenio)?.nome ?? form.categoriaConvenio}`
       : "";

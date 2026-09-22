@@ -9,6 +9,9 @@
 // Ver docs/integracao-postgres.md.
 
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseAuthEnabled, toPortalUser } from "@/lib/auth/supabase-auth";
+import { localAuthEnabled } from "./local-api";
+import { localRepository } from "./local-repository";
 import type {
   ConsultationRequest,
   Doctor,
@@ -34,7 +37,13 @@ function fmtDate(value: string | null): string {
 function fmtDateTime(value: string | null): string {
   if (!value) return "—";
   const dt = new Date(value);
-  return dt.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  return dt.toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function num(value: number | string | null): number | null {
@@ -44,6 +53,7 @@ function num(value: number | string | null): number | null {
 
 const REQUEST_SELECT = `
   id, numero, especialidade, tipo_consulta, data_desejada, status, observacoes,
+  preenchido_comercial_em,
   honorarios_medicos, diaria, cti, opme, anatomo_patologico, reserva_sangue,
   equipe_multidisciplinar, fisioterapia, tempo_bloco, obs_medico,
   valor_hospitalar, obs_comercial, created_at,
@@ -56,6 +66,7 @@ function mapRequest(row: any): ConsultationRequest {
   return {
     id: row.id,
     numero: row.numero,
+    dataAprovacao: row.preenchido_comercial_em ?? null,
     paciente: {
       nome: row.patients?.nome ?? "—",
       cpf: row.patients?.cpf ?? "—",
@@ -97,6 +108,13 @@ function unwrapId(res: { data: any; error: { message: string } | null }): { id: 
 }
 
 export interface NewRequestInput {
+  tasy?: {
+    cdPessoaFisica: string;
+    cdConvenio: string;
+    cdCategoria: string;
+    procedimentos: { codigo: string; origem: string; quantidade?: number }[];
+    materiais: { codigo: string; quantidade?: number }[];
+  };
   nome: string;
   nascimento: string; // yyyy-mm-dd
   cpf: string;
@@ -124,7 +142,7 @@ export interface DoctorFeesInput {
   obsMedico: string;
 }
 
-export const repository = {
+const supabaseRepository = {
   async listRequests(): Promise<ConsultationRequest[]> {
     const data = unwrap(
       await supabase
@@ -200,13 +218,38 @@ export const repository = {
     await supabase.from("request_events").insert(
       porMedico
         ? [
-            { request_id: created.id, titulo: "Solicitação criada", descricao: "Registrada pelo médico responsável", ordem: 1 },
-            { request_id: created.id, titulo: "Honorários preenchidos", descricao: "Valores informados na criação pelo médico", ordem: 3 },
-            { request_id: created.id, titulo: "Enviada ao Comercial", descricao: "Aguardando valores hospitalares", ordem: 4 },
+            {
+              request_id: created.id,
+              titulo: "Solicitação criada",
+              descricao: "Registrada pelo médico responsável",
+              ordem: 1,
+            },
+            {
+              request_id: created.id,
+              titulo: "Honorários preenchidos",
+              descricao: "Valores informados na criação pelo médico",
+              ordem: 3,
+            },
+            {
+              request_id: created.id,
+              titulo: "Enviada ao Comercial",
+              descricao: "Aguardando valores hospitalares",
+              ordem: 4,
+            },
           ]
         : [
-            { request_id: created.id, titulo: "Solicitação criada", descricao: "Registrada no portal", ordem: 1 },
-            { request_id: created.id, titulo: "Solicitação enviada ao médico", descricao: "Encaminhada para preenchimento de honorários", ordem: 2 },
+            {
+              request_id: created.id,
+              titulo: "Solicitação criada",
+              descricao: "Registrada no portal",
+              ordem: 1,
+            },
+            {
+              request_id: created.id,
+              titulo: "Solicitação enviada ao médico",
+              descricao: "Encaminhada para preenchimento de honorários",
+              ordem: 2,
+            },
           ],
     );
 
@@ -302,6 +345,17 @@ export const repository = {
 
   // Valida e-mail + senha no banco (função verificar_login, hash bcrypt/pgcrypto).
   async signIn(email: string, senha: string) {
+    if (supabaseAuthEnabled) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+      if (error)
+        throw new Error("Não foi possível entrar. Verifique suas credenciais e tente novamente.");
+      const user = data.user ? toPortalUser(data.user) : null;
+      if (!user) {
+        await supabase.auth.signOut({ scope: "local" });
+        throw new Error("Seu usuário ainda não possui um perfil de acesso ao portal.");
+      }
+      return user;
+    }
     const { data, error } = await (supabase as any).rpc("verificar_login", {
       p_email: email,
       p_senha: senha,
@@ -329,10 +383,15 @@ export const repository = {
     perfil: PortalUser["perfil"];
     senha: string;
   }): Promise<void> {
+    if (supabaseAuthEnabled) {
+      throw new Error(
+        "Solicite ao administrador de identidade o cadastro de acesso deste usuário.",
+      );
+    }
     const perfilDb: Record<string, string> = {
       Administrador: "administrador",
       Comercial: "comercial",
-      "Médico": "medico",
+      Médico: "medico",
     };
     const { error } = await (supabase as any).rpc("criar_usuario", {
       p_nome: input.nome,
@@ -342,7 +401,6 @@ export const repository = {
     });
     if (error) throw new Error(error.message);
   },
-
 
   async getTimeline(requestId: string): Promise<TimelineEvent[]> {
     const data = unwrap(
@@ -359,12 +417,42 @@ export const repository = {
       concluido: e.concluido,
     }));
     const previstos: TimelineEvent[] = [
-      { titulo: "Solicitação criada", descricao: "Registrada no portal", data: "—", concluido: false },
-      { titulo: "Solicitação enviada ao médico", descricao: "Encaminhada para preenchimento de honorários", data: "—", concluido: false },
-      { titulo: "Honorários preenchidos", descricao: "Aguardando ação do médico responsável", data: "—", concluido: false },
-      { titulo: "Enviada ao Comercial", descricao: "Etapa seguinte do fluxo", data: "—", concluido: false },
-      { titulo: "Valor hospitalar preenchido", descricao: "Preenchimento pelo setor Comercial", data: "—", concluido: false },
-      { titulo: "Orçamento concluído", descricao: "Orçamento final disponível ao paciente", data: "—", concluido: false },
+      {
+        titulo: "Solicitação criada",
+        descricao: "Registrada no portal",
+        data: "—",
+        concluido: false,
+      },
+      {
+        titulo: "Solicitação enviada ao médico",
+        descricao: "Encaminhada para preenchimento de honorários",
+        data: "—",
+        concluido: false,
+      },
+      {
+        titulo: "Honorários preenchidos",
+        descricao: "Aguardando ação do médico responsável",
+        data: "—",
+        concluido: false,
+      },
+      {
+        titulo: "Enviada ao Comercial",
+        descricao: "Etapa seguinte do fluxo",
+        data: "—",
+        concluido: false,
+      },
+      {
+        titulo: "Valor hospitalar preenchido",
+        descricao: "Preenchimento pelo setor Comercial",
+        data: "—",
+        concluido: false,
+      },
+      {
+        titulo: "Orçamento concluído",
+        descricao: "Orçamento final disponível ao paciente",
+        data: "—",
+        concluido: false,
+      },
     ];
     return previstos.map((p) => registrados.find((r) => r.titulo === p.titulo) ?? p);
   },
@@ -396,3 +484,7 @@ export const repository = {
     if (error) throw new Error(error.message);
   },
 };
+
+export const repository: typeof supabaseRepository = localAuthEnabled
+  ? localRepository
+  : supabaseRepository;

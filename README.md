@@ -1,5 +1,14 @@
 # Budget Navigator
 
+## Integração com o Tasy
+
+A implementação inicial da API Oracle e a configuração do Supabase Auth estão
+documentadas em [Integração Tasy](docs/integracao-tasy.md).
+O serviço fica em [services/tasy-api](services/tasy-api/README.md).
+A conexão real e as gravações dependem de homologação no ambiente do hospital.
+
+## Brief original do protótipo
+
 Crie o primeiro protótipo visual de um sistema web interno chamado Portal de Orçamentos de Consultas Particulares.
 
 IMPORTANTE:
@@ -121,6 +130,10 @@ Perfil
 Botão de sair
 
 No mobile, transformar a sidebar em menu lateral/drawer.
+
+
+
+
 
 Header
 

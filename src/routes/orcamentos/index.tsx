@@ -78,7 +78,12 @@ function OrcamentosPage() {
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <MetricCard label="Concluídos" value={concluidos.length} icon={CheckCircle2} tone="success" />
+        <MetricCard
+          label="Concluídos"
+          value={concluidos.length}
+          icon={CheckCircle2}
+          tone="success"
+        />
         <MetricCard label="Valor consolidado" value={formatCurrency(soma)} icon={Wallet} />
         <MetricCard label="Ticket médio" value={formatCurrency(media)} icon={FileText} />
       </div>
@@ -92,7 +97,7 @@ function OrcamentosPage() {
           description="Ajuste os filtros ou o termo de busca para visualizar outros resultados."
         />
       ) : (
-        <RequestTable requests={filtered} />
+        <RequestTable requests={filtered} manage />
       )}
     </AppShell>
   );

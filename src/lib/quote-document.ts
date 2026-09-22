@@ -4,10 +4,7 @@ import type { InstitutionSettings } from "@/lib/data/repository";
 import logoHorizontal from "@/assets/logo-horizontal.png";
 
 function esc(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function num(value: number | null | undefined): string {
@@ -30,6 +27,7 @@ function absoluteAsset(path: string): string {
 }
 
 interface LineItem {
+  tipo?: string;
   codigo: string;
   descricao: string;
   qtde: number;
@@ -39,9 +37,67 @@ interface LineItem {
   desconto: number;
 }
 
+function savedDescriptions(request: ConsultationRequest): Map<string, string> {
+  const descriptions = new Map<string, string>();
+  const text = request.observacoes || "";
+  const pattern = /\b(\d{1,15})(?:\s*\(origem\s+(\d+)\))?\s*-\s*([^;\n]+)/gi;
+  for (const match of text.matchAll(pattern)) {
+    const key = `${match[1]}:${match[2] ?? ""}`;
+    descriptions.set(key, match[3].trim());
+    if (!match[2]) descriptions.set(`${match[1]}:`, match[3].trim());
+  }
+  return descriptions;
+}
+
 /** Monta as linhas do quadro de procedimentos a partir dos dados da solicitação. */
 function buildItems(request: ConsultationRequest): LineItem[] {
   const items: LineItem[] = [];
+  const descriptions = savedDescriptions(request);
+  if (request.precificacao?.referencia.completo) {
+    const ref = request.precificacao.referencia;
+    for (const item of ref.itens) {
+      const qty = item.quantidade;
+      const total =
+        (Math.round(
+          (item.referencia.valorProcedimento ?? item.referencia.valorMaterial ?? 0) * 100,
+        ) *
+          qty) /
+        100;
+      const fees =
+        item.tipo === "procedimento"
+          ? (Math.round((item.referencia.honorarios ?? 0) * 100) * qty) / 100
+          : 0;
+      items.push({
+        tipo: item.tipo,
+        codigo: item.codigo,
+        descricao:
+          item.referencia.nome ||
+          descriptions.get(`${item.codigo}:${item.origem ?? ""}`) ||
+          descriptions.get(`${item.codigo}:`) ||
+          `${item.tipo === "material" ? "Material" : "Procedimento"}${item.origem ? ` (origem ${item.origem})` : ""}`,
+        qtde: qty,
+        medico: fees,
+        anestesista: 0,
+        hospital: Math.round((total - fees) * 100) / 100,
+        desconto: 0,
+      });
+    }
+    const feesDiff =
+      Math.round(((request.honorariosMedicos ?? 0) - (ref.honorarios ?? 0)) * 100) / 100;
+    const hospitalDiff =
+      Math.round(((request.valorHospitalar ?? 0) - (ref.hospitalar ?? 0)) * 100) / 100;
+    if (feesDiff || hospitalDiff)
+      items.push({
+        codigo: "—",
+        descricao: "Ajuste negociado do orçamento",
+        qtde: 1,
+        medico: feesDiff,
+        anestesista: 0,
+        hospital: hospitalDiff,
+        desconto: 0,
+      });
+    return items;
+  }
   const honorario = request.honorariosMedicos;
   const hospitalar = request.valorHospitalar;
 
@@ -96,18 +152,25 @@ export function buildQuoteHtml(
   request: ConsultationRequest,
   institution: InstitutionSettings,
 ): string {
+  if (request.precificacao && !request.precificacao.referencia.completo) {
+    throw new Error("Há itens sem preço confirmado. Conclua o cálculo antes de gerar o orçamento.");
+  }
   const agora = new Date();
   const validade = new Date(agora.getTime() + 30 * 24 * 60 * 60 * 1000);
   const fmt = (d: Date) =>
     `${d.toLocaleDateString("pt-BR")} ${d.toLocaleTimeString("pt-BR", { hour12: false })}`;
 
-  const items = buildItems(request);
+  const allItems = buildItems(request);
+  const materials = allItems.filter((item) => item.tipo === "material");
+  const items = allItems.filter((item) => item.tipo !== "material");
   const somaMedico = items.reduce((a, i) => a + i.medico, 0);
   const somaAnest = items.reduce((a, i) => a + i.anestesista, 0);
   const somaHosp = items.reduce((a, i) => a + i.hospital, 0);
   const somaDesc = items.reduce((a, i) => a + i.desconto, 0);
   const totalProc = somaMedico + somaAnest + somaHosp - somaDesc;
-  const totalGeral = totalProc;
+  const totalMaterial =
+    materials.reduce((sum, item) => sum + Math.round(item.hospital * 100), 0) / 100;
+  const totalGeral = Math.round((totalProc + totalMaterial) * 100) / 100;
   const honorarios = medicalFeesTotal(request);
 
   const linhas = items
@@ -125,7 +188,24 @@ export function buildQuoteHtml(
     )
     .join("\n");
 
-  const observacoes = [request.obsMedico, request.obsComercial, request.observacoes]
+  const materialRows = materials
+    .map(
+      (item) =>
+        `<tr><td class="c">${esc(item.codigo)}</td><td colspan="3">${esc(item.descricao)}</td><td class="c">${item.qtde}</td><td class="r">${num(item.hospital / item.qtde)}</td><td class="r">${num(item.desconto)}</td><td class="r">${num(item.hospital - item.desconto)}</td></tr>`,
+    )
+    .join("\n");
+  // Older budgets may retain descriptions only, without a price per material.
+  const legacyMaterials = [
+    request.opme,
+    ...(request.observacoes || "")
+      .split(/\r?\n/)
+      .filter((line) => /^(OPME|Materiais):/i.test(line)),
+  ]
+    .filter(Boolean)
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .join("; ");
+
+  const observacoes = [request.obsMedico, request.obsComercial]
     .filter((t) => t && t.trim())
     .join(" | ");
 
@@ -142,7 +222,7 @@ export function buildQuoteHtml(
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8" />
-<title>Orçamento ${esc(request.numero)} — ${esc(request.paciente.nome)}</title>
+<title>Orçamento ${esc(request.numero || "—")} — ${esc(request.paciente.nome)}</title>
 <style>
   @page { size: A4; margin: 8mm; }
   * { box-sizing: border-box; }
@@ -192,16 +272,21 @@ export function buildQuoteHtml(
     <div class="h1">${esc(institution.nome || "Hospital Evangélico de Belo Horizonte")}</div>
     <div class="h2">Orçamento para Atendimento</div>
   </div>
-  <div class="doc-num">${esc(request.numero)}</div>
+  <div class="doc-num">${esc(request.numero || "—")}</div>
 </header>
 
 <div class="meta">
   <table>
     ${field("Paciente", request.paciente.nome)}
-    ${field("Atendimento", request.numero)}
+    ${field("Atendimento", request.numero || "—")}
     ${field("Data Orçamento", fmt(agora))}
     ${field("Data Validade", fmt(validade))}
-    ${field("Data Aprovação", "")}
+    ${field(
+      "Data Aprovação",
+      request.status === "concluido" && request.dataAprovacao
+        ? fmt(new Date(request.dataAprovacao))
+        : "—",
+    )}
     ${field("Telefone/Cel", request.paciente.telefone)}
   </table>
   <table>
@@ -230,12 +315,14 @@ ${linhas}
       <td class="r">${num(somaMedico)}</td><td class="r">${num(somaAnest)}</td>
       <td class="r">${num(somaHosp)}</td><td class="r">${num(somaDesc)}</td><td class="r">${num(totalProc)}</td>
     </tr>
-    <tr><td></td><td class="lbl">Total Material</td><td colspan="6"></td></tr>
+  </tfoot>
+  ${materials.length ? `<tbody><tr><th colspan="4" style="text-align:left">Materiais e OPME</th><th>Qtde</th><th>Vl. unitário</th><th>Desconto</th><th>Total</th></tr>${materialRows}<tr><td colspan="7" class="lbl">Total Materiais e OPME</td><td class="r">${num(totalMaterial)}</td></tr></tbody>` : legacyMaterials ? `<tbody><tr><th colspan="8" style="text-align:left">Materiais e OPME</th></tr><tr><td colspan="8">${esc(legacyMaterials)}<br/>Valores por item não discriminados neste registro. O total do orçamento permanece o valor registrado.</td></tr></tbody>` : ""}
+  <tbody>
     <tr>
       <td></td><td class="lbl">Total Geral</td><td colspan="4"></td>
       <td class="r">${num(somaDesc)}</td><td class="r">${num(totalGeral)}</td>
     </tr>
-  </tfoot>
+  </tbody>
 </table>
 
 <div class="notes">

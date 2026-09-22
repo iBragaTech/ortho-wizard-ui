@@ -1,3 +1,6 @@
+import { useSession } from "@/lib/auth/session";
+import { RequiredMark } from "./item-quantity";
+import { localAuthEnabled } from "@/lib/data/local-api";
 import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import {
@@ -21,11 +24,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CONVENIO_CATEGORIAS } from "@/data/convenio-catalog";
+import { TasyInsuranceSelect } from "@/components/portal/tasy-insurance-select";
 import { useCreateRequest } from "@/lib/data/hooks";
-import { OpmeSelect, formatOpmeSelection } from "@/components/portal/opme-select";
-import { ProcedureSelect } from "@/components/portal/procedure-select";
-import { formatProcedure, formatProcedureSelection } from "@/data/procedure-catalog";
+import { TasyOpmeSelect, type TasyOpmeItem } from "@/components/portal/tasy-opme-select";
+import {
+  TasyMaterialSelect,
+  type TasyMaterialItem,
+} from "@/components/portal/tasy-material-select";
+import {
+  TasyProcedureSelect,
+  type TasyProcedureItem,
+} from "@/components/portal/tasy-procedure-select";
+import { TasyPatientSearch } from "@/components/portal/tasy-patient-search";
+import { telefonePessoaTasy } from "@/lib/data/tasy";
+import { getTasyClient } from "@/lib/data/tasy-supabase";
 
 const empty = {
   nome: "",
@@ -57,19 +69,27 @@ function toNumber(value: string): number | null {
 
 export function NewRequestDialog({
   trigger,
-  origem = "comercial",
+  origem: origemProp = "comercial",
 }: {
   trigger: ReactNode;
   origem?: "comercial" | "medico";
 }) {
   const [open, setOpen] = useState(false);
+  const [patientRevision, setPatientRevision] = useState(0);
+  const [patientCode, setPatientCode] = useState("");
+  const [patientNotFound, setPatientNotFound] = useState(false);
   const [form, setForm] = useState(empty);
-  const [opme, setOpme] = useState<string[]>([]);
-  const [procedimento, setProcedimento] = useState<string[]>([]);
-  const [adicionais, setAdicionais] = useState<string[]>([]);
+  const [opme, setOpme] = useState<TasyOpmeItem[]>([]);
+  const [materiais, setMateriais] = useState<TasyMaterialItem[]>([]);
+  const [procedimento, setProcedimento] = useState<TasyProcedureItem[]>([]);
+  const [adicionais, setAdicionais] = useState<TasyProcedureItem[]>([]);
+  const [catalogContext, setCatalogContext] = useState({ cdConvenio: "", cdCategoria: "" });
   const [temCti, setTemCti] = useState(false);
   const create = useCreateRequest();
+  const { user } = useSession();
+  const origem = user?.perfil === "Médico" ? "medico" : origemProp;
   const isMedico = origem === "medico";
+  const patientFieldsEditable = patientNotFound;
 
   const set = (key: keyof typeof empty) => (value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -80,15 +100,49 @@ export function NewRequestDialog({
       return;
     }
 
-    const opmeTexto = opme.length > 0 ? formatOpmeSelection(opme) : "";
-    const convenioTexto = form.convenio.trim()
-      ? `Convênio: ${form.convenio.trim()}`
-      : "";
+    if (
+      localAuthEnabled &&
+      (!catalogContext.cdConvenio ||
+        !catalogContext.cdCategoria ||
+        !procedimento.length ||
+        (!patientCode && !patientNotFound))
+    ) {
+      toast.error(
+        !patientCode && !patientNotFound
+          ? "Busque e selecione o paciente no Tasy."
+          : !catalogContext.cdConvenio
+            ? "Selecione o convênio."
+            : !catalogContext.cdCategoria
+              ? "Selecione a categoria do convênio."
+              : "Selecione o procedimento principal.",
+      );
+      return;
+    }
+    if (patientNotFound && !form.nascimento) {
+      toast.error("Informe a data de nascimento.");
+      return;
+    }
+    if (
+      [...procedimento, ...adicionais, ...materiais, ...opme].some(
+        (item) =>
+          !Number.isInteger(item.quantidade ?? 1) ||
+          (item.quantidade ?? 1) < 1 ||
+          (item.quantidade ?? 1) > 10000,
+      )
+    ) {
+      toast.error("Informe quantidades inteiras entre 1 e 10.000.");
+      return;
+    }
+    const opmeTexto = opme.map((item) => `${item.codigo} - ${item.nome}`).join("; ");
+    const materiaisTexto = materiais.map((item) => `${item.codigo} - ${item.nome}`).join("; ");
+    const convenioTexto = form.convenio.trim() ? `Convênio: ${form.convenio.trim()}` : "";
     const categoriaTexto = form.categoriaConvenio
-      ? `Categoria do convênio: ${CONVENIO_CATEGORIAS.find((c) => c.codigo === form.categoriaConvenio)?.nome ?? form.categoriaConvenio}`
+      ? `Categoria do convênio: ${form.categoriaConvenio}`
       : "";
+    const formatProcedure = (p: TasyProcedureItem) =>
+      `${p.codigo} (origem ${p.origem}) - ${p.nome}`;
     const principalTexto = procedimento[0] ? formatProcedure(procedimento[0]) : "";
-    const adicionaisTexto = adicionais.length > 0 ? formatProcedureSelection(adicionais) : "";
+    const adicionaisTexto = adicionais.map(formatProcedure).join("; ");
 
     const observacoes = isMedico
       ? [
@@ -109,6 +163,7 @@ export function NewRequestDialog({
           form.diariaEnf && `Diária Enf/Ap: ${form.diariaEnf}`,
           temCti && form.diariaCti && `Diária CTI: ${form.diariaCti}`,
           opmeTexto && `OPME: ${opmeTexto}`,
+          materiaisTexto && `Materiais: ${materiaisTexto}`,
           form.anatomo && `Anatomo patológico: ${form.anatomo}`,
           form.sangue && `Reserva de sangue: ${form.sangue}`,
           form.multidisciplinar && `Equipe multidisciplinar/Fisioterapia: ${form.multidisciplinar}`,
@@ -118,6 +173,17 @@ export function NewRequestDialog({
           .join("\n");
 
     try {
+      let tasyPatientCode = patientCode;
+      if (patientNotFound && !tasyPatientCode) {
+        const createdPatient = await getTasyClient().salvarPessoaFisica({
+          nmPessoaFisica: form.nome.trim(),
+          dtNascimento: form.nascimento,
+          nrCpf: form.cpf.trim().replace(/\D/g, ""),
+        });
+        tasyPatientCode = createdPatient.cdPessoaFisica;
+        setPatientCode(tasyPatientCode);
+        toast.success(`Pessoa cadastrada no Tasy com código ${tasyPatientCode}.`);
+      }
       await create.mutateAsync({
         nome: form.nome.trim(),
         nascimento: form.nascimento,
@@ -126,12 +192,34 @@ export function NewRequestDialog({
         especialidade: principalTexto,
         observacoes,
         origem,
+        ...(tasyPatientCode &&
+        catalogContext.cdConvenio &&
+        catalogContext.cdCategoria &&
+        procedimento.length
+          ? {
+              tasy: {
+                cdPessoaFisica: tasyPatientCode,
+                ...catalogContext,
+                procedimentos: [...procedimento, ...adicionais].map(
+                  ({ codigo, origem, quantidade = 1 }) => ({
+                    codigo,
+                    origem,
+                    quantidade,
+                  }),
+                ),
+                materiais: [...materiais, ...opme].map(({ codigo, quantidade = 1 }) => ({
+                  codigo,
+                  quantidade,
+                })),
+              },
+            }
+          : {}),
         ...(isMedico
           ? {
               medico: {
-                honorariosMedicos: toNumber(form.honorario),
-                diaria: toNumber(form.diaria),
-                cti: toNumber(form.cti),
+                honorariosMedicos: localAuthEnabled ? null : toNumber(form.honorario),
+                diaria: localAuthEnabled ? null : toNumber(form.diaria),
+                cti: localAuthEnabled ? null : toNumber(form.cti),
                 opme: opmeTexto,
                 anatomoPatologico: form.anatomo,
                 reservaSangue: form.sangue,
@@ -144,15 +232,21 @@ export function NewRequestDialog({
           : {}),
       });
       toast.success(
-        isMedico
-          ? "Orçamento criado e enviado ao Comercial."
-          : "Orçamento criado e enviado ao médico.",
+        localAuthEnabled
+          ? "Orçamento criado. Confira os valores e eventuais pendências nos detalhes."
+          : isMedico
+            ? "Orçamento criado e enviado ao Comercial."
+            : "Orçamento criado e enviado ao médico.",
       );
       setForm(empty);
+      setPatientCode("");
+      setPatientNotFound(false);
       setTemCti(false);
       setOpme([]);
+      setMateriais([]);
       setProcedimento([]);
       setAdicionais([]);
+      setCatalogContext({ cdConvenio: "", cdCategoria: "" });
 
       setOpen(false);
     } catch (e) {
@@ -161,49 +255,121 @@ export function NewRequestDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) {
+          setPatientCode("");
+          setPatientNotFound(false);
+          setCatalogContext({ cdConvenio: "", cdCategoria: "" });
+          setProcedimento([]);
+          setAdicionais([]);
+          setMateriais([]);
+          setOpme([]);
+          setForm((f) => ({ ...f, convenio: "", categoriaConvenio: "" }));
+        }
+      }}
+    >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Novo orçamento</DialogTitle>
           <DialogDescription>
-            {isMedico
-              ? "Preencha os dados médicos. O orçamento segue para o Comercial completar os valores hospitalares."
-              : "Os dados são salvos no banco e o orçamento segue para preenchimento do médico."}
+            {localAuthEnabled
+              ? "Os preços vigentes do Tasy serão calculados ao criar. Ajustes posteriores exigem justificativa."
+              : isMedico
+                ? "Preencha os dados médicos. O orçamento segue para o Comercial completar os valores hospitalares."
+                : "Os dados são salvos no banco e o orçamento segue para preenchimento do médico."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-6">
           <section className="grid gap-4">
+            {localAuthEnabled && (
+              <p className="text-sm text-muted-foreground">
+                Informe a quantidade de cada item selecionado. Inclua diárias e outros serviços como
+                procedimentos do catálogo para que entrem no cálculo. Ajustes de valor são feitos
+                nos detalhes, com justificativa.
+              </p>
+            )}
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Dados do paciente
             </h3>
+            {open && (
+              <TasyPatientSearch
+                onNotFound={(cpf) => {
+                  setPatientCode("");
+                  setPatientNotFound(true);
+                  setForm((f) => ({
+                    ...f,
+                    nome: "",
+                    nascimento: "",
+                    cpf,
+                    telefone: "",
+                  }));
+                }}
+                onSelect={(person) => {
+                  setPatientRevision((r) => r + 1);
+                  setPatientCode(person.cdPessoaFisica);
+                  setPatientNotFound(false);
+                  setCatalogContext({ cdConvenio: "", cdCategoria: "" });
+                  setProcedimento([]);
+                  setAdicionais([]);
+                  setForm((f) => ({
+                    ...f,
+                    nome: person.nmPessoaFisica ?? "",
+                    nascimento: person.dtNascimento ?? "",
+                    cpf: person.nrCpf ?? "",
+                    telefone: telefonePessoaTasy(person),
+                    convenio: "",
+                    categoriaConvenio: "",
+                  }));
+                }}
+              />
+            )}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2 sm:col-span-2">
-                <Label htmlFor="nome">Nome completo</Label>
+                <Label htmlFor="nome">
+                  Nome completo
+                  <RequiredMark />
+                </Label>
                 <Input
                   id="nome"
                   placeholder="Nome completo do paciente"
                   value={form.nome}
+                  disabled={!patientFieldsEditable}
                   onChange={(e) => set("nome")(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="nascimento">Data de nascimento</Label>
+                <Label htmlFor="nascimento">
+                  Data de nascimento
+                  <RequiredMark />
+                </Label>
                 <Input
                   id="nascimento"
                   type="date"
                   value={form.nascimento}
+                  disabled={!patientFieldsEditable}
                   onChange={(e) => set("nascimento")(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="cpf">CPF</Label>
+                <Label htmlFor="cpf">
+                  CPF
+                  <RequiredMark />
+                </Label>
                 <Input
                   id="cpf"
                   placeholder="000.000.000-00"
                   value={form.cpf}
-                  onChange={(e) => set("cpf")(e.target.value)}
+                  disabled={!patientFieldsEditable}
+                  onChange={(e) => {
+                    setPatientCode("");
+                    setPatientNotFound(false);
+                    set("cpf")(e.target.value);
+                  }}
                 />
               </div>
               <div className="grid gap-2">
@@ -212,64 +378,58 @@ export function NewRequestDialog({
                   id="telefone"
                   placeholder="(00) 00000-0000"
                   value={form.telefone}
+                  disabled={!patientFieldsEditable}
                   onChange={(e) => set("telefone")(e.target.value)}
                 />
               </div>
-              <div className="grid gap-2 sm:col-span-2">
-                <Label htmlFor="convenio">Convênio</Label>
-                <Input
-                  id="convenio"
-                  placeholder="Nome do convênio ou operadora"
-                  value={form.convenio}
-                  onChange={(e) => set("convenio")(e.target.value)}
+              {open && (
+                <TasyInsuranceSelect
+                  key={patientRevision}
+                  onChange={(convenio, categoriaConvenio, cdConvenio, cdCategoria) => {
+                    setForm((f) => ({ ...f, convenio, categoriaConvenio }));
+                    setCatalogContext({ cdConvenio, cdCategoria });
+                    setProcedimento([]);
+                    setAdicionais([]);
+                  }}
                 />
-              </div>
+              )}
               <div className="grid gap-2 sm:col-span-2">
-                <Label htmlFor="categoria-convenio">Categoria do convênio</Label>
-                <Select
-                  value={form.categoriaConvenio}
-                  onValueChange={(value) => set("categoriaConvenio")(value)}
-                >
-                  <SelectTrigger id="categoria-convenio">
-                    <SelectValue placeholder="Selecione a categoria do convênio" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CONVENIO_CATEGORIAS.map((c) => (
-                      <SelectItem key={c.codigo} value={c.codigo}>
-                        {c.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Lista demonstrativa — será substituída pelas categorias do banco corporativo.
-                </p>
-              </div>
-              <div className="grid gap-2 sm:col-span-2">
-                <Label>Procedimento principal</Label>
-                <ProcedureSelect
+                <Label>
+                  Procedimento principal
+                  <RequiredMark />
+                </Label>
+                <TasyProcedureSelect
+                  key={`principal:${catalogContext.cdConvenio}:${catalogContext.cdCategoria}`}
+                  {...catalogContext}
                   value={procedimento}
                   onChange={setProcedimento}
-                  placeholder="Pesquisar procedimento principal..."
                 />
               </div>
               <div className="grid gap-2 sm:col-span-2">
                 <Label>Procedimentos adicionais</Label>
-                <ProcedureSelect
+                <TasyProcedureSelect
+                  key={`adicionais:${catalogContext.cdConvenio}:${catalogContext.cdCategoria}`}
+                  {...catalogContext}
                   value={adicionais}
                   onChange={setAdicionais}
                   multiple
-                  placeholder="Pesquisar procedimentos adicionais..."
                 />
                 <p className="text-xs text-muted-foreground">
-                  Catálogo demonstrativo — será substituído pela tabela de procedimentos do banco
-                  corporativo.
+                  Procedimentos e serviços ativos do Tasy, incluindo diárias. Os preços são
+                  consultados para o convênio e a categoria selecionados.
                 </p>
               </div>
             </div>
           </section>
 
           <section className="grid gap-4">
+            {localAuthEnabled && (
+              <p className="text-sm text-muted-foreground">
+                Informe a quantidade de cada item selecionado. Inclua diárias e outros serviços como
+                procedimentos do catálogo para que entrem no cálculo. Ajustes de valor são feitos
+                nos detalhes, com justificativa.
+              </p>
+            )}
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               {isMedico ? "Dados médicos" : "Dados do procedimento"}
             </h3>
@@ -280,6 +440,7 @@ export function NewRequestDialog({
                     <Label htmlFor="honorario">Honorário (R$)</Label>
                     <Input
                       id="honorario"
+                      disabled={localAuthEnabled}
                       inputMode="decimal"
                       placeholder="0,00"
                       value={form.honorario}
@@ -290,6 +451,7 @@ export function NewRequestDialog({
                     <Label htmlFor="diaria">Diária (R$)</Label>
                     <Input
                       id="diaria"
+                      disabled={localAuthEnabled}
                       inputMode="decimal"
                       placeholder="0,00"
                       value={form.diaria}
@@ -300,6 +462,7 @@ export function NewRequestDialog({
                     <Label htmlFor="cti">CTI (R$)</Label>
                     <Input
                       id="cti"
+                      disabled={localAuthEnabled}
                       inputMode="decimal"
                       placeholder="0,00"
                       value={form.cti}
@@ -325,18 +488,14 @@ export function NewRequestDialog({
                       <label className="flex items-center gap-2 text-sm">
                         <Checkbox
                           checked={form.acomodacao === "enfermaria"}
-                          onCheckedChange={(c) =>
-                            set("acomodacao")(c ? "enfermaria" : "")
-                          }
+                          onCheckedChange={(c) => set("acomodacao")(c ? "enfermaria" : "")}
                         />
                         Enfermaria
                       </label>
                       <label className="flex items-center gap-2 text-sm">
                         <Checkbox
                           checked={form.acomodacao === "apartamento"}
-                          onCheckedChange={(c) =>
-                            set("acomodacao")(c ? "apartamento" : "")
-                          }
+                          onCheckedChange={(c) => set("acomodacao")(c ? "apartamento" : "")}
                         />
                         Apartamento
                       </label>
@@ -346,6 +505,7 @@ export function NewRequestDialog({
                     <Label htmlFor="diaria-enf">Diária Enf / Ap</Label>
                     <Input
                       id="diaria-enf"
+                      disabled={localAuthEnabled}
                       placeholder="Quantidade de diárias"
                       value={form.diariaEnf}
                       onChange={(e) => set("diariaEnf")(e.target.value)}
@@ -368,6 +528,7 @@ export function NewRequestDialog({
                       <Label htmlFor="diaria-cti">Diária CTI</Label>
                       <Input
                         id="diaria-cti"
+                        disabled={localAuthEnabled}
                         placeholder="Quantidade de diárias"
                         value={form.diariaCti}
                         onChange={(e) => set("diariaCti")(e.target.value)}
@@ -378,15 +539,20 @@ export function NewRequestDialog({
               )}
 
               <div className="grid gap-2 sm:col-span-2">
-                <Label>OPME{isMedico ? " (item, quantidade e fornecedor)" : ""}</Label>
-                <OpmeSelect value={opme} onChange={setOpme} />
-                <p className="text-xs text-muted-foreground">
-                  Catálogo demonstrativo — será substituído pela tabela de OPME do banco corporativo.
-                </p>
+                <Label>Materiais do Tasy</Label>
+                <TasyMaterialSelect value={materiais} onChange={setMateriais} />
               </div>
 
               <div className="grid gap-2 sm:col-span-2">
-                <Label htmlFor="anamoto">{isMedico ? "Anatomo Patológico" : "Anamoto patológico"}</Label>
+                <Label>OPME{isMedico ? " (item, quantidade e fornecedor)" : ""}</Label>
+                <TasyOpmeSelect value={opme} onChange={setOpme} />
+                <p className="text-xs text-muted-foreground">Materiais OPME ativos no Tasy.</p>
+              </div>
+
+              <div className="grid gap-2 sm:col-span-2">
+                <Label htmlFor="anamoto">
+                  {isMedico ? "Anatomo Patológico" : "Anamoto patológico"}
+                </Label>
                 <Textarea
                   id="anamoto"
                   rows={2}
@@ -450,7 +616,7 @@ export function NewRequestDialog({
           <Button className="w-full sm:w-auto" onClick={handleSubmit} disabled={create.isPending}>
             {create.isPending
               ? "Salvando..."
-              : isMedico
+              : isMedico && !localAuthEnabled
                 ? "Criar e enviar ao Comercial"
                 : "Criar orçamento"}
           </Button>

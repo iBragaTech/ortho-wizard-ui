@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { RequestActions } from "./request-actions";
 import { ArrowRight } from "lucide-react";
 import {
   Table,
@@ -16,16 +17,21 @@ import { formatCurrency, totalOf, type ConsultationRequest } from "@/data/mock";
 export function RequestTable({
   requests,
   showNumber = true,
+  manage = false,
 }: {
   requests: ConsultationRequest[];
   showNumber?: boolean;
+  manage?: boolean;
 }) {
   return (
     <>
       {/* Mobile: cards */}
       <div className="grid gap-3 md:hidden">
         {requests.map((r) => (
-          <RequestCard key={r.id} request={r} />
+          <div key={r.id} className="space-y-2">
+            <RequestCard request={r} />
+            {manage && <RequestActions request={r} />}
+          </div>
         ))}
       </div>
 
@@ -62,6 +68,7 @@ export function RequestTable({
                     {formatCurrency(totalOf(r))}
                   </TableCell>
                   <TableCell className="text-right">
+                    {manage && <RequestActions request={r} />}
                     <Button asChild size="sm" variant="ghost">
                       <Link to="/orcamentos/$id" params={{ id: r.id }}>
                         Visualizar <ArrowRight className="h-4 w-4" />

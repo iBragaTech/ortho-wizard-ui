@@ -1,0 +1,9 @@
+.env
+*.local.json
+*.local.mjs
+node_modules/
+.npm-cache/
+.local/
+.env.portal
+*.key
+*.secret

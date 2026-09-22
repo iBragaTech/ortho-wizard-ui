@@ -1,12 +1,13 @@
 import { Check, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TimelineEvent } from "@/data/mock";
+import { presentTimelineEvent } from "@/lib/timeline-presentation";
 
 export function Timeline({ events }: { events: TimelineEvent[] }) {
   return (
     <ol className="relative space-y-6">
-      {events.map((event, i) => (
-        <li key={event.titulo} className="relative flex gap-4">
+      {events.map(presentTimelineEvent).map((event, i) => (
+        <li key={`${event.data}:${i}`} className="relative flex gap-4">
           <div className="flex flex-col items-center">
             <span
               className={cn(
@@ -20,16 +21,17 @@ export function Timeline({ events }: { events: TimelineEvent[] }) {
             </span>
             {i < events.length - 1 ? (
               <span
-                className={cn(
-                  "mt-1 w-px flex-1",
-                  event.concluido ? "bg-success/30" : "bg-border",
-                )}
+                className={cn("mt-1 w-px flex-1", event.concluido ? "bg-success/30" : "bg-border")}
               />
             ) : null}
           </div>
           <div className="min-w-0 pb-1">
             <p className="text-sm font-medium text-foreground">{event.titulo}</p>
-            <p className="text-sm text-muted-foreground">{event.descricao}</p>
+            {event.descricao && (
+              <p className="whitespace-pre-line break-words text-sm text-muted-foreground">
+                {event.descricao}
+              </p>
+            )}
             <p className="mt-0.5 text-xs text-muted-foreground">{event.data}</p>
           </div>
         </li>

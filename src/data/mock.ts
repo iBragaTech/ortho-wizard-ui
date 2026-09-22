@@ -1,11 +1,7 @@
 // Dados fictícios (mock) — camada isolada para facilitar a futura troca por API/PostgreSQL.
 
 export type RequestStatus =
-  | "pendente"
-  | "em_analise"
-  | "aguardando_medico"
-  | "aguardando_comercial"
-  | "concluido";
+  "pendente" | "em_analise" | "aguardando_medico" | "aguardando_comercial" | "concluido";
 
 export interface Patient {
   nome: string;
@@ -16,8 +12,52 @@ export interface Patient {
 }
 
 export interface ConsultationRequest {
+  precificacao?: {
+    revisao: number;
+    confirmacoesZero?: Array<{
+      item: { tipo: string; codigo: string; origem?: string };
+      motivo: string;
+      nomeUsuario: string;
+      nmUsuario: string | null;
+      dataHora: string;
+      revisao: number;
+    }>;
+    referencia: {
+      calculadoEm: string;
+      nmUsuario: string;
+      completo: boolean;
+      honorarios: number | null;
+      hospitalar: number | null;
+      total: number | null;
+      subtotalConfirmado: number;
+      contexto: string;
+      itens: Array<{
+        tipo: string;
+        codigo: string;
+        origem?: string;
+        quantidade: number;
+        pendente: boolean;
+        zeroConfirmado?: boolean;
+        referencia: {
+          nome?: string;
+          valorProcedimento?: number | null;
+          valorMaterial?: number | null;
+          honorarios?: number | null;
+        };
+      }>;
+    };
+    ajustes: Array<{
+      anterior: { honorarios: number; hospitalar: number };
+      novo: { honorarios: number; hospitalar: number };
+      motivo: string;
+      usuarioId: string;
+      nomeUsuario: string;
+      dataHora: string;
+    }>;
+  };
   id: string;
-  numero: string;
+  numero: string | null;
+  dataAprovacao?: string | null;
   paciente: Patient;
   medico: string;
   crm: string;
@@ -319,11 +359,46 @@ export interface Doctor {
 }
 
 export const doctors: Doctor[] = [
-  { id: "1", nome: "Dr. Ricardo Menezes", crm: "CRM-SP 118240", especialidade: "Cardiologia", ativo: true, solicitacoes: 24 },
-  { id: "2", nome: "Dra. Helena Souza", crm: "CRM-SP 92310", especialidade: "Ortopedia", ativo: true, solicitacoes: 18 },
-  { id: "3", nome: "Dr. Paulo Nogueira", crm: "CRM-SP 145901", especialidade: "Dermatologia", ativo: true, solicitacoes: 12 },
-  { id: "4", nome: "Dra. Beatriz Antunes", crm: "CRM-SP 100522", especialidade: "Neurologia", ativo: false, solicitacoes: 7 },
-  { id: "5", nome: "Dr. André Camargo", crm: "CRM-SP 133870", especialidade: "Endocrinologia", ativo: true, solicitacoes: 9 },
+  {
+    id: "1",
+    nome: "Dr. Ricardo Menezes",
+    crm: "CRM-SP 118240",
+    especialidade: "Cardiologia",
+    ativo: true,
+    solicitacoes: 24,
+  },
+  {
+    id: "2",
+    nome: "Dra. Helena Souza",
+    crm: "CRM-SP 92310",
+    especialidade: "Ortopedia",
+    ativo: true,
+    solicitacoes: 18,
+  },
+  {
+    id: "3",
+    nome: "Dr. Paulo Nogueira",
+    crm: "CRM-SP 145901",
+    especialidade: "Dermatologia",
+    ativo: true,
+    solicitacoes: 12,
+  },
+  {
+    id: "4",
+    nome: "Dra. Beatriz Antunes",
+    crm: "CRM-SP 100522",
+    especialidade: "Neurologia",
+    ativo: false,
+    solicitacoes: 7,
+  },
+  {
+    id: "5",
+    nome: "Dr. André Camargo",
+    crm: "CRM-SP 133870",
+    especialidade: "Endocrinologia",
+    ativo: true,
+    solicitacoes: 9,
+  },
 ];
 
 export interface PortalUser {
@@ -336,11 +411,46 @@ export interface PortalUser {
 }
 
 export const users: PortalUser[] = [
-  { id: "1", nome: "Ana Carolina Lima", email: "ana.lima@hospital.exemplo", perfil: "Administrador", ativo: true, ultimoAcesso: "17/08/2026 09:42" },
-  { id: "2", nome: "Marcos Dantas", email: "marcos.dantas@hospital.exemplo", perfil: "Comercial", ativo: true, ultimoAcesso: "17/08/2026 08:15" },
-  { id: "3", nome: "Dr. Ricardo Menezes", email: "ricardo.menezes@hospital.exemplo", perfil: "Médico", ativo: true, ultimoAcesso: "16/08/2026 18:03" },
-  { id: "4", nome: "Dra. Helena Souza", email: "helena.souza@hospital.exemplo", perfil: "Médico", ativo: true, ultimoAcesso: "15/08/2026 14:27" },
-  { id: "5", nome: "Priscila Moraes", email: "priscila.moraes@hospital.exemplo", perfil: "Comercial", ativo: false, ultimoAcesso: "02/08/2026 11:10" },
+  {
+    id: "1",
+    nome: "Ana Carolina Lima",
+    email: "ana.lima@hospital.exemplo",
+    perfil: "Administrador",
+    ativo: true,
+    ultimoAcesso: "17/08/2026 09:42",
+  },
+  {
+    id: "2",
+    nome: "Marcos Dantas",
+    email: "marcos.dantas@hospital.exemplo",
+    perfil: "Comercial",
+    ativo: true,
+    ultimoAcesso: "17/08/2026 08:15",
+  },
+  {
+    id: "3",
+    nome: "Dr. Ricardo Menezes",
+    email: "ricardo.menezes@hospital.exemplo",
+    perfil: "Médico",
+    ativo: true,
+    ultimoAcesso: "16/08/2026 18:03",
+  },
+  {
+    id: "4",
+    nome: "Dra. Helena Souza",
+    email: "helena.souza@hospital.exemplo",
+    perfil: "Médico",
+    ativo: true,
+    ultimoAcesso: "15/08/2026 14:27",
+  },
+  {
+    id: "5",
+    nome: "Priscila Moraes",
+    email: "priscila.moraes@hospital.exemplo",
+    perfil: "Comercial",
+    ativo: false,
+    ultimoAcesso: "02/08/2026 11:10",
+  },
 ];
 
 export interface TimelineEvent {
@@ -351,12 +461,42 @@ export interface TimelineEvent {
 }
 
 export const timelineEvents: TimelineEvent[] = [
-  { titulo: "Solicitação criada", descricao: "Registrada pela central de atendimento", data: "12/08/2026 09:12", concluido: true },
-  { titulo: "Solicitação enviada ao médico", descricao: "Encaminhada para preenchimento de honorários", data: "12/08/2026 09:15", concluido: true },
-  { titulo: "Honorários preenchidos", descricao: "Aguardando ação do médico responsável", data: "—", concluido: false },
-  { titulo: "Enviada ao Comercial", descricao: "Etapa seguinte do fluxo", data: "—", concluido: false },
-  { titulo: "Valor hospitalar preenchido", descricao: "Preenchimento pelo setor Comercial", data: "—", concluido: false },
-  { titulo: "Orçamento concluído", descricao: "Orçamento final disponível ao paciente", data: "—", concluido: false },
+  {
+    titulo: "Solicitação criada",
+    descricao: "Registrada pela central de atendimento",
+    data: "12/08/2026 09:12",
+    concluido: true,
+  },
+  {
+    titulo: "Solicitação enviada ao médico",
+    descricao: "Encaminhada para preenchimento de honorários",
+    data: "12/08/2026 09:15",
+    concluido: true,
+  },
+  {
+    titulo: "Honorários preenchidos",
+    descricao: "Aguardando ação do médico responsável",
+    data: "—",
+    concluido: false,
+  },
+  {
+    titulo: "Enviada ao Comercial",
+    descricao: "Etapa seguinte do fluxo",
+    data: "—",
+    concluido: false,
+  },
+  {
+    titulo: "Valor hospitalar preenchido",
+    descricao: "Preenchimento pelo setor Comercial",
+    data: "—",
+    concluido: false,
+  },
+  {
+    titulo: "Orçamento concluído",
+    descricao: "Orçamento final disponível ao paciente",
+    data: "—",
+    concluido: false,
+  },
 ];
 
 export const currentUser = {
@@ -379,6 +519,7 @@ export const metrics = {
 };
 
 export function totalOf(r: ConsultationRequest): number | null {
+  if (r.precificacao && !r.precificacao.referencia.completo) return null;
   if (r.honorariosMedicos === null && r.valorHospitalar === null) return null;
   return (r.honorariosMedicos ?? 0) + (r.valorHospitalar ?? 0);
 }
@@ -388,5 +529,3 @@ export function medicalFeesTotal(r: ConsultationRequest): number | null {
   if (numericFields.every((v) => v === null)) return null;
   return numericFields.reduce<number>((acc, v) => acc + (v ?? 0), 0);
 }
-
-

@@ -1,0 +1,12 @@
+{
+  "SUB_DO_USUARIO_NO_PROVEDOR_DE_IDENTIDADE": {
+    "enabled": true,
+    "tasyUsername": "arafaela",
+    "tasyEstablishment": 2,
+    "tasyProfile": 1848,
+    "operations": ["usuarios.consultar"],
+    "pessoaFisicaIds": [],
+    "canCreatePessoaFisica": false,
+    "allPessoaFisica": false
+  }
+}

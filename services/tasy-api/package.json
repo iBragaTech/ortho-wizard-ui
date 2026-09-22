@@ -1,0 +1,25 @@
+{
+  "name": "portal-tasy-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "portal:init": "node --env-file-if-exists=.env.portal src/portal/setup.mjs",
+    "portal:start": "node --env-file-if-exists=.env.portal src/portal/server.mjs",
+    "start": "node --env-file=.env src/server.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@fastify/cors": "^11.0.0",
+    "@fastify/rate-limit": "^10.0.0",
+    "fastify": "^5.12.5",
+    "jose": "^6.0.0",
+    "oracledb": "^6.10.0",
+    "pg": "^8.23.0",
+    "zod": "^3.24.2"
+  }
+}

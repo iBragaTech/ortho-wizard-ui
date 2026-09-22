@@ -37,6 +37,7 @@ import { UserAvatar } from "./user-avatar";
 import { ACESSO, useSession, type Perfil } from "@/lib/auth/session";
 import { cn } from "@/lib/utils";
 import { ShieldAlert } from "lucide-react";
+import { toast } from "sonner";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -104,9 +105,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <Button
           variant="ghost"
           className="mt-1 w-full justify-start text-muted-foreground"
-          onClick={() => {
-            signOut();
-            void navigate({ to: "/login", replace: true });
+          onClick={async () => {
+            try {
+              await signOut();
+              void navigate({ to: "/login", replace: true });
+            } catch {
+              toast.error("Não foi possível encerrar a sessão. Tente novamente.");
+            }
           }}
         >
           <LogOut className="h-4 w-4" /> Sair
@@ -223,9 +228,13 @@ export function AppShell({ children }: { children: ReactNode }) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onSelect={() => {
-                      signOut();
-                      void navigate({ to: "/login", replace: true });
+                    onSelect={async () => {
+                      try {
+                        await signOut();
+                        void navigate({ to: "/login", replace: true });
+                      } catch {
+                        toast.error("Não foi possível encerrar a sessão. Tente novamente.");
+                      }
                     }}
                   >
                     <LogOut className="h-4 w-4" /> Sair

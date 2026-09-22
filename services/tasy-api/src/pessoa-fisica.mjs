@@ -13,11 +13,27 @@ const birthDate = dateFormat.refine((value) => {
     value <= new Date().toISOString().slice(0, 10)
   );
 }, "Data de nascimento inválida.");
+const cpf = z
+  .string()
+  .regex(/^\d{11}$/)
+  .refine((value) => {
+    if (/^(\d)\1{10}$/.test(value)) return false;
+    let sum = 0;
+    for (let index = 0; index < 9; index++) sum += Number(value[index]) * (10 - index);
+    let check = (sum * 10) % 11;
+    if (check === 10) check = 0;
+    if (check !== Number(value[9])) return false;
+    sum = 0;
+    for (let index = 0; index < 10; index++) sum += Number(value[index]) * (11 - index);
+    check = (sum * 10) % 11;
+    if (check === 10) check = 0;
+    return check === Number(value[10]);
+  }, "CPF inválido.");
 const fields = z
   .object({
     nmPessoaFisica: z.string().trim().min(1).max(60),
     dtNascimento: birthDate,
-    nrCpf: z.string().regex(/^\d{11}$/),
+    nrCpf: cpf,
   })
   .strict();
 const previous = z
@@ -42,7 +58,7 @@ export function pessoaFisicaOperations({ directDmlEnabled }) {
   return {
     "pessoas-fisicas.buscar-cpf": {
       kind: "read",
-      schema: z.object({ nrCpf: z.string().regex(/^\d{11}$/) }).strict(),
+      schema: z.object({ nrCpf: cpf }).strict(),
       authorize: ({ principal }) =>
         principal.allPessoaFisica === true || principal.pessoaFisicaIds?.length > 0,
       execute: async ({ connection, input, principal }) => {

@@ -15,7 +15,7 @@ function calculator(user, { material = 2.97, total = 2865, fees = 100 } = {}) {
   return createQuoteCalculator({
     principals: { [user.id]: { enabled: true, tasyUsername: "test" } },
     execute: async ({ name }) => {
-      if (name === "pessoas-fisicas.consultar") return { nrCpf: "00000000000" };
+      if (name === "pessoas-fisicas.consultar") return { nrCpf: "52998224725" };
       if (name === "precos.procedimento")
         return { valorProcedimento: total, honorarios: fees, custoOperacional: 2765 };
       if (name === "precos.material") return { valorMaterial: material };
@@ -25,7 +25,7 @@ function calculator(user, { material = 2.97, total = 2865, fees = 100 } = {}) {
 }
 test("automatic quote sums native total once, includes materials, and does not treat missing prices as free", async () => {
   const user = { id: "test" };
-  const result = await calculator(user)(selection, user, "00000000000");
+  const result = await calculator(user)(selection, user, "52998224725");
   assert.equal(result.total, 2867.97);
   assert.equal(result.honorarios, 100);
   assert.equal(result.hospitalar, 2767.97);
@@ -72,7 +72,7 @@ test("creation stores server prices; negotiations preserve reference, audit iden
   });
   const input = {
     nome: "Test",
-    cpf: "00000000000",
+    cpf: "52998224725",
     nascimento: "2000-01-01",
     telefone: "",
     origem: "medico",
@@ -147,7 +147,7 @@ test("pending quote stays in analysis and reconsultation preserves previous refe
   });
   const id = await run(
     "createRequest",
-    { nome: "Test", cpf: "00000000000", nascimento: "2000-01-01", telefone: "", tasy: selection },
+    { nome: "Test", cpf: "52998224725", nascimento: "2000-01-01", telefone: "", tasy: selection },
     user,
   );
   const initial = await run("getRequest", { id }, user);

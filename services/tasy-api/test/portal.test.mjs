@@ -68,7 +68,7 @@ test("independent portal with a real embedded PostgreSQL database", async (t) =>
   };
   const patient = {
     nome: "Pessoa fictícia de teste",
-    cpf: "000.000.000-00",
+    cpf: "529.982.247-25",
     nascimento: "1990-01-20",
     telefone: "",
   };

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getTasyClient } from "@/lib/data/tasy-supabase";
-import { TasyApiError, type PessoaFisicaTasy } from "@/lib/data/tasy";
+import { isValidCpf, TasyApiError, type PessoaFisicaTasy } from "@/lib/data/tasy";
 
 export function TasyPatientSearch({
   onSelect,
@@ -26,9 +26,9 @@ export function TasyPatientSearch({
 
   async function search() {
     const value = query.trim().replace(/[.\-\s]/g, "");
-    if (!(byCode ? /^\d{1,10}$/ : /^\d{11}$/).test(value)) {
+    if (byCode ? !/^\d{1,10}$/.test(value) : !isValidCpf(value)) {
       toast.error(
-        byCode ? "Informe o código do paciente no Tasy." : "Informe um CPF com 11 dígitos.",
+        byCode ? "Informe o código do paciente no Tasy." : "Informe um CPF válido com 11 dígitos.",
       );
       return;
     }

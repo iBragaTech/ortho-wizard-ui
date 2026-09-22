@@ -39,12 +39,12 @@ test("quantities multiply unit prices and survive zero confirmation without doub
     principals: { test: { enabled: true, tasyUsername: "test" } },
     execute: async ({ name, body }) => {
       assert.equal(Object.hasOwn(body, "quantidade"), false);
-      if (name === "pessoas-fisicas.consultar") return { nrCpf: "00000000000" };
+      if (name === "pessoas-fisicas.consultar") return { nrCpf: "52998224725" };
       if (name === "precos.procedimento") return { valorProcedimento: 550, honorarios: 0 };
       return { valorMaterial: body.codigo === "31" ? 2.97 : 0 };
     },
   });
-  const ref = await calculate(selection, { id: "test" }, "00000000000");
+  const ref = await calculate(selection, { id: "test" }, "52998224725");
   assert.equal(ref.subtotalConfirmado, 1108.91);
   assert.equal(ref.total, null);
   assert.deepEqual(

@@ -4,7 +4,7 @@ import { pessoaFisicaOperations } from "../src/pessoa-fisica.mjs";
 
 const operation = pessoaFisicaOperations({ directDmlEnabled: false })["pessoas-fisicas.buscar-cpf"];
 const principal = { pessoaFisicaIds: ["123"] };
-const input = { nrCpf: "00000000000" };
+const input = { nrCpf: "52998224725" };
 const person = { cdPessoaFisica: "123", nmPessoaFisica: "Paciente de teste", nrCpf: input.nrCpf };
 const connection = (rows) => ({
   execute: async (sql, binds, options) => {

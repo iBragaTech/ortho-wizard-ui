@@ -36,7 +36,7 @@ import {
   type TasyProcedureItem,
 } from "@/components/portal/tasy-procedure-select";
 import { TasyPatientSearch } from "@/components/portal/tasy-patient-search";
-import { telefonePessoaTasy } from "@/lib/data/tasy";
+import { isValidCpf, telefonePessoaTasy } from "@/lib/data/tasy";
 import { getTasyClient } from "@/lib/data/tasy-supabase";
 
 const empty = {
@@ -97,6 +97,10 @@ export function NewRequestDialog({
   async function handleSubmit() {
     if (!form.nome.trim() || !form.cpf.trim()) {
       toast.error("Informe ao menos nome e CPF do paciente.");
+      return;
+    }
+    if (!isValidCpf(form.cpf)) {
+      toast.error("Informe um CPF válido com 11 dígitos.");
       return;
     }
 

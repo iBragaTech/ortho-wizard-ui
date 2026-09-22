@@ -6,7 +6,7 @@ import { createExecutor } from "../src/executor.mjs";
 const before = {
   nmPessoaFisica: "Pessoa de teste",
   dtNascimento: "1990-01-20",
-  nrCpf: "00000000000",
+  nrCpf: "52998224725",
 };
 const principal = {
   subject: "sub-1",

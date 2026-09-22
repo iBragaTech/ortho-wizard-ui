@@ -29,6 +29,19 @@ const fees = z
     obsMedico: text,
   })
   .strict();
+const validCpf = (value) => {
+  if (!/^\d{11}$/.test(value) || /^(\d)\1{10}$/.test(value)) return false;
+  let sum = 0;
+  for (let index = 0; index < 9; index++) sum += Number(value[index]) * (10 - index);
+  let check = (sum * 10) % 11;
+  if (check === 10) check = 0;
+  if (check !== Number(value[9])) return false;
+  sum = 0;
+  for (let index = 0; index < 10; index++) sum += Number(value[index]) * (11 - index);
+  check = (sum * 10) % 11;
+  if (check === 10) check = 0;
+  return check === Number(value[10]);
+};
 const newRequest = z
   .object({
     nome: z.string().trim().min(1).max(120),
@@ -37,7 +50,7 @@ const newRequest = z
       .string()
       .regex(/^[\d.\- ]+$/)
       .transform((v) => v.replace(/\D/g, ""))
-      .refine((v) => v.length === 11),
+      .refine(validCpf, "CPF inválido."),
     telefone: z.string().max(40),
     especialidade: text.optional(),
     tipoConsulta: text.optional(),

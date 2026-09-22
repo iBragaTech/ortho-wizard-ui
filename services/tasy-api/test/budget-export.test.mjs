@@ -22,7 +22,7 @@ const selection = {
 const snapshot = {
   id: "00000000-0000-4000-8000-000000000001",
   actorId: "00000000-0000-4000-8000-000000000002",
-  data: { tasy: selection, paciente: { cpf: "00000000000" } },
+  data: { tasy: selection, paciente: { cpf: "52998224725" } },
 };
 function mock({ duplicate = false, commitError = false, catalogValid = true } = {}) {
   const calls = [];

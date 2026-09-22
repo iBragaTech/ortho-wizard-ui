@@ -23,7 +23,7 @@ export interface PessoaFisicaTasy {
 
 export function isValidCpf(value: string): boolean {
   const digits = value.replace(/\D/g, "");
-  if (!/^\d{11}$/.test(digits) || /^\d{11}$/.test(digits[0].repeat(11))) return false;
+  if (!/^\d{11}$/.test(digits) || /^\d{11}$/.test((digits[0] ?? "").repeat(11))) return false;
   let sum = 0;
   for (let index = 0; index < 9; index++) sum += Number(digits[index]) * (10 - index);
   let check = (sum * 10) % 11;

@@ -5,7 +5,9 @@ export const tasySelection = z
   .object({
     cdPessoaFisica: z.string().regex(/^\d{1,10}$/),
     cdConvenio: code,
+    convenioNome: z.string().trim().max(200).optional(),
     cdCategoria: z.string().min(1).max(10),
+    categoriaNome: z.string().trim().max(200).optional(),
     procedimentos: z
       .array(z.object({ codigo: code, origem: code, quantidade: quantity }).strict())
       .min(1)

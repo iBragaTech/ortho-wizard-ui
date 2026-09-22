@@ -67,6 +67,7 @@ function mapRequest(row: any): ConsultationRequest {
     id: row.id,
     numero: row.numero,
     dataAprovacao: row.preenchido_comercial_em ?? null,
+    solicitante: row.solicitante ?? row.created_by_nome ?? "—",
     paciente: {
       nome: row.patients?.nome ?? "—",
       cpf: row.patients?.cpf ?? "—",
@@ -111,7 +112,9 @@ export interface NewRequestInput {
   tasy?: {
     cdPessoaFisica: string;
     cdConvenio: string;
+    convenioNome?: string;
     cdCategoria: string;
+    categoriaNome?: string;
     procedimentos: { codigo: string; origem: string; quantidade?: number }[];
     materiais: { codigo: string; quantidade?: number }[];
   };

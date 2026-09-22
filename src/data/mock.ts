@@ -12,6 +12,15 @@ export interface Patient {
 }
 
 export interface ConsultationRequest {
+  tasy?: {
+    cdPessoaFisica: string;
+    cdConvenio: string;
+    convenioNome?: string;
+    cdCategoria: string;
+    categoriaNome?: string;
+    procedimentos: { codigo: string; origem: string; quantidade?: number }[];
+    materiais: { codigo: string; quantidade?: number }[];
+  };
   precificacao?: {
     revisao: number;
     confirmacoesZero?: Array<{
@@ -58,6 +67,7 @@ export interface ConsultationRequest {
   id: string;
   numero: string | null;
   dataAprovacao?: string | null;
+  solicitante?: string;
   paciente: Patient;
   medico: string;
   crm: string;

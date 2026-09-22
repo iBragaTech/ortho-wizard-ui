@@ -200,6 +200,8 @@ export function NewRequestDialog({
               tasy: {
                 cdPessoaFisica: tasyPatientCode,
                 ...catalogContext,
+                convenioNome: form.convenio,
+                categoriaNome: form.categoriaConvenio,
                 procedimentos: [...procedimento, ...adicionais].map(
                   ({ codigo, origem, quantidade = 1 }) => ({
                     codigo,

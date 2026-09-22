@@ -49,6 +49,13 @@ function savedDescriptions(request: ConsultationRequest): Map<string, string> {
   return descriptions;
 }
 
+function savedField(request: ConsultationRequest, label: string): string {
+  const line = (request.observacoes || "")
+    .split(/\r?\n/)
+    .find((entry) => entry.toLocaleLowerCase().startsWith(`${label.toLocaleLowerCase()}:`));
+  return line ? line.slice(label.length + 1).trim() : "";
+}
+
 /** Monta as linhas do quadro de procedimentos a partir dos dados da solicitação. */
 function buildItems(request: ConsultationRequest): LineItem[] {
   const items: LineItem[] = [];
@@ -86,12 +93,22 @@ function buildItems(request: ConsultationRequest): LineItem[] {
       Math.round(((request.honorariosMedicos ?? 0) - (ref.honorarios ?? 0)) * 100) / 100;
     const hospitalDiff =
       Math.round(((request.valorHospitalar ?? 0) - (ref.hospitalar ?? 0)) * 100) / 100;
-    if (feesDiff || hospitalDiff)
+    if (feesDiff)
       items.push({
         codigo: "—",
-        descricao: "Ajuste negociado do orçamento",
+        descricao: "Honorários Médicos",
         qtde: 1,
         medico: feesDiff,
+        anestesista: 0,
+        hospital: 0,
+        desconto: 0,
+      });
+    if (hospitalDiff)
+      items.push({
+        codigo: "—",
+        descricao: "Valor Hospitalar",
+        qtde: 1,
+        medico: 0,
         anestesista: 0,
         hospital: hospitalDiff,
         desconto: 0,
@@ -161,6 +178,15 @@ export function buildQuoteHtml(
     `${d.toLocaleDateString("pt-BR")} ${d.toLocaleTimeString("pt-BR", { hour12: false })}`;
 
   const allItems = buildItems(request);
+  const tasy = request.tasy;
+  const convenioLabel = tasy?.convenioNome || savedField(request, "Convênio");
+  const categoriaLabel = tasy?.categoriaNome || savedField(request, "Categoria do convênio");
+  const approvalDate =
+    request.status === "concluido"
+      ? request.dataAprovacao
+        ? fmt(new Date(request.dataAprovacao))
+        : request.data || "—"
+      : "—";
   const materials = allItems.filter((item) => item.tipo === "material");
   const items = allItems.filter((item) => item.tipo !== "material");
   const somaMedico = items.reduce((a, i) => a + i.medico, 0);
@@ -278,23 +304,18 @@ export function buildQuoteHtml(
 <div class="meta">
   <table>
     ${field("Paciente", request.paciente.nome)}
-    ${field("Atendimento", request.numero || "—")}
     ${field("Data Orçamento", fmt(agora))}
     ${field("Data Validade", fmt(validade))}
-    ${field(
-      "Data Aprovação",
-      request.status === "concluido" && request.dataAprovacao
-        ? fmt(new Date(request.dataAprovacao))
-        : "—",
-    )}
+    ${field("Data Aprovação", approvalDate)}
     ${field("Telefone/Cel", request.paciente.telefone)}
   </table>
   <table>
-    ${field("Convênio", request.especialidade)}
+    ${field("Cód. Pessoa", tasy?.cdPessoaFisica || "—")}
+    ${field("Convênio", convenioLabel || tasy?.cdConvenio || "—")}
     ${field("Cond. Pagamento", "Conforme Vencimentos")}
-    ${field("Solicitante", request.medico)}
+    ${field("Solicitante", request.solicitante || request.medico || "—")}
     ${field("Nome do médico", `${request.medico} · ${request.crm}`)}
-    ${field("Categoria", request.tipoConsulta)}
+    ${field("Categoria", categoriaLabel || tasy?.cdCategoria || "—")}
     ${field("Status Orçamento", request.status === "concluido" ? "Aprovado" : "Em aprovação")}
   </table>
 </div>

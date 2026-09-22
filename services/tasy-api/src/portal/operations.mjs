@@ -244,6 +244,7 @@ export function createPortalOperations(db, { calculateQuote, auditIdentity = () 
             nascimento: fmtDate(value.nascimento),
             email: "",
           },
+          solicitante: user.nome,
           medico: value.origem === "medico" ? user.nome : "—",
           crm: "",
           especialidade: value.especialidade || "",

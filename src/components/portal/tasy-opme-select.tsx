@@ -131,10 +131,6 @@ export function TasyOpmeSelect({
           </Button>
         </div>
       ))}
-      <p className="text-xs text-muted-foreground">
-        Materiais ativos dos grupos 59, 60 e 61 do Tasy. A seleção não inclui preço ou
-        disponibilidade em estoque.
-      </p>
     </div>
   );
 }

@@ -126,9 +126,6 @@ export function TasyInsuranceSelect({
           ) : null}
         </>
       )}
-      <p className="text-xs text-muted-foreground">
-        Cadastros ativos do Tasy. A seleção não confirma cobertura ou preço contratado.
-      </p>
     </div>
   );
 }

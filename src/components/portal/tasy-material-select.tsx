@@ -137,9 +137,6 @@ export function TasyMaterialSelect({
           </Button>
         </div>
       ))}
-      <p className="text-xs text-muted-foreground">
-        Materiais ativos do Tasy, exceto os grupos reservados para OPME.
-      </p>
     </div>
   );
 }

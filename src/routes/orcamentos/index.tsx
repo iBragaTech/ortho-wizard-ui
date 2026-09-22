@@ -50,7 +50,11 @@ function OrcamentosPage() {
     () =>
       requests.filter((r) => {
         const q = filters.busca.trim().toLowerCase();
-        if (q && !r.paciente.nome.toLowerCase().includes(q) && !r.numero.toLowerCase().includes(q))
+        if (
+          q &&
+          !r.paciente.nome.toLowerCase().includes(q) &&
+          !(r.numero ?? "").toLowerCase().includes(q)
+        )
           return false;
         if (filters.status !== "todos" && r.status !== filters.status) return false;
         if (filters.medico !== "todos" && r.medico !== filters.medico) return false;

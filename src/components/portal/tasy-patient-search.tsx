@@ -95,10 +95,6 @@ export function TasyPatientSearch({
           {busy ? "Consultando…" : "Buscar"}
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground">
-        Preenche nome, nascimento, CPF e celular quando cadastrado. Confira os demais campos
-        separadamente.
-      </p>
     </div>
   );
 }

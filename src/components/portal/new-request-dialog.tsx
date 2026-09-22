@@ -420,10 +420,6 @@ export function NewRequestDialog({
                   onChange={setAdicionais}
                   multiple
                 />
-                <p className="text-xs text-muted-foreground">
-                  Procedimentos e serviços ativos do Tasy, incluindo diárias. Os preços são
-                  consultados para o convênio e a categoria selecionados.
-                </p>
               </div>
             </div>
           </section>
@@ -552,7 +548,6 @@ export function NewRequestDialog({
               <div className="grid gap-2 sm:col-span-2">
                 <Label>OPME{isMedico ? " (item, quantidade e fornecedor)" : ""}</Label>
                 <TasyOpmeSelect value={opme} onChange={setOpme} />
-                <p className="text-xs text-muted-foreground">Materiais OPME ativos no Tasy.</p>
               </div>
 
               <div className="grid gap-2 sm:col-span-2">

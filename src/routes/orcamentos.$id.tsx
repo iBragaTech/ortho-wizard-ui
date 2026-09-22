@@ -82,7 +82,7 @@ function RequestDetail() {
       </Button>
 
       <PageHeader
-        title={request.numero}
+        title={request.numero ?? "Orçamento"}
         description={`${request.paciente.nome} · ${request.especialidade}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">

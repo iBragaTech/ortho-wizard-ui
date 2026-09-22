@@ -171,10 +171,6 @@ export function TasyProcedureSelect({
           />
         </div>
       ))}
-      <p className="text-xs text-muted-foreground">
-        Procedimentos e serviços ativos do Tasy. Selecione convênio e categoria; cobertura e preço
-        dependem das regras do atendimento.
-      </p>
     </div>
   );
 }

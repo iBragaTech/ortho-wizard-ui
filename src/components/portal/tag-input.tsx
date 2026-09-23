@@ -6,11 +6,13 @@ export function TagInput({
   value,
   onChange,
   placeholder,
+  hint,
   id,
 }: {
   value: string[];
   onChange: (items: string[]) => void;
   placeholder?: string;
+  hint?: string;
   id?: string;
 }) {
   const [text, setText] = useState("");
@@ -37,6 +39,7 @@ export function TagInput({
         }}
         onBlur={add}
       />
+      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
       {value.length > 0 && (
         <ul className="flex flex-wrap gap-2">
           {value.map((item, index) => (

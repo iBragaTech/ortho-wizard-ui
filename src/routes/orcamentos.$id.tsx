@@ -250,7 +250,7 @@ function RequestDetail() {
                       <Label htmlFor="tempo-bloco">Tempo de bloco</Label>
                       <Input
                         id="tempo-bloco"
-                        placeholder="Ex.: 2h30"
+placeholder="Insira o tempo em minutos"
                         defaultValue={request.tempoBloco}
                       />
                     </div>

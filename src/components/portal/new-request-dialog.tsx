@@ -52,8 +52,6 @@ const empty = {
   diariaEnf: "",
   diariaCti: "",
   anatomo: "",
-  sangue: "",
-  multidisciplinar: "",
   bloco: "",
   // Campos do Médico
   honorario: "",

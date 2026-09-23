@@ -36,6 +36,7 @@ import {
   type TasyProcedureItem,
 } from "@/components/portal/tasy-procedure-select";
 import { TasyPatientSearch } from "@/components/portal/tasy-patient-search";
+import { TagInput } from "@/components/portal/tag-input";
 import { isValidCpf, telefonePessoaTasy } from "@/lib/data/tasy";
 import { getTasyClient } from "@/lib/data/tasy-supabase";
 
@@ -51,8 +52,6 @@ const empty = {
   diariaEnf: "",
   diariaCti: "",
   anatomo: "",
-  sangue: "",
-  multidisciplinar: "",
   bloco: "",
   // Campos do Médico
   honorario: "",
@@ -86,6 +85,8 @@ export function NewRequestDialog({
   const [catalogContext, setCatalogContext] = useState({ cdConvenio: "", cdCategoria: "" });
   const [temCti, setTemCti] = useState(false);
   const [anestesista, setAnestesista] = useState(false);
+  const [sangue, setSangue] = useState<string[]>([]);
+  const [multidisciplinar, setMultidisciplinar] = useState<string[]>([]);
   const create = useCreateRequest();
   const { user } = useSession();
   const origem = user?.perfil === "Médico" ? "medico" : origemProp;
@@ -174,8 +175,9 @@ export function NewRequestDialog({
           opmeTexto && `OPME: ${opmeTexto}`,
           materiaisTexto && `Materiais: ${materiaisTexto}`,
           form.anatomo && `Anátomo Patológico: ${form.anatomo}`,
-          form.sangue && `Reserva de sangue: ${form.sangue}`,
-          form.multidisciplinar && `Equipe multidisciplinar/Fisioterapia: ${form.multidisciplinar}`,
+          sangue.length && `Reserva de sangue: ${sangue.join("; ")}`,
+          multidisciplinar.length &&
+            `Equipe multidisciplinar/Fisioterapia: ${multidisciplinar.join("; ")}`,
           form.bloco && `Tempo de bloco: ${form.bloco}`,
         ]
           .filter(Boolean)
@@ -233,8 +235,8 @@ export function NewRequestDialog({
                 cti: localAuthEnabled ? null : toNumber(form.cti),
                 opme: opmeTexto,
                 anatomoPatologico: form.anatomo,
-                reservaSangue: form.sangue,
-                equipeMultidisciplinar: `Anestesista: ${anestesista ? "Sim" : "Não"}. ${form.multidisciplinar}`,
+                reservaSangue: sangue.join("; "),
+                equipeMultidisciplinar: `Anestesista: ${anestesista ? "Sim" : "Não"}. ${multidisciplinar.join("; ")}`,
                 fisioterapia: toNumber(form.fisioterapia),
                 tempoBloco: form.bloco,
                 obsMedico: form.obsMedico,
@@ -258,6 +260,8 @@ export function NewRequestDialog({
       setMateriais([]);
       setProcedimento([]);
       setAdicionais([]);
+      setSangue([]);
+      setMultidisciplinar([]);
       setCatalogContext({ cdConvenio: "", cdCategoria: "" });
 
       setOpen(false);
@@ -569,22 +573,22 @@ export function NewRequestDialog({
                 <Label htmlFor="sangue">
                   {isMedico ? "Reserva de sangue (material e quantidade)" : "Reserva de sangue"}
                 </Label>
-                <Input
+                <TagInput
                   id="sangue"
                   placeholder="Ex.: 2 concentrados de hemácias"
-                  value={form.sangue}
-                  onChange={(e) => set("sangue")(e.target.value)}
+                  value={sangue}
+                  onChange={setSangue}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="multidisciplinar">
                   {isMedico ? "Equipe multidisciplinar" : "Equipe multidisciplinar/Fisioterapia"}
                 </Label>
-                <Input
+                <TagInput
                   id="multidisciplinar"
                   placeholder="Ex.: Fisioterapia 2x/dia"
-                  value={form.multidisciplinar}
-                  onChange={(e) => set("multidisciplinar")(e.target.value)}
+                  value={multidisciplinar}
+                  onChange={setMultidisciplinar}
                 />
               </div>
               <div className="grid gap-2">

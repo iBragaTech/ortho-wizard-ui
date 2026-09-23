@@ -144,25 +144,27 @@ export function TasyProcedureSelect({
           <span>
             {item.codigo} - {item.nome}
           </span>
-          <ItemQuantity
-            name={item.nome}
-            value={item.quantidade ?? 1}
-            onChange={(quantidade) =>
-              onChange(
-                value.map((v) =>
-                  v.codigo === item.codigo && v.origem === item.origem ? { ...v, quantidade } : v,
-                ),
-              )
-            }
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            aria-label={`Remover ${item.nome}`}
-            onClick={() => toggle(item)}
-          >
-            Remover
-          </Button>
+          <div className="flex items-end gap-2">
+            <ItemQuantity
+              name={item.nome}
+              value={item.quantidade ?? 1}
+              onChange={(quantidade) =>
+                onChange(
+                  value.map((v) =>
+                    v.codigo === item.codigo && v.origem === item.origem ? { ...v, quantidade } : v,
+                  ),
+                )
+              }
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              aria-label={`Remover ${item.nome}`}
+              onClick={() => toggle(item)}
+            >
+              Remover
+            </Button>
+          </div>
           <TasyPriceReference
             codigo={item.codigo}
             origem={item.origem}

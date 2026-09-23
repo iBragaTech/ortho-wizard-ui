@@ -32,7 +32,15 @@ type SessionContextValue = {
 
 const STORAGE_KEY = "portal.session";
 
-const SessionContext = createContext<SessionContextValue | null>(null);
+// Mantém um único contexto mesmo quando o módulo é recarregado (HMR),
+// evitando "useSession precisa estar dentro de <SessionProvider>".
+const globalScope = globalThis as typeof globalThis & {
+  __portalSessionContext?: React.Context<SessionContextValue | null>;
+};
+
+const SessionContext =
+  globalScope.__portalSessionContext ??
+  (globalScope.__portalSessionContext = createContext<SessionContextValue | null>(null));
 
 export function SessionProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();

@@ -589,6 +589,9 @@ export function NewRequestDialog({
                   value={sangue}
                   onChange={setSangue}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Pressione Enter para adicionar mais itens
+                </p>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="multidisciplinar">
@@ -600,6 +603,9 @@ export function NewRequestDialog({
                   value={multidisciplinar}
                   onChange={setMultidisciplinar}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Pressione Enter para adicionar mais itens
+                </p>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="bloco">Tempo de bloco</Label>

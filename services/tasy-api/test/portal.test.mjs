@@ -21,7 +21,7 @@ test("independent portal with a real embedded PostgreSQL database", async (t) =>
     perfil: "Médico",
     senha: password,
   });
-  await createUser(db, {
+  const other = await createUser(db, {
     nome: "Other",
     email: "other@example.test",
     perfil: "Médico",
@@ -196,9 +196,10 @@ test("independent portal with a real embedded PostgreSQL database", async (t) =>
     assert.equal(
       (await call("createDoctor", { nome: "Doctor", crm: "TEST", especialidade: "Teste" }))
         .statusCode,
-      200,
+      404,
     );
-    assert.equal((await call("listDoctors", {}, "doctor")).json().data.length, 1);
+    const doctorUsers = (await call("listDoctors", {}, "doctor")).json().data;
+    assert.deepEqual(new Set(doctorUsers.map((d) => d.id)), new Set([doctor.id, other.id]));
   });
   await t.test("invalid input and unauthorized SQL operations are rejected", async () => {
     assert.equal(

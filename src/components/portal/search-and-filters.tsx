@@ -27,6 +27,8 @@ export function SearchAndFilters({
   onChange: (f: Filters) => void;
 }) {
   const { data: doctors = [] } = useDoctors();
+  const { user } = useSession();
+  const podeVerTodosMedicos = user?.perfil === "Administrador" || user?.perfil === "Comercial";
   const set = (key: keyof Filters) => (value: string) => onChange({ ...filters, [key]: value });
 
   return (
@@ -56,19 +58,21 @@ export function SearchAndFilters({
           </SelectContent>
         </Select>
 
-        <Select value={filters.medico} onValueChange={set("medico")}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Médico" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os médicos</SelectItem>
-            {doctors.map((d) => (
-              <SelectItem key={d.id} value={d.nome}>
-                {d.nome}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {podeVerTodosMedicos && (
+          <Select value={filters.medico} onValueChange={set("medico")}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Médico" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os médicos</SelectItem>
+              {doctors.map((d) => (
+                <SelectItem key={d.id} value={d.nome}>
+                  {d.nome}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <Select value={filters.especialidade} onValueChange={set("especialidade")}>
           <SelectTrigger className="w-full">

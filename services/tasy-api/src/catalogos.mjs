@@ -54,7 +54,7 @@ export const catalogoOperations = {
       JOIN TASY.grupo_material d ON d.cd_grupo_material = c.cd_grupo_material
       WHERE a.ie_situacao = 'A' AND b.ie_situacao = 'A'
         AND c.ie_situacao = 'A' AND d.ie_situacao = 'A'
-        AND d.cd_grupo_material IN (59, 60, 61) AND a.ds_material IS NOT NULL
+        AND d.cd_grupo_material IN (59, 60, 61,13) AND a.ds_material IS NOT NULL
         AND (:busca IS NULL OR INSTR(UPPER(a.ds_material), UPPER(:busca)) > 0
           OR TRIM(TO_CHAR(a.cd_material)) LIKE TRIM(:busca) || '%')
       ORDER BY a.ds_material, a.cd_material OFFSET :offset ROWS FETCH NEXT 101 ROWS ONLY`,
@@ -76,7 +76,7 @@ export const catalogoOperations = {
         JOIN TASY.grupo_material d ON d.cd_grupo_material = c.cd_grupo_material
         WHERE a.ie_situacao = 'A' AND b.ie_situacao = 'A'
           AND c.ie_situacao = 'A' AND d.ie_situacao = 'A'
-          AND d.cd_grupo_material NOT IN (59, 60, 61) AND a.ds_material IS NOT NULL
+          AND d.cd_grupo_material NOT IN (59, 60, 61,13) AND a.ds_material IS NOT NULL
           AND (:busca IS NULL OR INSTR(UPPER(a.ds_material), UPPER(:busca)) > 0
             OR TRIM(TO_CHAR(a.cd_material)) LIKE TRIM(:busca) || '%')
         ORDER BY a.ds_material, a.cd_material OFFSET :offset ROWS FETCH NEXT 101 ROWS ONLY`,
@@ -110,6 +110,7 @@ export const catalogoOperations = {
       FROM TASY.categoria_convenio c JOIN TASY.convenio v ON v.cd_convenio = c.cd_convenio
       WHERE c.cd_convenio = :cdConvenio AND c.ie_situacao = 'A' AND v.ie_situacao = 'A'
       AND c.ds_categoria IS NOT NULL
+      AND c.cd_categoria IN (2,4)
       ORDER BY c.ds_categoria, c.cd_categoria OFFSET :offset ROWS FETCH NEXT 101 ROWS ONLY`,
         input,
       ),

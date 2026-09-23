@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   Bell,
@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/breadcrumb";
 import { UserAvatar } from "./user-avatar";
 import { ACESSO, useSession, type Perfil } from "@/lib/auth/session";
+import { useRequests } from "@/lib/data/hooks";
+import type { ConsultationRequest } from "@/data/mock";
 import { cn } from "@/lib/utils";
 import { ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
@@ -115,10 +117,51 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+interface PortalNotification {
+  id: string;
+  titulo: string;
+  descricao: string;
+  to: string;
+}
+
+function buildNotifications(
+  perfil: Perfil,
+  nome: string,
+  requests: ConsultationRequest[],
+): PortalNotification[] {
+  const numero = (r: ConsultationRequest) => r.numero ?? `#${r.id.slice(0, 8)}`;
+
+  if (perfil === "Médico") {
+    return requests
+      .filter((r) => r.status === "aguardando_medico" && r.medico === nome)
+      .map((r) => ({
+        id: `med-${r.id}`,
+        titulo: `Honorários pendentes — ${numero(r)}`,
+        descricao: `Preencher os honorários médicos de ${r.paciente.nome}.`,
+        to: `/orcamentos/${r.id}`,
+      }));
+  }
+
+  // Administrador e Comercial
+  return requests
+    .filter((r) => r.status === "aguardando_comercial")
+    .map((r) => ({
+      id: `com-${r.id}`,
+      titulo: `Novo orçamento do médico — ${numero(r)}`,
+      descricao: `${r.medico} criou o orçamento de ${r.paciente.nome}. Preencher os valores hospitalares.`,
+      to: `/orcamentos/${r.id}`,
+    }));
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const { user, ready, signOut } = useSession();
   const navigate = useNavigate();
+  const { data: requests = [] } = useRequests();
+  const notifications = useMemo(
+    () => (user ? buildNotifications(user.perfil, user.nome, requests) : []),
+    [user, requests],
+  );
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const base = "/" + (pathname.split("/")[1] ?? "");
   const title = titles[base] ?? titles[pathname] ?? "Portal";
@@ -202,11 +245,37 @@ export function AppShell({ children }: { children: ReactNode }) {
                   className="w-64 pl-9"
                 />
               </div>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-success" />
-                <span className="sr-only">Notificações</span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <Bell className="h-5 w-5" />
+                    {notifications.length > 0 && (
+                      <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-success px-1 text-[10px] font-bold text-success-foreground">
+                        {notifications.length > 9 ? "9+" : notifications.length}
+                      </span>
+                    )}
+                    <span className="sr-only">Notificações</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  <DropdownMenuLabel>Notificações</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {notifications.length === 0 ? (
+                    <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                      Nenhuma notificação por aqui.
+                    </p>
+                  ) : (
+                    notifications.slice(0, 8).map((n) => (
+                      <DropdownMenuItem key={n.id} asChild className="cursor-pointer">
+                        <Link to={n.to} className="flex flex-col items-start gap-0.5">
+                          <span className="text-sm font-medium text-foreground">{n.titulo}</span>
+                          <span className="text-xs text-muted-foreground">{n.descricao}</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button

@@ -1,3 +1,4 @@
+import { createTasyLinkValidator } from "./tasy-users.mjs";
 import { openDatabase, migrate } from "./database.mjs";
 import { createPortalApp } from "./app.mjs";
 import { readPrincipals } from "../config.mjs";
@@ -81,6 +82,7 @@ try {
     principals,
     tasyExecute,
     budgetExporter,
+    validateTasyLink: createTasyLinkValidator(oracle),
   });
   app.addHook("onClose", async () => {
     if (oracle) await oracle.close(10);

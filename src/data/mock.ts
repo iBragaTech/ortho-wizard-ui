@@ -412,6 +412,11 @@ export const doctors: Doctor[] = [
 ];
 
 export interface PortalUser {
+  nmUsuario?: string | null;
+  cdPerfil?: number | null;
+  cdEstabelecimento?: number | null;
+  consultarTodosPacientes?: boolean | null;
+  cadastrarPacientes?: boolean | null;
   id: string;
   nome: string;
   email: string;

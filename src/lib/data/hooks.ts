@@ -1,7 +1,12 @@
 // Hooks de leitura/escrita do portal. Todas as telas consomem o repositório
 // através daqui — a origem dos dados pode mudar sem tocar na interface.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { repository, type DoctorFeesInput, type InstitutionSettings, type NewRequestInput } from "./repository";
+import {
+  repository,
+  type DoctorFeesInput,
+  type InstitutionSettings,
+  type NewRequestInput,
+} from "./repository";
 
 export function useRequests() {
   return useQuery({ queryKey: ["requests"], queryFn: () => repository.listRequests() });
@@ -78,11 +83,15 @@ export function useCreateUser() {
       email: string;
       perfil: "Administrador" | "Comercial" | "Médico";
       senha: string;
+      nmUsuario?: string;
+      cdPerfil?: number;
+      cdEstabelecimento?: number;
+      consultarTodosPacientes?: boolean;
+      cadastrarPacientes?: boolean;
     }) => repository.createUser(input),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["portal_users"] }),
   });
 }
-
 
 export function useSaveSettings() {
   const qc = useQueryClient();

@@ -1,6 +1,7 @@
+import { linkFields, principalForLink, storeLink } from "./tasy-users.mjs";
 import { z } from "zod";
 import { ApiError } from "../errors.mjs";
-import { createUser, parse } from "./auth.mjs";
+import { createUser, parse, userSchema } from "./auth.mjs";
 import { tasySelection } from "../orcamento-schema.mjs";
 import { confirmZeroReference } from "./pricing.mjs";
 
@@ -30,17 +31,7 @@ const fees = z
   })
   .strict();
 const validCpf = (value) => {
-  if (!/^\d{11}$/.test(value) || /^(\d)\1{10}$/.test(value)) return false;
-  let sum = 0;
-  for (let index = 0; index < 9; index++) sum += Number(value[index]) * (10 - index);
-  let check = (sum * 10) % 11;
-  if (check === 10) check = 0;
-  if (check !== Number(value[9])) return false;
-  sum = 0;
-  for (let index = 0; index < 10; index++) sum += Number(value[index]) * (11 - index);
-  check = (sum * 10) % 11;
-  if (check === 10) check = 0;
-  return check === Number(value[10]);
+  return /^\d{11}$/.test(value) && !/^(\d)\1{10}$/.test(value);
 };
 const newRequest = z
   .object({
@@ -118,7 +109,10 @@ const event = (db, id, user, title, description = "") =>
     description,
   ]);
 
-export function createPortalOperations(db, { calculateQuote, auditIdentity = () => null } = {}) {
+export function createPortalOperations(
+  db,
+  { calculateQuote, auditIdentity = () => null, validateTasyLink } = {},
+) {
   const handlers = {
     editRequest: async (input, user) => {
       const value = parse(
@@ -405,7 +399,7 @@ export function createPortalOperations(db, { calculateQuote, auditIdentity = () 
           motivo: v.motivo,
           usuarioId: user.id,
           nomeUsuario: user.nome,
-          nmUsuario: auditIdentity(user),
+          nmUsuario: await auditIdentity(user, tx),
           dataHora: new Date().toISOString(),
           revisao: v.revisao,
         };
@@ -472,7 +466,7 @@ export function createPortalOperations(db, { calculateQuote, auditIdentity = () 
           motivo: v.motivo,
           usuarioId: user.id,
           nomeUsuario: user.nome,
-          nmUsuario: auditIdentity(user),
+          nmUsuario: await auditIdentity(user, tx),
           dataHora: new Date().toISOString(),
         };
         const data = {
@@ -619,7 +613,10 @@ export function createPortalOperations(db, { calculateQuote, auditIdentity = () 
     listUsers: async (_input, user) => {
       allowed(user, ["Administrador"]);
       const result = await db.query(
-        "SELECT id,nome,email,perfil,ativo,ultimo_acesso FROM portal.users ORDER BY nome",
+        `SELECT u.id,u.nome,u.email,u.perfil,u.ativo,u.ultimo_acesso,l.nm_usuario AS "nmUsuario",
+        (l.principal->>'tasyProfile')::int AS "cdPerfil",(l.principal->>'tasyEstablishment')::int AS "cdEstabelecimento",
+        (l.principal->>'allPessoaFisica')::boolean AS "consultarTodosPacientes",(l.principal->>'canCreatePessoaFisica')::boolean AS "cadastrarPacientes"
+        FROM portal.users u LEFT JOIN portal.tasy_user_links l ON l.user_id=u.id ORDER BY u.nome`,
       );
       return result.rows.map(({ ultimo_acesso, ...row }) => ({
         ...row,
@@ -628,7 +625,51 @@ export function createPortalOperations(db, { calculateQuote, auditIdentity = () 
     },
     createUser: async (input, user) => {
       allowed(user, ["Administrador"]);
-      await createUser(db, input);
+      const value = parse(userSchema.extend(linkFields).strict(), input);
+      if (!validateTasyLink)
+        throw new ApiError(
+          503,
+          "TASY_DISABLED",
+          "Configure a conexao Tasy para validar o cadastro.",
+        );
+      const {
+        nmUsuario,
+        cdPerfil,
+        cdEstabelecimento,
+        consultarTodosPacientes,
+        cadastrarPacientes,
+        ...account
+      } = value;
+      const link = await validateTasyLink({
+        nmUsuario,
+        cdPerfil,
+        cdEstabelecimento,
+        consultarTodosPacientes,
+        cadastrarPacientes,
+      });
+      await db.transaction(async (tx) => {
+        const created = await createUser(tx, account);
+        await storeLink(tx, created.id, principalForLink({ ...value, ...link }), user.id);
+      });
+      return null;
+    },
+    saveUserTasyLink: async (input, user) => {
+      allowed(user, ["Administrador"]);
+      const value = parse(z.object({ id: uuid, ...linkFields }).strict(), input);
+      if (!validateTasyLink)
+        throw new ApiError(
+          503,
+          "TASY_DISABLED",
+          "Configure a conexao Tasy para validar o cadastro.",
+        );
+      const link = await validateTasyLink(value);
+      await db.transaction(async (tx) => {
+        const target = await tx.query("SELECT id FROM portal.users WHERE id=$1 FOR UPDATE", [
+          value.id,
+        ]);
+        if (!target.rows.length) throw new ApiError(404, "NOT_FOUND", "Usuario nao encontrado.");
+        await storeLink(tx, value.id, principalForLink({ ...value, ...link }), user.id);
+      });
       return null;
     },
     getSettings: async () =>

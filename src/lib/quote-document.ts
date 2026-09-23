@@ -42,6 +42,7 @@ function savedDescriptions(request: ConsultationRequest): Map<string, string> {
   const text = request.observacoes || "";
   const pattern = /\b(\d{1,15})(?:\s*\(origem\s+(\d+)\))?\s*-\s*([^;\n]+)/gi;
   for (const match of text.matchAll(pattern)) {
+    if (!match[1] || !match[3]) continue;
     const key = `${match[1]}:${match[2] ?? ""}`;
     descriptions.set(key, match[3]?.trim() ?? "");
     if (!match[2]) descriptions.set(`${match[1]}:`, match[3]?.trim() ?? "");

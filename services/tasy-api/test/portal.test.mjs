@@ -33,7 +33,12 @@ test("independent portal with a real embedded PostgreSQL database", async (t) =>
     perfil: "Comercial",
     senha: password,
   });
-  const app = await createPortalApp({ db, portalOrigin: "http://localhost:5173", logger: false });
+  const app = await createPortalApp({
+    db,
+    portalOrigin: "http://localhost:5173",
+    logger: false,
+    validateTasyLink: async (v) => v,
+  });
   t.after(async () => {
     await app.close();
     await db.close();
@@ -157,6 +162,9 @@ test("independent portal with a real embedded PostgreSQL database", async (t) =>
         await call("createUser", {
           nome: "New",
           email: "new@example.test",
+          nmUsuario: "newuser",
+          cdPerfil: 10,
+          cdEstabelecimento: 2,
           perfil: "Comercial",
           senha: password,
         })
@@ -168,6 +176,9 @@ test("independent portal with a real embedded PostgreSQL database", async (t) =>
         await call("createUser", {
           nome: "New",
           email: "new@example.test",
+          nmUsuario: "newuser",
+          cdPerfil: 10,
+          cdEstabelecimento: 2,
           perfil: "Comercial",
           senha: password,
         })

@@ -106,5 +106,11 @@ export async function migrate(db) {
       await tx.exec(await readFile(new URL("./export-schema.sql", import.meta.url), "utf8"));
       await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (2)");
     }
+    if (
+      !(await tx.query("SELECT version FROM portal.schema_migrations WHERE version=3")).rows.length
+    ) {
+      await tx.exec(await readFile(new URL("./tasy-users-schema.sql", import.meta.url), "utf8"));
+      await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (3)");
+    }
   });
 }

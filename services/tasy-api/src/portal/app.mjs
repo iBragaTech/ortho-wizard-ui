@@ -1,3 +1,4 @@
+import { importLegacyLinks, createLinkResolver } from "./tasy-users.mjs";
 import { createApp } from "../app.mjs";
 import { createLocalAuth, publicUser } from "./auth.mjs";
 import { createPortalOperations } from "./operations.mjs";
@@ -12,7 +13,10 @@ export async function createPortalApp({
   principals = {},
   logger = true,
   budgetExporter,
+  validateTasyLink,
 }) {
+  await importLegacyLinks(db, principals);
+  const resolvePrincipal = createLinkResolver(db, validateTasyLink);
   const auth = await createLocalAuth(db);
   const app = await createApp({
     portalOrigin,
@@ -25,10 +29,7 @@ export async function createPortalApp({
           "TASY_DISABLED",
           "A consulta ao Tasy ainda não está habilitada neste ambiente.",
         );
-      const principal = Object.hasOwn(principals, user.id) ? principals[user.id] : null;
-      if (!principal?.enabled)
-        throw new ApiError(403, "FORBIDDEN", "Usuário sem vínculo autorizado com o Tasy.");
-      return { ...principal, subject: user.id };
+      return resolvePrincipal(user);
     },
     execute:
       tasyExecute ||
@@ -38,12 +39,12 @@ export async function createPortalApp({
   });
   const run = createPortalOperations(db, {
     calculateQuote: tasyExecute
-      ? createQuoteCalculator({ execute: tasyExecute, principals })
+      ? createQuoteCalculator({ execute: tasyExecute, principals, resolvePrincipal })
       : undefined,
-    auditIdentity: (user) =>
-      principals[user.id]?.enabled ? principals[user.id].tasyUsername : null,
+    auditIdentity: async (user, tx) => (await resolvePrincipal(user, tx)).tasyUsername,
+    validateTasyLink,
   });
-  const exports = createExportService({ db, send: budgetExporter, principals });
+  const exports = createExportService({ db, send: budgetExporter, principals, resolvePrincipal });
   const signed = async (request) => {
     request.portalUser = await auth.authenticate(request.headers.authorization);
   };

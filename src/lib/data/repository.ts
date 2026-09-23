@@ -385,6 +385,11 @@ const supabaseRepository = {
     email: string;
     perfil: PortalUser["perfil"];
     senha: string;
+    nmUsuario?: string;
+    cdPerfil?: number;
+    cdEstabelecimento?: number;
+    consultarTodosPacientes?: boolean;
+    cadastrarPacientes?: boolean;
   }): Promise<void> {
     if (supabaseAuthEnabled) {
       throw new Error(

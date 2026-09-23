@@ -16,19 +16,7 @@ const birthDate = dateFormat.refine((value) => {
 const cpf = z
   .string()
   .regex(/^\d{11}$/)
-  .refine((value) => {
-    if (/^(\d)\1{10}$/.test(value)) return false;
-    let sum = 0;
-    for (let index = 0; index < 9; index++) sum += Number(value[index]) * (10 - index);
-    let check = (sum * 10) % 11;
-    if (check === 10) check = 0;
-    if (check !== Number(value[9])) return false;
-    sum = 0;
-    for (let index = 0; index < 10; index++) sum += Number(value[index]) * (11 - index);
-    check = (sum * 10) % 11;
-    if (check === 10) check = 0;
-    return check === Number(value[10]);
-  }, "CPF inválido.");
+  .refine((value) => !/^(\d)\1{10}$/.test(value), "CPF inválido.");
 const fields = z
   .object({
     nmPessoaFisica: z.string().trim().min(1).max(60),

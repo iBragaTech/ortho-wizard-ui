@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ApiError } from "../errors.mjs";
 import { tasySelection } from "../orcamento-schema.mjs";
-export function createExportService({ db, send, principals }) {
+export function createExportService({ db, send, principals, resolvePrincipal }) {
   const access = async (tx, id, user, lock = false) => {
     const row = (
       await tx.query(
@@ -42,7 +42,7 @@ export function createExportService({ db, send, principals }) {
           "EXPORT_DISABLED",
           "Envio ao Tasy ainda não habilitado na homologação.",
         );
-      const principal = principals[user.id];
+      const principal = resolvePrincipal ? await resolvePrincipal(user) : principals[user.id];
       if (!principal?.enabled || !principal.operations.includes("orcamentos.enviar"))
         throw new ApiError(
           403,

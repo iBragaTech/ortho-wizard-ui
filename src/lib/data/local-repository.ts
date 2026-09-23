@@ -27,6 +27,11 @@ export const localRepository = {
     email: string;
     perfil: PortalUser["perfil"];
     senha: string;
+    nmUsuario?: string;
+    cdPerfil?: number;
+    cdEstabelecimento?: number;
+    consultarTodosPacientes?: boolean;
+    cadastrarPacientes?: boolean;
   }) => portalCall<void>("createUser", input),
   getSettings: () => portalCall<InstitutionSettings>("getSettings"),
   saveSettings: (input: InstitutionSettings) => portalCall<void>("saveSettings", input),

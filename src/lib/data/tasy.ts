@@ -23,6 +23,7 @@ export interface PessoaFisicaTasy {
 
 export function isValidCpf(value: string): boolean {
   const digits = value.replace(/\D/g, "");
+<<<<<<< HEAD
   if (!/^\d{11}$/.test(digits) || /^\d{11}$/.test((digits[0] ?? "").repeat(11))) return false;
   let sum = 0;
   for (let index = 0; index < 9; index++) sum += Number(digits[index]) * (10 - index);
@@ -34,6 +35,9 @@ export function isValidCpf(value: string): boolean {
   check = (sum * 10) % 11;
   if (check === 10) check = 0;
   return check === Number(digits[10]);
+=======
+  return /^\d{11}$/.test(digits) && !/^(\d)\1{10}$/.test(digits);
+>>>>>>> d1ce128 (Modificações usuarios)
 }
 
 // Preserve a complete/formatted number as stored; add area code only to a local number.

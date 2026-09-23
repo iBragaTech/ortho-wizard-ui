@@ -66,7 +66,7 @@ export function confirmZeroReference(reference, item) {
   };
 }
 
-export function createQuoteCalculator({ execute, principals }) {
+export function createQuoteCalculator({ execute, principals, resolvePrincipal }) {
   return async (selection, user, cpf) => {
     if (!execute)
       throw new ApiError(
@@ -74,7 +74,11 @@ export function createQuoteCalculator({ execute, principals }) {
         "TASY_DISABLED",
         "Habilite a conexão Tasy para calcular o orçamento.",
       );
-    const mapping = Object.hasOwn(principals, user.id) ? principals[user.id] : null;
+    const mapping = resolvePrincipal
+      ? await resolvePrincipal(user)
+      : Object.hasOwn(principals, user.id)
+        ? principals[user.id]
+        : null;
     if (!mapping?.enabled)
       throw new ApiError(403, "FORBIDDEN", "Usuário sem vínculo autorizado com o Tasy.");
     const principal = { ...mapping, subject: user.id };

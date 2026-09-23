@@ -44,7 +44,7 @@ export function RequestTable({
                 {showNumber ? <TableHead>Nº</TableHead> : null}
                 <TableHead>Paciente</TableHead>
                 <TableHead>Médico</TableHead>
-                <TableHead>Especialidade</TableHead>
+                <TableHead>Procedimento</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Valor</TableHead>

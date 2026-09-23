@@ -40,26 +40,24 @@ export function TagInput({
         onBlur={add}
       />
       {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
-      {value.length > 0 && (
-        <ul className="flex flex-wrap gap-2">
-          {value.map((item, index) => (
-            <li
-              key={`${item}-${index}`}
-              className="flex items-center gap-1 rounded-md border bg-muted/40 px-2 py-1 text-sm"
+      <ul className="flex h-9 flex-wrap content-start gap-2 overflow-y-auto">
+        {value.map((item, index) => (
+          <li
+            key={`${item}-${index}`}
+            className="flex items-center gap-1 rounded-md border bg-muted/40 px-2 py-1 text-sm"
+          >
+            <span>{item}</span>
+            <button
+              type="button"
+              aria-label={`Remover ${item}`}
+              className="text-muted-foreground hover:text-foreground"
+              onClick={() => onChange(value.filter((_, i) => i !== index))}
             >
-              <span>{item}</span>
-              <button
-                type="button"
-                aria-label={`Remover ${item}`}
-                className="text-muted-foreground hover:text-foreground"
-                onClick={() => onChange(value.filter((_, i) => i !== index))}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

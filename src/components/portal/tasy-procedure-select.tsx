@@ -140,37 +140,39 @@ export function TasyProcedureSelect({
         </>
       )}
       {value.map((item) => (
-        <div key={`${item.codigo}:${item.origem}`} className="grid gap-2 text-sm">
-          <span>
+        <div
+          key={`${item.codigo}:${item.origem}`}
+          className="flex flex-wrap items-center gap-3 text-sm"
+        >
+          <span className="min-w-48 flex-1">
             {item.codigo} - {item.nome}
           </span>
-          <div className="flex flex-wrap items-end gap-2">
-            <ItemQuantity
-              name={item.nome}
-              value={item.quantidade ?? 1}
-              onChange={(quantidade) =>
-                onChange(
-                  value.map((v) =>
-                    v.codigo === item.codigo && v.origem === item.origem ? { ...v, quantidade } : v,
-                  ),
-                )
-              }
-            />
-            <TasyPriceReference
-              codigo={item.codigo}
-              origem={item.origem}
-              cdConvenio={cdConvenio}
-              cdCategoria={cdCategoria}
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              aria-label={`Remover ${item.nome}`}
-              onClick={() => toggle(item)}
-            >
-              Remover
-            </Button>
-          </div>
+          <ItemQuantity
+            inline
+            name={item.nome}
+            value={item.quantidade ?? 1}
+            onChange={(quantidade) =>
+              onChange(
+                value.map((v) =>
+                  v.codigo === item.codigo && v.origem === item.origem ? { ...v, quantidade } : v,
+                ),
+              )
+            }
+          />
+          <TasyPriceReference
+            codigo={item.codigo}
+            origem={item.origem}
+            cdConvenio={cdConvenio}
+            cdCategoria={cdCategoria}
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            aria-label={`Remover ${item.nome}`}
+            onClick={() => toggle(item)}
+          >
+            Remover
+          </Button>
         </div>
       ))}
     </div>

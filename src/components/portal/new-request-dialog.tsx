@@ -36,6 +36,7 @@ import {
   type TasyProcedureItem,
 } from "@/components/portal/tasy-procedure-select";
 import { TasyPatientSearch } from "@/components/portal/tasy-patient-search";
+import { TagInput } from "@/components/portal/tag-input";
 import { isValidCpf, telefonePessoaTasy } from "@/lib/data/tasy";
 import { getTasyClient } from "@/lib/data/tasy-supabase";
 
@@ -86,6 +87,8 @@ export function NewRequestDialog({
   const [catalogContext, setCatalogContext] = useState({ cdConvenio: "", cdCategoria: "" });
   const [temCti, setTemCti] = useState(false);
   const [anestesista, setAnestesista] = useState(false);
+  const [sangue, setSangue] = useState<string[]>([]);
+  const [multidisciplinar, setMultidisciplinar] = useState<string[]>([]);
   const create = useCreateRequest();
   const { user } = useSession();
   const origem = user?.perfil === "Médico" ? "medico" : origemProp;
@@ -174,8 +177,9 @@ export function NewRequestDialog({
           opmeTexto && `OPME: ${opmeTexto}`,
           materiaisTexto && `Materiais: ${materiaisTexto}`,
           form.anatomo && `Anátomo Patológico: ${form.anatomo}`,
-          form.sangue && `Reserva de sangue: ${form.sangue}`,
-          form.multidisciplinar && `Equipe multidisciplinar/Fisioterapia: ${form.multidisciplinar}`,
+          sangue.length && `Reserva de sangue: ${sangue.join("; ")}`,
+          multidisciplinar.length &&
+            `Equipe multidisciplinar/Fisioterapia: ${multidisciplinar.join("; ")}`,
           form.bloco && `Tempo de bloco: ${form.bloco}`,
         ]
           .filter(Boolean)

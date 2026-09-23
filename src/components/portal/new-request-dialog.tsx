@@ -586,12 +586,10 @@ export function NewRequestDialog({
                 <TagInput
                   id="sangue"
                   placeholder="Ex.: 2 concentrados de hemácias"
+                  hint="Pressione Enter para adicionar mais itens"
                   value={sangue}
                   onChange={setSangue}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Pressione Enter para adicionar mais itens
-                </p>
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="multidisciplinar">
@@ -600,18 +598,17 @@ export function NewRequestDialog({
                 <TagInput
                   id="multidisciplinar"
                   placeholder="Ex.: Fisioterapia 2x/dia"
+                  hint="Pressione Enter para adicionar mais itens"
                   value={multidisciplinar}
                   onChange={setMultidisciplinar}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Pressione Enter para adicionar mais itens
-                </p>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="bloco">Tempo de bloco</Label>
+                <Label htmlFor="bloco">Tempo de bloco (minutos)</Label>
                 <Input
                   id="bloco"
-                  placeholder="Ex.: 2h30"
+                  inputMode="numeric"
+                  placeholder="Insira o tempo em minutos"
                   value={form.bloco}
                   onChange={(e) => set("bloco")(e.target.value)}
                 />

@@ -137,10 +137,10 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="tempo-bloco">Tempo de bloco</Label>
+<Label htmlFor="tempo-bloco">Tempo de bloco (minutos)</Label>
                 <Input
                   id="tempo-bloco"
-                  placeholder="Ex.: 2h30"
+placeholder="Insira o tempo em minutos"
                   value={form.tempoBloco}
                   onChange={(e) => set("tempoBloco")(e.target.value)}
                 />

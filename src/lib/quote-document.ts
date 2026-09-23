@@ -238,7 +238,7 @@ export function buildQuoteHtml(
 
   const detalhes = [
     ["OPME", request.opme],
-    ["Anatomo patológico", request.anatomoPatologico],
+    ["Anátomo Patológico", request.anatomoPatologico],
     ["Reserva de sangue", request.reservaSangue],
     ["Equipe multidisciplinar", request.equipeMultidisciplinar],
     ["Tempo de bloco", request.tempoBloco],

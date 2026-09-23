@@ -168,7 +168,7 @@ export function NewRequestDialog({
           temCti && form.diariaCti && `Diária CTI: ${form.diariaCti}`,
           opmeTexto && `OPME: ${opmeTexto}`,
           materiaisTexto && `Materiais: ${materiaisTexto}`,
-          form.anatomo && `Anatomo patológico: ${form.anatomo}`,
+          form.anatomo && `Anátomo Patológico: ${form.anatomo}`,
           form.sangue && `Reserva de sangue: ${form.sangue}`,
           form.multidisciplinar && `Equipe multidisciplinar/Fisioterapia: ${form.multidisciplinar}`,
           form.bloco && `Tempo de bloco: ${form.bloco}`,
@@ -538,7 +538,7 @@ export function NewRequestDialog({
 
               <div className="grid gap-2 sm:col-span-2">
                 <Label htmlFor="anamoto">
-                  {isMedico ? "Anatomo Patológico" : "Anamoto patológico"}
+                  Anátomo Patológico
                 </Label>
                 <Textarea
                   id="anamoto"

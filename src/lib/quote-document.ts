@@ -275,8 +275,8 @@ export function buildQuoteHtml(
   .items tbody tr:nth-child(even) { background: #f2f2f2; }
   .items .r { text-align: right; }
   .items .c { text-align: center; }
-  .items tfoot td { padding: 4px 6px; font-weight: bold; }
-  .items tfoot .lbl { text-align: right; }
+  .items .subtotal td, .items .grand-total td { padding: 4px 6px; font-weight: bold; }
+  .items .lbl { text-align: right; }
   .notes { border-top: 1px solid #000; padding: 8px 12px 16px; line-height: 1.45; }
   .notes h3 { font-size: 11px; margin: 0 0 8px; }
   .notes p { margin: 0 0 8px; }
@@ -333,15 +333,15 @@ export function buildQuoteHtml(
   <tbody>
 ${linhas}
   </tbody>
-  <tfoot>
+  <tbody class="subtotal">
     <tr>
       <td></td><td class="lbl">Total Procedimento</td><td></td>
       <td class="r">${num(somaMedico)}</td><td class="r">${num(somaAnest)}</td>
       <td class="r">${num(somaHosp)}</td><td class="r">${num(somaDesc)}</td><td class="r">${num(totalProc)}</td>
     </tr>
-  </tfoot>
+  </tbody>
   ${materials.length ? `<tbody><tr><th colspan="4" style="text-align:left">Materiais e OPME</th><th>Qtde</th><th>Vl. unitário</th><th>Desconto</th><th>Total</th></tr>${materialRows}<tr><td colspan="7" class="lbl">Total Materiais e OPME</td><td class="r">${num(totalMaterial)}</td></tr></tbody>` : legacyMaterials ? `<tbody><tr><th colspan="8" style="text-align:left">Materiais e OPME</th></tr><tr><td colspan="8">${esc(legacyMaterials)}<br/>Valores por item não discriminados neste registro. O total do orçamento permanece o valor registrado.</td></tr></tbody>` : ""}
-  <tbody>
+  <tbody class="grand-total">
     <tr>
       <td></td><td class="lbl">Total Geral</td><td colspan="4"></td>
       <td class="r">${num(somaDesc)}</td><td class="r">${num(totalGeral)}</td>

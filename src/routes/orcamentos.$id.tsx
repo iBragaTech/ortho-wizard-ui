@@ -157,6 +157,14 @@ function RequestDetail() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <InfoField
+                  label="Honorário solicitado pelo médico"
+                  value={
+                    request.honorariosSolicitados == null
+                      ? "Não registrado nesta solicitação"
+                      : formatCurrency(request.honorariosSolicitados)
+                  }
+                />
+                <InfoField
                   label="Equipe / anestesista"
                   value={request.equipeMultidisciplinar || "Não informado"}
                 />

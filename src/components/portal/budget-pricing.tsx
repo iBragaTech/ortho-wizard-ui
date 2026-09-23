@@ -220,12 +220,22 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
             ) : (
               <>
                 <p className="text-sm">
-                  Total de referência (inclui zeros confirmados):{" "}
+                  Total dos itens de referência do Tasy:{" "}
                   <strong>{formatCurrency(pricing.referencia.total)}</strong>
                 </p>
                 <p className="text-sm">
                   Honorários atuais: {formatCurrency(request.honorariosMedicos)} · Hospitalar atual:{" "}
                   {formatCurrency(request.valorHospitalar)}
+                </p>
+                <p className="text-sm font-semibold">
+                  Total do orçamento com os honorários atuais:{" "}
+                  {formatCurrency(
+                    request.honorariosMedicos == null || request.valorHospitalar == null
+                      ? null
+                      : (Math.round(request.honorariosMedicos * 100) +
+                          Math.round(request.valorHospitalar * 100)) /
+                          100,
+                  )}
                 </p>
                 {!canReview ? null : !editing ? (
                   <Button

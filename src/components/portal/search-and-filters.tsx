@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select";
 import { especialidades, statusLabels, type RequestStatus } from "@/data/mock";
 import { useDoctors } from "@/lib/data/hooks";
+import { useSession } from "@/lib/auth/session";
 
 export interface Filters {
   busca: string;

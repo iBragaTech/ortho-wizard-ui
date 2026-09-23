@@ -281,9 +281,9 @@ export function NewRequestDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Novo orçamento</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className={localAuthEnabled ? "sr-only" : undefined}>
             {localAuthEnabled
-              ? "Os preços vigentes do Tasy serão calculados ao criar. Ajustes posteriores exigem justificativa."
+              ? "Cadastro de novo orçamento."
               : isMedico
                 ? "Preencha os dados médicos. O orçamento segue para o Comercial completar os valores hospitalares."
                 : "Os dados são salvos no banco e o orçamento segue para preenchimento do médico."}
@@ -292,13 +292,6 @@ export function NewRequestDialog({
 
         <div className="grid gap-6">
           <section className="grid gap-4">
-            {localAuthEnabled && (
-              <p className="text-sm text-muted-foreground">
-                Informe a quantidade de cada item selecionado. Inclua diárias e outros serviços como
-                procedimentos do catálogo para que entrem no cálculo. Ajustes de valor são feitos
-                nos detalhes, com justificativa.
-              </p>
-            )}
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               Dados do paciente
             </h3>
@@ -425,13 +418,6 @@ export function NewRequestDialog({
           </section>
 
           <section className="grid gap-4">
-            {localAuthEnabled && (
-              <p className="text-sm text-muted-foreground">
-                Informe a quantidade de cada item selecionado. Inclua diárias e outros serviços como
-                procedimentos do catálogo para que entrem no cálculo. Ajustes de valor são feitos
-                nos detalhes, com justificativa.
-              </p>
-            )}
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               {isMedico ? "Dados médicos" : "Dados do procedimento"}
             </h3>

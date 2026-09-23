@@ -307,21 +307,21 @@ const supabaseRepository = {
 
   async listDoctors(): Promise<Doctor[]> {
     const data = unwrap(
-      await supabase.from("doctors").select("id, nome, crm, especialidade, ativo").order("nome"),
+      await supabase
+        .from("portal_users")
+        .select("id, nome, ativo")
+        .eq("perfil", "medico")
+        .eq("ativo", true)
+        .order("nome"),
     );
     return (data as any[]).map((d) => ({
       id: d.id,
       nome: d.nome,
-      crm: d.crm,
-      especialidade: d.especialidade,
+      crm: "",
+      especialidade: "",
       ativo: d.ativo,
       solicitacoes: 0,
     }));
-  },
-
-  async createDoctor(input: { nome: string; crm: string; especialidade: string }): Promise<void> {
-    const { error } = await supabase.from("doctors").insert(input);
-    if (error) throw new Error(error.message);
   },
 
   async listUsers(): Promise<PortalUser[]> {

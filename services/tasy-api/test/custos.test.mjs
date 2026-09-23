@@ -55,6 +55,11 @@ test("Custos exclusively reviews, audits and approves; prices stay private until
     calculateQuote,
     auditIdentity: (user) => `tasy-${user.nome}`,
   });
+  const doctors = await run("listDoctors", {}, costs);
+  assert.deepEqual(new Set(doctors.map((d) => d.id)), new Set([doctor.id, other.id]));
+  await db.query("UPDATE portal.users SET ativo=false WHERE id=$1", [other.id]);
+  assert.equal((await run("listDoctors", {}, costs)).length, 1);
+  await assert.rejects(run("createDoctor", {}, costs), (e) => e.code === "NOT_FOUND");
   const input = {
     nome: "Paciente teste",
     cpf: "52998224725",
@@ -167,8 +172,14 @@ test("Custos exclusively reviews, audits and approves; prices stay private until
     "UPDATE portal.requests SET data=jsonb_set(data,'{precificacao,referencia,completo}','false') WHERE id=$1",
     [direct],
   );
-  await assert.rejects(run("approveRequest", {id: direct, revisao: 1}, costs), e => e.code === "INCOMPLETE_PRICE");
-  await assert.rejects(run("createRequest", {...input, medico: undefined}, doctor), e => e.code === "INVALID_INPUT");
+  await assert.rejects(
+    run("approveRequest", { id: direct, revisao: 1 }, costs),
+    (e) => e.code === "INCOMPLETE_PRICE",
+  );
+  await assert.rejects(
+    run("createRequest", { ...input, medico: undefined }, doctor),
+    (e) => e.code === "INVALID_INPUT",
+  );
 });
 
 test("HTTP price endpoints reject doctor and commercial before contacting Oracle", async (t) => {
@@ -176,27 +187,67 @@ test("HTTP price endpoints reject doctor and commercial before contacting Oracle
   const { createPortalApp } = await import("../src/portal/app.mjs");
   const { createExecutor } = await import("../src/executor.mjs");
   const { z } = await import("zod");
-  const db = await openDatabase({PORTAL_DATA_DIR: ":memory:"});
+  const db = await openDatabase({ PORTAL_DATA_DIR: ":memory:" });
   t.after(() => db.close());
   await migrate(db);
   const principals = {};
   for (const [i, perfil] of ["Médico", "Comercial"].entries()) {
-    const user = await createUser(db, {nome: `User ${i}`,email:`price${i}@example.test`,perfil,senha:"test-password-local"});
-    principals[user.id] = {enabled:true,tasyUsername:`test${i}`,tasyProfile:1,tasyEstablishment:2,operations:["precos.procedimento","precos.material"]};
+    const user = await createUser(db, {
+      nome: `User ${i}`,
+      email: `price${i}@example.test`,
+      perfil,
+      senha: "test-password-local",
+    });
+    principals[user.id] = {
+      enabled: true,
+      tasyUsername: `test${i}`,
+      tasyProfile: 1,
+      tasyEstablishment: 2,
+      operations: ["precos.procedimento", "precos.material"],
+    };
   }
   let oracleCalls = 0;
-  const tasyExecute = createExecutor({pool:{getConnection:async () => {oracleCalls++; throw Error("must not run");}},
-    operations: Object.fromEntries(["precos.procedimento","precos.material"].map(name => [name,{kind:"read",schema:z.object({}),authorize:()=>true}])),
-    writesEnabled:false, audit:()=>{},callTimeout:1000});
-  const app = await createPortalApp({db,principals,tasyExecute,portalOrigin:"http://localhost:5173",logger:false});
+  const tasyExecute = createExecutor({
+    pool: {
+      getConnection: async () => {
+        oracleCalls++;
+        throw Error("must not run");
+      },
+    },
+    operations: Object.fromEntries(
+      ["precos.procedimento", "precos.material"].map((name) => [
+        name,
+        { kind: "read", schema: z.object({}), authorize: () => true },
+      ]),
+    ),
+    writesEnabled: false,
+    audit: () => {},
+    callTimeout: 1000,
+  });
+  const app = await createPortalApp({
+    db,
+    principals,
+    tasyExecute,
+    portalOrigin: "http://localhost:5173",
+    logger: false,
+  });
   t.after(() => app.close());
-  for (let i=0; i<2; i++) {
-    const login = await app.inject({method:"POST",url:"/v1/auth/login",payload:{email:`price${i}@example.test`,senha:"test-password-local"}});
-    assert.equal(login.statusCode,200);
-    for (const name of ["precos.procedimento","precos.material"]) {
-      const response = await app.inject({method:"POST",url:`/v1/operations/${name}`,payload:{},headers:{authorization:`Bearer ${login.json().data.token}`}});
-      assert.equal(response.statusCode,403);
+  for (let i = 0; i < 2; i++) {
+    const login = await app.inject({
+      method: "POST",
+      url: "/v1/auth/login",
+      payload: { email: `price${i}@example.test`, senha: "test-password-local" },
+    });
+    assert.equal(login.statusCode, 200);
+    for (const name of ["precos.procedimento", "precos.material"]) {
+      const response = await app.inject({
+        method: "POST",
+        url: `/v1/operations/${name}`,
+        payload: {},
+        headers: { authorization: `Bearer ${login.json().data.token}` },
+      });
+      assert.equal(response.statusCode, 403);
     }
   }
-  assert.equal(oracleCalls,0);
+  assert.equal(oracleCalls, 0);
 });

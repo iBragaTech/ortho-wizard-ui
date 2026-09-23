@@ -608,28 +608,9 @@ export function createPortalOperations(
     listDoctors: async () =>
       (
         await db.query(
-          "SELECT id,nome,crm,especialidade,ativo,0 AS solicitacoes FROM portal.doctors ORDER BY nome",
+          "SELECT id,nome,'' AS crm,'' AS especialidade,ativo,0 AS solicitacoes FROM portal.users WHERE perfil='Médico' AND ativo=true ORDER BY nome",
         )
       ).rows,
-    createDoctor: async (input, user) => {
-      allowed(user, ["Administrador"]);
-      const value = parse(
-        z
-          .object({
-            nome: z.string().trim().min(1).max(120),
-            crm: z.string().trim().min(1).max(40),
-            especialidade: z.string().trim().min(1).max(120),
-          })
-          .strict(),
-        input,
-      );
-      await db.query("INSERT INTO portal.doctors(nome,crm,especialidade) VALUES ($1,$2,$3)", [
-        value.nome,
-        value.crm,
-        value.especialidade,
-      ]);
-      return null;
-    },
     listUsers: async (_input, user) => {
       allowed(user, ["Administrador"]);
       const result = await db.query(

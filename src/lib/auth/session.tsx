@@ -153,7 +153,6 @@ export const ACESSO: Record<string, Perfil[]> = {
   "/orcamentos": PERFIS,
   "/area-medico": ["Administrador", "Médico"],
   "/area-comercial": ["Administrador", "Comercial"],
-  "/medicos": ["Administrador"],
   "/usuarios": ["Administrador"],
   "/configuracoes": ["Administrador"],
 };

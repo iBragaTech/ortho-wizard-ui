@@ -66,15 +66,6 @@ export function useSaveHospitalValue() {
   });
 }
 
-export function useCreateDoctor() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: { nome: string; crm: string; especialidade: string }) =>
-      repository.createDoctor(input),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["doctors"] }),
-  });
-}
-
 export function useCreateUser() {
   const qc = useQueryClient();
   return useMutation({

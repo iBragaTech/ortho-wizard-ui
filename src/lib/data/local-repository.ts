@@ -19,8 +19,7 @@ export const localRepository = {
     portalCall<void>("saveHospitalValue", { id, valor, obs }),
   getTimeline: (id: string) => portalCall<TimelineEvent[]>("getTimeline", { id }),
   listDoctors: () => portalCall<Doctor[]>("listDoctors"),
-  createDoctor: (input: { nome: string; crm: string; especialidade: string }) =>
-    portalCall<void>("createDoctor", input),
+
   listUsers: () => portalCall<PortalUser[]>("listUsers"),
   createUser: (input: {
     nome: string;

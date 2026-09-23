@@ -522,18 +522,26 @@ export function NewRequestDialog({
                       onChange={(e) => set("diariaEnf")(e.target.value)}
                     />
                   </div>
-                  <div className="grid gap-2 sm:col-span-2">
-                    <label className="flex items-center gap-2 text-sm">
-                      <Checkbox
-                        checked={temCti}
-                        onCheckedChange={(c) => {
-                          setTemCti(Boolean(c));
-                          if (!c) set("diariaCti")("");
-                        }}
-                      />
-                      Possui CTI
-                    </label>
-                  </div>
+                </>
+              )}
+            </div>
+
+            {!isMedico && (
+              <div className="grid gap-4">
+                <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  CTI
+                </h4>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={temCti}
+                      onCheckedChange={(c) => {
+                        setTemCti(Boolean(c));
+                        if (!c) set("diariaCti")("");
+                      }}
+                    />
+                    Possui CTI
+                  </label>
                   {temCti && (
                     <div className="grid gap-2">
                       <Label htmlFor="diaria-cti">Diária CTI</Label>
@@ -546,9 +554,11 @@ export function NewRequestDialog({
                       />
                     </div>
                   )}
-                </>
-              )}
+                </div>
+              </div>
+            )}
 
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2 sm:col-span-2">
                 <Label>Materiais do Tasy</Label>
                 <TasyMaterialSelect {...catalogContext} value={materiais} onChange={setMateriais} />

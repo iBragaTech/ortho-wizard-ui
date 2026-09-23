@@ -164,7 +164,7 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="anatomo">Anatomo Patológico</Label>
+                <Label htmlFor="anatomo">Anátomo Patológico</Label>
                 <Textarea
                   id="anatomo"
                   rows={2}

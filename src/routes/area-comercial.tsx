@@ -166,7 +166,7 @@ function AreaComercial() {
                     <InfoField label="Fisioterapia" value={selected.fisioterapia !== null ? `${selected.fisioterapia} sessões` : "—"} />
                     <InfoField label="Tempo de bloco" value={selected.tempoBloco || "—"} />
                     <InfoField label="OPME" value={selected.opme || "—"} />
-                    <InfoField label="Anatomo Patológico" value={selected.anatomoPatologico || "—"} />
+                    <InfoField label="Anátomo Patológico" value={selected.anatomoPatologico || "—"} />
                     <InfoField label="Reserva de sangue" value={selected.reservaSangue || "—"} />
                     <InfoField label="Equipe multidisciplinar" value={selected.equipeMultidisciplinar || "—"} />
                   </dl>

@@ -284,7 +284,11 @@ export function NewRequestDialog({
       }}
     >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
+      <DialogContent
+        className="max-h-[90vh] overflow-y-auto sm:max-w-6xl"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Novo orçamento</DialogTitle>
           <DialogDescription className={localAuthEnabled ? "sr-only" : undefined}>

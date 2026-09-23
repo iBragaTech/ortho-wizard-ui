@@ -141,10 +141,10 @@ export function TasyProcedureSelect({
       )}
       {value.map((item) => (
         <div key={`${item.codigo}:${item.origem}`} className="grid gap-2 text-sm">
-          <span>
-            {item.codigo} - {item.nome}
-          </span>
-          <div className="flex items-end gap-2">
+          <div className="flex flex-wrap items-end gap-2">
+            <span className="min-w-0 flex-1 pt-2">
+              {item.codigo} - {item.nome}
+            </span>
             <ItemQuantity
               name={item.nome}
               value={item.quantidade ?? 1}

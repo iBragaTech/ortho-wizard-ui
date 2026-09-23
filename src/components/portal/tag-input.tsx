@@ -41,7 +41,7 @@ export function TagInput({
       />
       {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
       {value.length > 0 && (
-        <ul className="flex flex-wrap gap-2">
+        <ul className="flex max-h-16 flex-wrap content-start gap-2 overflow-y-auto">
           {value.map((item, index) => (
             <li
               key={`${item}-${index}`}

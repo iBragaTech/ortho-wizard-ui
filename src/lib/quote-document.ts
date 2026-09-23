@@ -170,6 +170,8 @@ export function buildQuoteHtml(
   request: ConsultationRequest,
   institution: InstitutionSettings,
 ): string {
+  if (request.status !== "concluido")
+    throw new Error("Aguarde a aprovação de Custos para imprimir o orçamento.");
   if (request.precificacao && !request.precificacao.referencia.completo) {
     throw new Error("Há itens sem preço confirmado. Conclua o cálculo antes de gerar o orçamento.");
   }

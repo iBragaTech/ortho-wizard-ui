@@ -1,3 +1,4 @@
+import { TasyPriceReference } from "./tasy-price-reference";
 import { ItemQuantity } from "./item-quantity";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +15,11 @@ export type TasyOpmeItem = {
 export function TasyOpmeSelect({
   value,
   onChange,
+  cdConvenio = "",
+  cdCategoria = "",
 }: {
+  cdConvenio?: string;
+  cdCategoria?: string;
   value: TasyOpmeItem[];
   onChange: (items: TasyOpmeItem[]) => void;
 }) {
@@ -110,7 +115,10 @@ export function TasyOpmeSelect({
         </>
       )}
       {value.map((item) => (
-        <div key={item.codigo} className="flex items-center justify-between gap-2 text-sm">
+        <div
+          key={item.codigo}
+          className="flex flex-wrap items-center justify-between gap-2 text-sm"
+        >
           <span>
             {item.codigo} - {item.nome}
           </span>
@@ -120,6 +128,11 @@ export function TasyOpmeSelect({
             onChange={(quantidade) =>
               onChange(value.map((v) => (v.codigo === item.codigo ? { ...v, quantidade } : v)))
             }
+          />
+          <TasyPriceReference
+            codigo={item.codigo}
+            cdConvenio={cdConvenio}
+            cdCategoria={cdCategoria}
           />
           <Button
             type="button"

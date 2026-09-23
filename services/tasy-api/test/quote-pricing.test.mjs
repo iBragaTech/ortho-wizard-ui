@@ -91,28 +91,28 @@ test("creation stores server prices; negotiations preserve reference, audit iden
     tasy: selection,
   };
   const id = await run("createRequest", input, doctor);
-  const initial = await run("getRequest", { id }, doctor);
-  assert.equal(initial.status, "concluido");
-  assert.equal(initial.honorariosMedicos, 100);
+  const initial = await run("getRequest", { id }, admin);
+  assert.equal(initial.status, "em_analise");
+  assert.equal(initial.honorariosMedicos, 999);
   assert.equal(initial.diaria, null);
   const change = { id, revisao: 1, honorarios: 90, hospitalar: 2700, motivo: "Desconto negociado" };
-  await assert.rejects(run("adjustPrices", change, other), (e) => e.code === "NOT_FOUND");
+  await assert.rejects(run("adjustPrices", change, other), (e) => e.code === "FORBIDDEN");
   await assert.rejects(
-    run("adjustPrices", { ...change, motivo: "" }, doctor),
+    run("adjustPrices", { ...change, motivo: "" }, admin),
     (e) => e.code === "INVALID_INPUT",
   );
-  await run("adjustPrices", change, doctor);
-  await assert.rejects(run("adjustPrices", change, commercial), (e) => e.code === "RECORD_CHANGED");
-  await run("adjustPrices", { ...change, revisao: 2, hospitalar: 2600 }, commercial);
+  await run("adjustPrices", change, admin);
+  await assert.rejects(run("adjustPrices", change, admin), (e) => e.code === "RECORD_CHANGED");
+  await run("adjustPrices", { ...change, revisao: 2, hospitalar: 2600 }, admin);
   const final = await run("getRequest", { id }, admin);
   assert.deepEqual(final.precificacao.referencia, initial.precificacao.referencia);
   assert.equal(final.precificacao.ajustes.length, 2);
-  assert.equal(final.precificacao.ajustes[0].usuarioId, doctor.id);
+  assert.equal(final.precificacao.ajustes[0].usuarioId, admin.id);
   assert.equal(final.precificacao.ajustes[0].nmUsuario, "test");
-  assert.equal(final.precificacao.ajustes[0].anterior.honorarios, 100);
+  assert.equal(final.precificacao.ajustes[0].anterior.honorarios, 999);
   assert.ok(final.precificacao.ajustes[0].dataHora);
   await assert.rejects(
-    run("saveHospitalValue", { id, valor: 1, obs: "" }, commercial),
+    run("saveHospitalValue", { id, valor: 1, obs: "" }, admin),
     (e) => e.code === "AUDIT_REQUIRED",
   );
   await assert.rejects(
@@ -160,7 +160,7 @@ test("pending quote stays in analysis and reconsultation preserves previous refe
   material = 2.97;
   await run("calculateRequest", { id }, user);
   const final = await run("getRequest", { id }, user);
-  assert.equal(final.status, "concluido");
+  assert.equal(final.status, "em_analise");
   assert.equal(final.precificacao.referenciasAnteriores.length, 1);
   assert.equal(final.precificacao.referenciasAnteriores[0].completo, false);
   await assert.rejects(run("calculateRequest", { id }, user), (e) => e.code === "ALREADY_PRICED");

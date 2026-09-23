@@ -81,7 +81,7 @@ export function useCreateUser() {
     mutationFn: (input: {
       nome: string;
       email: string;
-      perfil: "Administrador" | "Comercial" | "Médico";
+      perfil: "Administrador" | "Comercial" | "Médico" | "Custos";
       senha: string;
       nmUsuario?: string;
       cdPerfil?: number;

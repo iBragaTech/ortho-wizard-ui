@@ -98,6 +98,10 @@ export function presentTimelineEvent(event: TimelineEvent): TimelineEvent {
         descricao:
           "Ainda não foi possível confirmar o registro. Verifique o envio antes de tentar novamente.",
       };
+    case "Orçamento aprovado por Custos":
+    case "Itens revisados por Custos":
+    case "Valor de item ajustado por Custos":
+      return { ...event, descricao: lines(by, reason) };
     default:
       return {
         ...event,

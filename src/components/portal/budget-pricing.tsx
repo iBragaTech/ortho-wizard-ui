@@ -1,3 +1,5 @@
+import { useSession } from "@/lib/auth/session";
+import { CostsReview } from "./costs-review";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -21,6 +23,9 @@ function shortItemLabel(item: {
 }
 
 export function BudgetPricing({ request }: { request: ConsultationRequest }) {
+  const { user } = useSession();
+  const canReview =
+    ["Custos", "Administrador"].includes(user?.perfil ?? "") && request.status !== "concluido";
   const pricing = request.precificacao;
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -53,6 +58,20 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
       setBusy(false);
     }
   }
+  if (!canReview && request.status !== "concluido")
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          Solicitação enviada para Custos. Os valores e a impressão serão liberados após a
+          aprovação.
+          {request.honorariosSolicitados != null && (
+            <p className="mt-2">
+              Honorário solicitado: {formatCurrency(request.honorariosSolicitados)}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    );
   return (
     <Card>
       <CardHeader>
@@ -101,7 +120,8 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
                         {i.zeroConfirmado && (
                           <p className="text-xs">Zero confirmado com justificativa</p>
                         )}
-                        {i.pendente &&
+                        {canReview &&
+                          i.pendente &&
                           (i.tipo === "material"
                             ? i.referencia.valorMaterial === 0
                             : i.referencia.valorProcedimento === 0 &&
@@ -190,6 +210,7 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
                   pendente até consultar os preços faltantes ou confirmar os itens com valor zero.
                 </p>
                 <Button
+                  className={canReview ? undefined : "hidden"}
                   disabled={busy}
                   onClick={() => void save("calculateRequest", { id: request.id })}
                 >
@@ -206,7 +227,7 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
                   Honorários atuais: {formatCurrency(request.honorariosMedicos)} · Hospitalar atual:{" "}
                   {formatCurrency(request.valorHospitalar)}
                 </p>
-                {!editing ? (
+                {!canReview ? null : !editing ? (
                   <Button
                     onClick={() => {
                       setFees(String(request.honorariosMedicos ?? ""));
@@ -325,6 +346,7 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
             )}
           </>
         )}
+        {canReview && <CostsReview key={pricing?.revisao} request={request} />}
       </CardContent>
     </Card>
   );

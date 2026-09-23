@@ -1,3 +1,5 @@
+import { SolicitationWorkspace } from "@/components/portal/solicitation-workspace";
+import { localAuthEnabled } from "@/lib/data/local-api";
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, ClipboardList, History, Plus, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +21,8 @@ export const Route = createFileRoute("/area-medico")({
       { title: "Área do Médico — Portal de Orçamentos" },
       {
         name: "description",
-        content: "Espaço do médico para preencher honorários das consultas particulares solicitadas.",
+        content:
+          "Espaço do médico para preencher honorários das consultas particulares solicitadas.",
       },
       { property: "og:title", content: "Área do Médico — Portal de Orçamentos" },
       {
@@ -57,6 +60,10 @@ function RequestRow({ request }: { request: ConsultationRequest }) {
 }
 
 function AreaMedico() {
+  return localAuthEnabled ? <SolicitationWorkspace origem="medico" /> : <LegacyAreaMedico />;
+}
+
+function LegacyAreaMedico() {
   const { data: requests = [] } = useRequests();
   const meus = requests;
   const aguardando = meus.filter((r) => r.honorariosMedicos === null);
@@ -87,7 +94,12 @@ function AreaMedico() {
           tone="warning"
           hint={`${aguardando.length} solicitações aguardando seus honorários`}
         />
-        <MetricCard label="Já preenchidas" value={preenchidas.length} icon={CheckCircle2} tone="success" />
+        <MetricCard
+          label="Já preenchidas"
+          value={preenchidas.length}
+          icon={CheckCircle2}
+          tone="success"
+        />
         <MetricCard label="Total no histórico" value={meus.length} icon={History} />
       </div>
 

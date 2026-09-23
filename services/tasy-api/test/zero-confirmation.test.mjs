@@ -76,6 +76,8 @@ test("zero confirmation is audited, revision locked, scoped, and respects export
       ).rows[0],
     );
   const [user, other] = users;
+  await db.query("UPDATE portal.users SET perfil='Custos' WHERE id=$1", [user.id]);
+  user.perfil = "Custos";
   const create = async () =>
     (
       await db.query(
@@ -94,7 +96,7 @@ test("zero confirmation is audited, revision locked, scoped, and respects export
     item: { tipo: "material", codigo: "53304" },
     motivo: "Item incluído sem cobrança",
   };
-  await assert.rejects(run("confirmZeroPrice", input, other), (e) => e.code === "NOT_FOUND");
+  await assert.rejects(run("confirmZeroPrice", input, other), (e) => e.code === "FORBIDDEN");
   await assert.rejects(
     run("confirmZeroPrice", { ...input, motivo: "   " }, user),
     (e) => e.code === "INVALID_INPUT",
@@ -102,7 +104,7 @@ test("zero confirmation is audited, revision locked, scoped, and respects export
   await run("confirmZeroPrice", input, user);
   await assert.rejects(run("confirmZeroPrice", input, user), (e) => e.code === "RECORD_CHANGED");
   const row = await run("getRequest", { id }, user);
-  assert.equal(row.status, "concluido");
+  assert.equal(row.status, "em_analise");
   assert.equal(row.valorHospitalar, 2867.97);
   assert.deepEqual(row.precificacao.referenciasAnteriores[0], reference);
   const audit = row.precificacao.confirmacoesZero[0];

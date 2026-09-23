@@ -14,7 +14,7 @@ export const userSchema = z
       .email()
       .max(254)
       .transform((s) => s.toLowerCase()),
-    perfil: z.enum(["Administrador", "Comercial", "Médico"]),
+    perfil: z.enum(["Administrador", "Comercial", "Médico", "Custos"]),
     senha: passwordSchema,
   })
   .strict();

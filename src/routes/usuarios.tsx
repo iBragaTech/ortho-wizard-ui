@@ -75,7 +75,9 @@ function NewUserDialog() {
   const [open, setOpen] = useState(false);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
-  const [perfil, setPerfil] = useState<"Administrador" | "Comercial" | "Médico" | "">("");
+  const [perfil, setPerfil] = useState<"Administrador" | "Comercial" | "Médico" | "Custos" | "">(
+    "",
+  );
   const [senha, setSenha] = useState("");
   const [tasyLink, setTasyLink] = useState(emptyTasyLink);
   const create = useCreateUser();
@@ -165,6 +167,7 @@ function NewUserDialog() {
               <SelectContent>
                 <SelectItem value="Administrador">Administrador</SelectItem>
                 <SelectItem value="Comercial">Comercial</SelectItem>
+                <SelectItem value="Custos">Custos</SelectItem>
                 <SelectItem value="Médico">Médico</SelectItem>
               </SelectContent>
             </Select>

@@ -91,7 +91,10 @@ function RequestDetail() {
               <DropdownMenuTrigger asChild>
                 <Button
                   size="sm"
-                  disabled={!!request.precificacao && !request.precificacao.referencia.completo}
+                  disabled={
+                    request.status !== "concluido" ||
+                    (!!request.precificacao && !request.precificacao.referencia.completo)
+                  }
                 >
                   <FileText className="h-4 w-4" /> Gerar arquivo do paciente
                 </Button>
@@ -147,6 +150,32 @@ function RequestDetail() {
             </CardContent>
           </Card>
 
+          {localAuthEnabled && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Solicitação médica e necessidades</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <InfoField
+                  label="Equipe / anestesista"
+                  value={request.equipeMultidisciplinar || "Não informado"}
+                />
+                <InfoField label="Tempo de bloco" value={request.tempoBloco || "Não informado"} />
+                <InfoField
+                  label="Anátomo patológico"
+                  value={request.anatomoPatologico || "Não informado"}
+                />
+                <InfoField
+                  label="Reserva de sangue"
+                  value={request.reservaSangue || "Não informado"}
+                />
+                <InfoField
+                  label="Observação do médico"
+                  value={request.obsMedico || "Não informado"}
+                />
+              </CardContent>
+            </Card>
+          )}
           {localAuthEnabled ? (
             <BudgetPricing
               key={`${request.id}:${request.precificacao?.revisao ?? 0}`}

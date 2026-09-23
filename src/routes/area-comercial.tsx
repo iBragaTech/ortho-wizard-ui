@@ -1,3 +1,5 @@
+import { SolicitationWorkspace } from "@/components/portal/solicitation-workspace";
+import { localAuthEnabled } from "@/lib/data/local-api";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { createFileRoute } from "@tanstack/react-router";
@@ -23,7 +25,8 @@ export const Route = createFileRoute("/area-comercial")({
       { title: "Área Comercial — Portal de Orçamentos" },
       {
         name: "description",
-        content: "Espaço do setor Comercial para preencher valores hospitalares e consolidar orçamentos.",
+        content:
+          "Espaço do setor Comercial para preencher valores hospitalares e consolidar orçamentos.",
       },
       { property: "og:title", content: "Área Comercial — Portal de Orçamentos" },
       {
@@ -36,13 +39,20 @@ export const Route = createFileRoute("/area-comercial")({
 });
 
 function toNumber(value: string): number | null {
-  const clean = value.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  const clean = value
+    .replace(/[^\d,.-]/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
   if (!clean.trim()) return null;
   const n = Number(clean);
   return Number.isFinite(n) ? n : null;
 }
 
 function AreaComercial() {
+  return localAuthEnabled ? <SolicitationWorkspace origem="comercial" /> : <LegacyAreaComercial />;
+}
+
+function LegacyAreaComercial() {
   const { data: requests = [] } = useRequests();
   const saveHospital = useSaveHospitalValue();
   const fila = requests.filter((r) => r.status !== "concluido");
@@ -52,10 +62,13 @@ function AreaComercial() {
   const [obs, setObs] = useState("");
 
   useEffect(() => {
-    setValor(selected?.valorHospitalar !== null && selected?.valorHospitalar !== undefined ? String(selected.valorHospitalar) : "");
+    setValor(
+      selected?.valorHospitalar !== null && selected?.valorHospitalar !== undefined
+        ? String(selected.valorHospitalar)
+        : "",
+    );
     setObs(selected?.obsComercial ?? "");
   }, [selected?.id]);
-
 
   const emAnalise = requests.filter((r) => r.status === "em_analise" || r.status === "pendente");
   const aguardando = requests.filter((r) => r.status === "aguardando_comercial");
@@ -96,7 +109,12 @@ function AreaComercial() {
           icon={Briefcase}
           tone="warning"
         />
-        <MetricCard label="Orçamentos concluídos" value={concluidos.length} icon={CheckCircle2} tone="success" />
+        <MetricCard
+          label="Orçamentos concluídos"
+          value={concluidos.length}
+          icon={CheckCircle2}
+          tone="success"
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
@@ -160,19 +178,35 @@ function AreaComercial() {
                     Detalhamento médico
                   </p>
                   <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <InfoField label="Honorário" value={formatCurrency(selected.honorariosMedicos)} />
+                    <InfoField
+                      label="Honorário"
+                      value={formatCurrency(selected.honorariosMedicos)}
+                    />
                     <InfoField label="Diária" value={formatCurrency(selected.diaria)} />
                     <InfoField label="CTI" value={formatCurrency(selected.cti)} />
-                    <InfoField label="Fisioterapia" value={selected.fisioterapia !== null ? `${selected.fisioterapia} sessões` : "—"} />
+                    <InfoField
+                      label="Fisioterapia"
+                      value={
+                        selected.fisioterapia !== null ? `${selected.fisioterapia} sessões` : "—"
+                      }
+                    />
                     <InfoField label="Tempo de bloco" value={selected.tempoBloco || "—"} />
                     <InfoField label="OPME" value={selected.opme || "—"} />
-                    <InfoField label="Anátomo Patológico" value={selected.anatomoPatologico || "—"} />
+                    <InfoField
+                      label="Anátomo Patológico"
+                      value={selected.anatomoPatologico || "—"}
+                    />
                     <InfoField label="Reserva de sangue" value={selected.reservaSangue || "—"} />
-                    <InfoField label="Equipe multidisciplinar" value={selected.equipeMultidisciplinar || "—"} />
+                    <InfoField
+                      label="Equipe multidisciplinar"
+                      value={selected.equipeMultidisciplinar || "—"}
+                    />
                   </dl>
                   {selected.obsMedico ? (
                     <div>
-                      <p className="text-xs font-medium text-muted-foreground">Observação do médico</p>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Observação do médico
+                      </p>
                       <p className="mt-1 text-sm text-foreground">{selected.obsMedico}</p>
                     </div>
                   ) : null}
@@ -206,7 +240,11 @@ function AreaComercial() {
                 />
               </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                <Button className="w-full sm:w-auto" onClick={concluir} disabled={saveHospital.isPending}>
+                <Button
+                  className="w-full sm:w-auto"
+                  onClick={concluir}
+                  disabled={saveHospital.isPending}
+                >
                   {saveHospital.isPending ? "Salvando..." : "Concluir orçamento"}
                 </Button>
               </div>

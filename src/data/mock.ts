@@ -12,6 +12,7 @@ export interface Patient {
 }
 
 export interface ConsultationRequest {
+  honorariosSolicitados?: number | null;
   tasy?: {
     cdPessoaFisica: string;
     cdConvenio: string;
@@ -93,7 +94,7 @@ export interface ConsultationRequest {
 
 export const statusLabels: Record<RequestStatus, string> = {
   pendente: "Pendente",
-  em_analise: "Em análise",
+  em_analise: "Aguardando Custos",
   aguardando_medico: "Aguardando médico",
   aguardando_comercial: "Aguardando Comercial",
   concluido: "Concluído",
@@ -420,7 +421,7 @@ export interface PortalUser {
   id: string;
   nome: string;
   email: string;
-  perfil: "Administrador" | "Comercial" | "Médico";
+  perfil: "Administrador" | "Comercial" | "Médico" | "Custos";
   ativo: boolean;
   ultimoAcesso: string;
 }

@@ -1,3 +1,4 @@
+import { custosOperations, requireCustos, isCustos, visibleRequest } from "./custos.mjs";
 import { linkFields, principalForLink, storeLink } from "./tasy-users.mjs";
 import { z } from "zod";
 import { ApiError } from "../errors.mjs";
@@ -52,7 +53,11 @@ const newRequest = z
     tasy: tasySelection.optional(),
   })
   .strict()
-  .refine((v) => (v.origem === "medico") === Boolean(v.medico));
+  .refine((v) => (v.origem === "medico") === Boolean(v.medico))
+  .refine(
+    (v) => v.origem !== "medico" || v.medico?.honorariosMedicos != null,
+    "Informe o honorário solicitado.",
+  );
 const settings = z
   .object({
     nome: text,
@@ -72,8 +77,8 @@ const fmtDate = (value) =>
   value ? new Date(value).toLocaleDateString("pt-BR", { timeZone: "UTC" }) : "—";
 const fmtTime = (value) =>
   value ? new Date(value).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—";
-const rowDto = (row) => ({
-  ...row.data,
+const rowDto = (row, user) => ({
+  ...visibleRequest(row, user),
   id: row.id,
   numero: row.numero,
   status: row.status,
@@ -87,6 +92,8 @@ async function getAccessible(db, id, user, lock = false) {
     [id, user.perfil, user.id],
   );
   if (!rows.length) throw new ApiError(404, "NOT_FOUND", "Orçamento não encontrado.");
+  if (lock && rows[0].status === "concluido")
+    throw new ApiError(409, "INVALID_STATE", "Orçamento aprovado não pode ser alterado.");
   if (lock && rows[0].data.inativo)
     throw new ApiError(409, "INACTIVE_REQUEST", "Orçamento inativo não pode ser alterado.");
   if (
@@ -114,6 +121,7 @@ export function createPortalOperations(
   { calculateQuote, auditIdentity = () => null, validateTasyLink } = {},
 ) {
   const handlers = {
+    ...custosOperations({ db, getAccessible, event, calculateQuote, auditIdentity }),
     editRequest: async (input, user) => {
       const value = parse(
         z
@@ -221,10 +229,10 @@ export function createPortalOperations(
         ORDER BY created_at DESC, id LIMIT $3 OFFSET $4`,
         [user.perfil, user.id, paging.limit, paging.offset],
       );
-      return result.rows.map(rowDto);
+      return result.rows.map((row) => rowDto(row, user));
     },
     getRequest: async (input, user) =>
-      rowDto(await getAccessible(db, parse(idInput, input).id, user)),
+      rowDto(await getAccessible(db, parse(idInput, input).id, user), user),
     createRequest: async (input, user) => {
       const value = parse(newRequest, input);
       if (
@@ -270,12 +278,13 @@ export function createPortalOperations(
           obsMedico: "",
           valorHospitalar: null,
           obsComercial: "",
-          dataAprovacao: referencia?.completo ? new Date().toISOString() : null,
+          dataAprovacao: null,
+          honorariosSolicitados: value.medico?.honorariosMedicos ?? null,
           ...value.medico,
           ...(referencia
             ? {
                 precificacao: { referencia, revisao: 1, ajustes: [] },
-                honorariosMedicos: referencia.honorarios,
+                honorariosMedicos: value.medico?.honorariosMedicos ?? referencia.honorarios,
                 valorHospitalar: referencia.hospitalar,
                 diaria: null,
                 cti: null,
@@ -290,23 +299,29 @@ export function createPortalOperations(
             numero,
             user.id,
             value.origem === "medico" ? user.id : null,
-            referencia
-              ? referencia.completo
-                ? "concluido"
-                : "em_analise"
-              : value.origem === "medico"
-                ? "aguardando_comercial"
-                : "aguardando_medico",
+            "em_analise",
             JSON.stringify(data),
           ],
         );
         const id = result.rows[0].id;
-        await event(tx, id, user, "Solicitação criada");
+        await event(
+          tx,
+          id,
+          user,
+          "Solicitação criada",
+          JSON.stringify({
+            nomeUsuario: user.nome,
+            nmUsuario: calculateQuote ? await auditIdentity(user, tx) : null,
+            novo: value,
+            dataHora: new Date().toISOString(),
+          }),
+        );
         if (value.medico) await event(tx, id, user, "Honorários preenchidos");
         return id;
       });
     },
     calculateRequest: async (input, user) => {
+      requireCustos(user);
       const { id } = parse(idInput, input);
       const before = await getAccessible(db, id, user);
       if (before.data.precificacao?.referencia.completo)
@@ -348,21 +363,22 @@ export function createPortalOperations(
               ...(row.data.precificacao ? [row.data.precificacao.referencia] : []),
             ],
           },
-          honorariosMedicos: referencia.honorarios,
+          honorariosMedicos:
+            row.data.honorariosMedicos ?? row.data.honorariosSolicitados ?? referencia.honorarios,
           valorHospitalar: referencia.hospitalar,
           diaria: null,
           cti: null,
         };
         await tx.query(
           "UPDATE portal.requests SET data=$2::jsonb,status=$3,updated_at=now() WHERE id=$1",
-          [id, JSON.stringify(data), referencia.completo ? "concluido" : "em_analise"],
+          [id, JSON.stringify(data), "em_analise"],
         );
         await event(tx, id, user, "Referência Tasy calculada", JSON.stringify(referencia));
         return null;
       });
     },
     confirmZeroPrice: async (input, user) => {
-      allowed(user, ["Administrador", "Médico", "Comercial"]);
+      requireCustos(user);
       const v = parse(
         z
           .object({
@@ -405,7 +421,8 @@ export function createPortalOperations(
         };
         const data = {
           ...row.data,
-          honorariosMedicos: referencia.honorarios,
+          honorariosMedicos:
+            row.data.honorariosMedicos ?? row.data.honorariosSolicitados ?? referencia.honorarios,
           valorHospitalar: referencia.hospitalar,
           precificacao: {
             ...pricing,
@@ -417,14 +434,14 @@ export function createPortalOperations(
         };
         await tx.query(
           "UPDATE portal.requests SET data=$2::jsonb,status=$3,updated_at=now() WHERE id=$1",
-          [v.id, JSON.stringify(data), referencia.completo ? "concluido" : "em_analise"],
+          [v.id, JSON.stringify(data), "em_analise"],
         );
         await event(tx, v.id, user, "Preço zero confirmado", JSON.stringify(confirmation));
         return null;
       });
     },
     adjustPrices: async (input, user) => {
-      allowed(user, ["Administrador", "Médico", "Comercial"]);
+      requireCustos(user);
       const v = parse(
         z
           .object({
@@ -505,7 +522,7 @@ export function createPortalOperations(
             "Orçamento concluído não pode receber novos honorários.",
           );
         await tx.query(
-          "UPDATE portal.requests SET data = data || $1::jsonb, status = 'aguardando_comercial', updated_at = now() WHERE id = $2",
+          "UPDATE portal.requests SET data = data || $1::jsonb, status = 'em_analise', updated_at = now() WHERE id = $2",
           [JSON.stringify(value.input), value.id],
         );
         await event(tx, value.id, user, "Honorários preenchidos");
@@ -513,7 +530,7 @@ export function createPortalOperations(
       return null;
     },
     saveHospitalValue: async (input, user) => {
-      allowed(user, ["Administrador", "Comercial"]);
+      requireCustos(user);
       const value = parse(z.object({ id: uuid, valor: money, obs: text }).strict(), input);
       if (value.valor === null)
         throw new ApiError(400, "INVALID_INPUT", "Informe o valor hospitalar.");
@@ -525,24 +542,24 @@ export function createPortalOperations(
             "AUDIT_REQUIRED",
             "Use Ajustar valores com justificativa para este orçamento.",
           );
-        if (row.status !== "aguardando_comercial")
+        if (row.status === "concluido")
           throw new ApiError(
             409,
             "INVALID_STATE",
             "O orçamento deve aguardar o Comercial para ser concluído.",
           );
         await tx.query(
-          "UPDATE portal.requests SET data = data || $1::jsonb, status = 'concluido', updated_at = now() WHERE id = $2",
+          "UPDATE portal.requests SET data = data || $1::jsonb, status = 'em_analise', updated_at = now() WHERE id = $2",
           [
             JSON.stringify({
               valorHospitalar: value.valor,
               obsComercial: value.obs,
-              dataAprovacao: new Date().toISOString(),
+              dataAprovacao: null,
             }),
             value.id,
           ],
         );
-        await event(tx, value.id, user, "Orçamento concluído");
+        await event(tx, value.id, user, "Valor hospitalar registrado por Custos");
       });
       return null;
     },
@@ -551,7 +568,7 @@ export function createPortalOperations(
       const value = parse(z.object({ id: uuid, userId: uuid }).strict(), input);
       await db.transaction(async (tx) => {
         const row = await getAccessible(tx, value.id, user, true);
-        if (row.status !== "aguardando_medico")
+        if (!["aguardando_medico", "em_analise"].includes(row.status))
           throw new ApiError(
             409,
             "INVALID_STATE",
@@ -573,14 +590,17 @@ export function createPortalOperations(
     },
     getTimeline: async (input, user) => {
       const { id } = parse(idInput, input);
-      await getAccessible(db, id, user);
+      const request = await getAccessible(db, id, user);
       const result = await db.query(
         "SELECT titulo,descricao,created_at FROM portal.events WHERE request_id=$1 ORDER BY created_at,id",
         [id],
       );
       return result.rows.map((row) => ({
         titulo: row.titulo,
-        descricao: row.descricao,
+        descricao:
+          !isCustos(user) && request.status !== "concluido"
+            ? "Movimentação registrada; detalhes financeiros disponíveis após aprovação."
+            : row.descricao,
         data: fmtTime(row.created_at),
         concluido: true,
       }));

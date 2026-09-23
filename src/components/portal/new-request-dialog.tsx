@@ -85,6 +85,7 @@ export function NewRequestDialog({
   const [adicionais, setAdicionais] = useState<TasyProcedureItem[]>([]);
   const [catalogContext, setCatalogContext] = useState({ cdConvenio: "", cdCategoria: "" });
   const [temCti, setTemCti] = useState(false);
+  const [anestesista, setAnestesista] = useState(false);
   const create = useCreateRequest();
   const { user } = useSession();
   const origem = user?.perfil === "Médico" ? "medico" : origemProp;
@@ -95,6 +96,10 @@ export function NewRequestDialog({
     setForm((f) => ({ ...f, [key]: value }));
 
   async function handleSubmit() {
+    if (isMedico && (toNumber(form.honorario) === null || toNumber(form.honorario)! < 0)) {
+      toast.error("Informe o honorário solicitado, inclusive quando for zero.");
+      return;
+    }
     if (!form.nome.trim() || !form.cpf.trim()) {
       toast.error("Informe ao menos nome e CPF do paciente.");
       return;
@@ -223,13 +228,13 @@ export function NewRequestDialog({
         ...(isMedico
           ? {
               medico: {
-                honorariosMedicos: localAuthEnabled ? null : toNumber(form.honorario),
+                honorariosMedicos: toNumber(form.honorario),
                 diaria: localAuthEnabled ? null : toNumber(form.diaria),
                 cti: localAuthEnabled ? null : toNumber(form.cti),
                 opme: opmeTexto,
                 anatomoPatologico: form.anatomo,
                 reservaSangue: form.sangue,
-                equipeMultidisciplinar: form.multidisciplinar,
+                equipeMultidisciplinar: `Anestesista: ${anestesista ? "Sim" : "Não"}. ${form.multidisciplinar}`,
                 fisioterapia: toNumber(form.fisioterapia),
                 tempoBloco: form.bloco,
                 obsMedico: form.obsMedico,
@@ -239,12 +244,13 @@ export function NewRequestDialog({
       });
       toast.success(
         localAuthEnabled
-          ? "Orçamento criado. Confira os valores e eventuais pendências nos detalhes."
+          ? "Solicitação enviada para aprovação de Custos."
           : isMedico
             ? "Orçamento criado e enviado ao Comercial."
             : "Orçamento criado e enviado ao médico.",
       );
       setForm(empty);
+      setAnestesista(false);
       setPatientCode("");
       setPatientNotFound(false);
       setTemCti(false);
@@ -424,11 +430,20 @@ export function NewRequestDialog({
             <div className="grid gap-4 sm:grid-cols-2">
               {isMedico ? (
                 <>
+                  <label className="flex items-center gap-2 sm:col-span-2">
+                    <Checkbox
+                      checked={anestesista}
+                      onCheckedChange={(v) => setAnestesista(v === true)}
+                    />
+                    Necessita anestesista
+                  </label>
                   <div className="grid gap-2">
-                    <Label htmlFor="honorario">Honorário (R$)</Label>
+                    <Label htmlFor="honorario">
+                      Honorário solicitado (R$)
+                      <RequiredMark />
+                    </Label>
                     <Input
                       id="honorario"
-                      disabled={localAuthEnabled}
                       inputMode="decimal"
                       placeholder="0,00"
                       value={form.honorario}
@@ -528,18 +543,16 @@ export function NewRequestDialog({
 
               <div className="grid gap-2 sm:col-span-2">
                 <Label>Materiais do Tasy</Label>
-                <TasyMaterialSelect value={materiais} onChange={setMateriais} />
+                <TasyMaterialSelect {...catalogContext} value={materiais} onChange={setMateriais} />
               </div>
 
               <div className="grid gap-2 sm:col-span-2">
                 <Label>OPME{isMedico ? " (item, quantidade e fornecedor)" : ""}</Label>
-                <TasyOpmeSelect value={opme} onChange={setOpme} />
+                <TasyOpmeSelect {...catalogContext} value={opme} onChange={setOpme} />
               </div>
 
               <div className="grid gap-2 sm:col-span-2">
-                <Label htmlFor="anamoto">
-                  Anátomo Patológico
-                </Label>
+                <Label htmlFor="anamoto">Anátomo Patológico</Label>
                 <Textarea
                   id="anamoto"
                   rows={2}
@@ -586,7 +599,7 @@ export function NewRequestDialog({
                   <Textarea
                     id="obs-medico"
                     rows={2}
-                    placeholder="Informações adicionais para o Comercial"
+                    placeholder="Informações adicionais para Custos"
                     value={form.obsMedico}
                     onChange={(e) => set("obsMedico")(e.target.value)}
                   />

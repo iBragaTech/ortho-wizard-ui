@@ -29,7 +29,16 @@ export async function createPortalApp({
           "TASY_DISABLED",
           "A consulta ao Tasy ainda não está habilitada neste ambiente.",
         );
-      return resolvePrincipal(user);
+      const principal = await resolvePrincipal(user);
+      if (!["Custos", "Administrador"].includes(user.perfil)) {
+        return {
+          ...principal,
+          operations: principal.operations.filter(
+            (name) => !name.startsWith("precos.") && name !== "orcamentos.enviar",
+          ),
+        };
+      }
+      return principal;
     },
     execute:
       tasyExecute ||

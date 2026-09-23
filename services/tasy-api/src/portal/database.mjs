@@ -112,5 +112,13 @@ export async function migrate(db) {
       await tx.exec(await readFile(new URL("./tasy-users-schema.sql", import.meta.url), "utf8"));
       await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (3)");
     }
+    if (
+      !(await tx.query("SELECT version FROM portal.schema_migrations WHERE version=4")).rows.length
+    ) {
+      await tx.exec(
+        "ALTER TABLE portal.users DROP CONSTRAINT users_perfil_check; ALTER TABLE portal.users ADD CONSTRAINT users_perfil_check CHECK (perfil IN ('Administrador','Comercial','Médico','Custos'));",
+      );
+      await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (4)");
+    }
   });
 }

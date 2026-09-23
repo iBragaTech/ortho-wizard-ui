@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { supabaseAuthEnabled, toPortalUser } from "./supabase-auth";
 import { localAuthEnabled, localAuth, localAuthEvent } from "@/lib/data/local-api";
 
-export type Perfil = "Administrador" | "Comercial" | "Médico";
+export type Perfil = "Administrador" | "Comercial" | "Médico" | "Custos";
 
 export type SessionUser = {
   id: string;
@@ -137,7 +137,7 @@ export function useSession(): SessionContextValue {
   return ctx;
 }
 
-export const PERFIS: Perfil[] = ["Administrador", "Comercial", "Médico"];
+export const PERFIS: Perfil[] = ["Administrador", "Comercial", "Médico", "Custos"];
 
 // Quais perfis podem acessar cada área do portal.
 export const ACESSO: Record<string, Perfil[]> = {

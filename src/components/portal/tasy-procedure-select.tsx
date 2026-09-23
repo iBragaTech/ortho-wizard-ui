@@ -144,7 +144,7 @@ export function TasyProcedureSelect({
           <span>
             {item.codigo} - {item.nome}
           </span>
-          <div className="flex items-end gap-2">
+          <div className="flex flex-wrap items-end gap-2">
             <ItemQuantity
               name={item.nome}
               value={item.quantidade ?? 1}
@@ -156,6 +156,12 @@ export function TasyProcedureSelect({
                 )
               }
             />
+            <TasyPriceReference
+              codigo={item.codigo}
+              origem={item.origem}
+              cdConvenio={cdConvenio}
+              cdCategoria={cdCategoria}
+            />
             <Button
               type="button"
               variant="ghost"
@@ -165,12 +171,6 @@ export function TasyProcedureSelect({
               Remover
             </Button>
           </div>
-          <TasyPriceReference
-            codigo={item.codigo}
-            origem={item.origem}
-            cdConvenio={cdConvenio}
-            cdCategoria={cdCategoria}
-          />
         </div>
       ))}
     </div>

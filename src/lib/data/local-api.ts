@@ -49,7 +49,9 @@ async function call<T>(path: string, body?: unknown): Promise<T> {
     cache: "no-store",
     redirect: "error",
     signal: AbortSignal.timeout(
-      path.includes("/v1/portal/createRequest") || path.includes("/v1/portal/calculateRequest")
+      path.includes("/v1/portal/createRequest") ||
+        path.includes("/v1/portal/calculateRequest") ||
+        path.includes("/v1/portal/updateRequestItems")
         ? 180000
         : 30000,
     ),

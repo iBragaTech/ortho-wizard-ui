@@ -105,7 +105,7 @@ test("independent portal with a real embedded PostgreSQL database", async (t) =>
       id = created.json().data;
       const read = await call("getRequest", { id }, "doctor");
       assert.equal(read.json().data.paciente.nome, patient.nome);
-      assert.equal(read.json().data.status, "aguardando_comercial");
+      assert.equal(read.json().data.status, "em_analise");
       assert.equal((await call("getRequest", { id }, "other")).statusCode, 404);
       assert.deepEqual((await call("listRequests", {}, "other")).json().data, []);
       assert.equal((await call("getTimeline", { id }, "other")).statusCode, 404);
@@ -116,19 +116,15 @@ test("independent portal with a real embedded PostgreSQL database", async (t) =>
       );
     },
   );
-  await t.test("commercial concludes request and medical edits cannot regress status", async () => {
-    assert.equal(
-      (await call("saveHospitalValue", { id, valor: 500, obs: "teste" }, "doctor")).statusCode,
-      403,
-    );
-    assert.equal(
-      (await call("saveHospitalValue", { id, valor: 500, obs: "teste" }, "commercial")).statusCode,
-      200,
-    );
-    assert.equal((await call("getRequest", { id }, "doctor")).json().data.status, "concluido");
-    assert.equal((await call("saveDoctorFees", { id, input: fees }, "doctor")).statusCode, 409);
-    const timeline = (await call("getTimeline", { id }, "doctor")).json().data;
-    assert.ok(timeline.some((e) => e.titulo === "Orçamento concluído"));
+  await t.test("commercial cannot approve or set hospital prices", async () => {
+    for (const who of ["doctor", "commercial"]) {
+      assert.equal(
+        (await call("saveHospitalValue", { id, valor: 500, obs: "teste" }, who)).statusCode,
+        403,
+      );
+      assert.equal((await call("approveRequest", { id, revisao: 1 }, who)).statusCode, 403);
+    }
+    assert.equal((await call("getRequest", { id }, "doctor")).json().data.status, "em_analise");
   });
   await t.test("commercial request needs explicit physician assignment", async () => {
     const created = await call("createRequest", { ...patient }, "commercial");

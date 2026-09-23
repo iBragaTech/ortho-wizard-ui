@@ -142,9 +142,9 @@ export function TasyProcedureSelect({
       {value.map((item) => (
         <div
           key={`${item.codigo}:${item.origem}`}
-          className="flex flex-wrap items-center gap-3 text-sm"
+          className="grid items-center gap-3 border-b py-2 text-sm last:border-b-0 sm:grid-cols-[minmax(0,1fr)_5rem_auto_auto]"
         >
-          <span className="min-w-48 flex-1">
+          <span className="min-w-0 break-words">
             {item.codigo} - {item.nome}
           </span>
           <ItemQuantity
@@ -168,6 +168,7 @@ export function TasyProcedureSelect({
           <Button
             type="button"
             variant="ghost"
+            className="justify-self-start sm:justify-self-end"
             aria-label={`Remover ${item.nome}`}
             onClick={() => toggle(item)}
           >

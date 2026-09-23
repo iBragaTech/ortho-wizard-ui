@@ -123,12 +123,13 @@ export function TasyMaterialSelect({
       {value.map((item) => (
         <div
           key={item.codigo}
-          className="flex flex-wrap items-center justify-between gap-2 text-sm"
+          className="grid items-center gap-3 border-b py-2 text-sm last:border-b-0 sm:grid-cols-[minmax(0,1fr)_5rem_auto_auto]"
         >
-          <span>
+          <span className="min-w-0 break-words">
             {item.codigo} - {item.nome}
           </span>
           <ItemQuantity
+            inline
             name={item.nome}
             value={item.quantidade ?? 1}
             onChange={(quantidade) =>
@@ -143,6 +144,7 @@ export function TasyMaterialSelect({
           <Button
             type="button"
             variant="ghost"
+            className="justify-self-start sm:justify-self-end"
             aria-label={`Remover ${item.nome}`}
             onClick={() => toggle(item)}
           >

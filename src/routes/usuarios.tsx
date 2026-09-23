@@ -93,6 +93,10 @@ function NewUserDialog() {
       );
       return;
     }
+    if (localAuthEnabled && senha.length > 128) {
+      toast.error("A senha inicial deve ter no máximo 128 caracteres.");
+      return;
+    }
     if (
       localAuthEnabled &&
       (!tasyLink.nmUsuario.trim() ||
@@ -178,6 +182,8 @@ function NewUserDialog() {
             <Input
               id="senha-usuario"
               type="password"
+              minLength={localAuthEnabled ? 12 : 6}
+              maxLength={localAuthEnabled ? 128 : undefined}
               placeholder={localAuthEnabled ? "Mínimo 12 caracteres" : "Mínimo 6 caracteres"}
               value={senha}
               onChange={(e) => setSenha(e.target.value)}

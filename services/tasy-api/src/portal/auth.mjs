@@ -20,12 +20,25 @@ export const userSchema = z
   .strict();
 export function parse(schema, input) {
   const result = schema.safeParse(input);
-  if (!result.success)
+  if (!result.success) {
+    const messages = {
+      nome: "Nome: informe de 1 a 120 caracteres.",
+      email: "E-mail: informe um endereço válido, com até 254 caracteres.",
+      perfil: "Perfil inválido. Selecione Administrador, Comercial, Médico ou Custos.",
+      senha: "Senha inicial: informe de 12 a 128 caracteres.",
+      nmUsuario: "Usuário Tasy (NM_USUARIO): informe de 1 a 15 caracteres.",
+      cdPerfil: "Código do perfil Tasy: informe um número inteiro positivo válido.",
+      cdEstabelecimento: "Código do estabelecimento: informe um número inteiro positivo válido.",
+    };
+    const field = result.error.issues[0]?.path[0];
     throw new ApiError(
       400,
       "INVALID_INPUT",
-      "Dados inválidos. Senhas novas devem ter de 12 a 128 caracteres.",
+      Object.hasOwn(messages, field)
+        ? messages[field]
+        : "Dados inválidos. Confira os campos obrigatórios e os valores informados.",
     );
+  }
   return result.data;
 }
 export async function hashPassword(password) {

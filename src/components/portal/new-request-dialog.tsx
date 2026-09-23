@@ -262,6 +262,8 @@ export function NewRequestDialog({
       setMateriais([]);
       setProcedimento([]);
       setAdicionais([]);
+      setSangue([]);
+      setMultidisciplinar([]);
       setCatalogContext({ cdConvenio: "", cdCategoria: "" });
 
       setOpen(false);
@@ -573,22 +575,22 @@ export function NewRequestDialog({
                 <Label htmlFor="sangue">
                   {isMedico ? "Reserva de sangue (material e quantidade)" : "Reserva de sangue"}
                 </Label>
-                <Input
+                <TagInput
                   id="sangue"
                   placeholder="Ex.: 2 concentrados de hemácias"
-                  value={form.sangue}
-                  onChange={(e) => set("sangue")(e.target.value)}
+                  value={sangue}
+                  onChange={setSangue}
                 />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="multidisciplinar">
                   {isMedico ? "Equipe multidisciplinar" : "Equipe multidisciplinar/Fisioterapia"}
                 </Label>
-                <Input
+                <TagInput
                   id="multidisciplinar"
                   placeholder="Ex.: Fisioterapia 2x/dia"
-                  value={form.multidisciplinar}
-                  onChange={(e) => set("multidisciplinar")(e.target.value)}
+                  value={multidisciplinar}
+                  onChange={setMultidisciplinar}
                 />
               </div>
               <div className="grid gap-2">

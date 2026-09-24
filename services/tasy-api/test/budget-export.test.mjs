@@ -24,9 +24,11 @@ const snapshot = {
   actorId: "00000000-0000-4000-8000-000000000002",
   data: { tasy: selection, paciente: { cpf: "52998224725" } },
 };
-function mock({ duplicate = false, commitError = false, catalogValid = true } = {}) {
+function mock({ duplicate = false, commitError = false, catalogValid = true, persistedFee } = {}) {
   const calls = [];
   let storedHash;
+  let primaryFee;
+  let nextId = 789;
   const c = {
     execute: async (sql, binds) => {
       calls.push({ sql, binds });
@@ -38,9 +40,13 @@ function mock({ duplicate = false, commitError = false, catalogValid = true } = 
       }
       if (sql.includes("HASH_CONTEUDO AS")) return { rows: [{ hash: storedHash, id: "789" }] };
       if (sql.includes("FROM TASY.pessoa_fisica")) return { rows: [{ found: 1 }] };
+      if (sql.includes('SELECT vl_medico AS "vlMedico"'))
+        return { rows: [{ vlMedico: persistedFee === undefined ? primaryFee : persistedFee }] };
+      if (sql.startsWith("INSERT INTO TASY.orcamento_paciente_proc") && binds.principal === null)
+        primaryFee = binds.vlMedico;
       if (sql.includes("FROM TASY.procedimento p") && sql.includes("FETCH NEXT"))
-        return { rows: catalogValid ? [{ codigo: "10", origem: "1" }] : [] };
-      if (sql.includes("NEXTVAL)")) return { rows: [{ id: "789" }] };
+        return { rows: catalogValid ? [{ codigo: binds.busca, origem: "1" }] : [] };
+      if (sql.includes("NEXTVAL)")) return { rows: [{ id: String(nextId++) }] };
       return { rows: [], rowsAffected: 1 };
     },
     commit: async () => {
@@ -86,6 +92,61 @@ test("Oracle committed key is recovered without duplicate inserts; commit loss i
   const stale = mock({ catalogValid: false });
   await assert.rejects(stale.send(snapshot, principal), (e) => e.code === "CATALOG_CHANGED");
   assert.ok(!stale.calls.includes("commit"));
+});
+
+test("medical fee is bound only to the primary procedure, preserving zero and quantity", async () => {
+  for (const fee of [1000, 1234.56, 0, null]) {
+    const { send, calls } = mock();
+    await send(
+      {
+        ...snapshot,
+        data: {
+          ...snapshot.data,
+          honorariosMedicos: fee,
+          tasy: {
+            ...selection,
+            procedimentos: [
+              { codigo: "10", origem: "1", quantidade: 3 },
+              { codigo: "20", origem: "1", quantidade: 2 },
+            ],
+          },
+        },
+      },
+      principal,
+    );
+    const inserts = calls.filter((c) =>
+      c.sql?.startsWith("INSERT INTO TASY.orcamento_paciente_proc"),
+    );
+    assert.equal(inserts.length, 2);
+    assert.match(inserts[0].sql, /vl_medico/);
+    assert.equal(inserts[0].binds.vlMedico, fee);
+    assert.equal(inserts[0].binds.quantidade, 3);
+    assert.equal(inserts[0].binds.principal, null);
+    assert.equal(inserts[1].binds.vlMedico, null);
+    assert.equal(inserts[1].binds.principal, inserts[0].binds.itemId);
+    assert.equal(calls.filter((c) => c === "commit").length, 1);
+  }
+});
+
+test("invalid medical fees cannot start Oracle writes; trigger changes roll back the export", async () => {
+  for (const fee of [-1, NaN, Infinity, "1000", 10000000000]) {
+    const { send, calls } = mock();
+    await assert.rejects(
+      send({ ...snapshot, data: { ...snapshot.data, honorariosMedicos: fee } }, principal),
+      { code: "INVALID_MEDICAL_FEE" },
+    );
+    assert.equal(calls.length, 0);
+  }
+  const altered = mock({ persistedFee: null });
+  await assert.rejects(
+    altered.send({ ...snapshot, data: { ...snapshot.data, honorariosMedicos: 0 } }, principal),
+    { code: "MEDICAL_FEE_NOT_SAVED" },
+  );
+  assert.ok(altered.calls.includes("rollback"));
+  assert.ok(!altered.calls.includes("commit"));
+  const retry = mock({ duplicate: true });
+  await retry.send({ ...snapshot, data: { ...snapshot.data, honorariosMedicos: 1000 } }, principal);
+  assert.ok(!retry.calls.some((c) => c.sql?.startsWith("UPDATE TASY.orcamento_paciente_proc")));
 });
 test("disabled exports and inaccessible patients are blocked before Oracle", async () => {
   await assert.rejects(

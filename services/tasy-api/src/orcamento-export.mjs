@@ -38,6 +38,17 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
         "Crie um orçamento com paciente e itens selecionados no Tasy.",
       );
     const selection = parsed.data;
+    const fee = snapshot.data.honorariosMedicos ?? null;
+    if (
+      fee !== null &&
+      (typeof fee !== "number" || !Number.isFinite(fee) || fee < 0 || fee > 9999999999.99)
+    )
+      throw new ApiError(
+        400,
+        "INVALID_MEDICAL_FEE",
+        "Honorário médico inválido para envio ao Tasy.",
+      );
+    const medicalFee = fee === null ? null : Math.round(fee * 100) / 100;
     if (!principal.allPessoaFisica && !principal.pessoaFisicaIds.includes(selection.cdPessoaFisica))
       throw new ApiError(403, "FORBIDDEN", "Paciente fora do escopo autorizado.");
     const hash = createHash("sha256").update(canonicalJson(snapshot)).digest("hex");
@@ -181,8 +192,8 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
         await c.execute(
           `INSERT INTO TASY.orcamento_paciente_proc
           (nr_sequencia,nr_sequencia_orcamento,cd_procedimento,ie_origem_proced,qt_procedimento,
-           dt_atualizacao,nm_usuario,nr_seq_proc_princ)
-          VALUES (:itemId,:id,:codigo,:origem,:quantidade,SYSDATE,:usuario,:principal)`,
+           dt_atualizacao,nm_usuario,nr_seq_proc_princ,vl_medico)
+          VALUES (:itemId,:id,:codigo,:origem,:quantidade,SYSDATE,:usuario,:principal,:vlMedico)`,
           {
             itemId,
             id,
@@ -191,6 +202,9 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
             quantidade: item.quantidade,
             usuario: principal.tasyUsername,
             principal: primary ?? null,
+            // The amount entered in the portal belongs to the primary procedure
+            // once; do not multiply by quantity or repeat it on additional items.
+            vlMedico: primary === undefined ? medicalFee : null,
           },
         );
         primary ??= itemId;
@@ -211,9 +225,22 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
           },
         );
       }
+      if (medicalFee !== null) {
+        const saved = await c.execute(
+          `SELECT vl_medico AS "vlMedico" FROM TASY.orcamento_paciente_proc
+           WHERE nr_sequencia=:itemId AND nr_sequencia_orcamento=:id`,
+          { itemId: primary, id },
+        );
+        if (saved.rows?.length !== 1 || saved.rows[0].vlMedico !== medicalFee)
+          throw new ApiError(
+            409,
+            "MEDICAL_FEE_NOT_SAVED",
+            "O Tasy não confirmou o honorário no procedimento principal. O envio foi desfeito.",
+          );
+      }
       const note =
         `Portal ${snapshot.id}; usuario portal ${snapshot.actorId}; aguardando cotacao. ` +
-        `Valores informados no portal (nao precificados no ERP): medico=${snapshot.data.honorariosMedicos ?? "nao informado"}; hospital=${snapshot.data.valorHospitalar ?? "nao informado"}.`;
+        `Honorario medico no VL_MEDICO do procedimento principal=${medicalFee ?? "nao informado"}; valor hospitalar informado no portal (nao precificado no ERP)=${snapshot.data.valorHospitalar ?? "nao informado"}.`;
       await c.execute(
         `INSERT INTO TASY.orcamento_historico
         (nr_sequencia,nr_sequencia_orcamento,dt_atualizacao,nm_usuario,dt_atualizacao_nrec,nm_usuario_nrec,dt_historico,ds_historico,dt_liberacao)

@@ -87,7 +87,6 @@ export function NewRequestDialog({
   const [adicionais, setAdicionais] = useState<TasyProcedureItem[]>([]);
   const [catalogContext, setCatalogContext] = useState({ cdConvenio: "", cdCategoria: "" });
   const [temCti, setTemCti] = useState(false);
-  const [anestesista, setAnestesista] = useState(false);
   const [sangue, setSangue] = useState<string[]>([]);
   const [multidisciplinar, setMultidisciplinar] = useState<string[]>([]);
   const create = useCreateRequest();
@@ -243,7 +242,7 @@ export function NewRequestDialog({
                 opme: opmeTexto,
                 anatomoPatologico: form.anatomo,
                 reservaSangue: sangue.join("; "),
-                equipeMultidisciplinar: `Anestesista: ${anestesista ? "Sim" : "Não"}. ${multidisciplinar.join("; ")}`,
+                equipeMultidisciplinar: multidisciplinar.join("; "),
                 fisioterapia: toNumber(form.fisioterapia),
                 tempoBloco: form.bloco,
                 obsMedico: form.obsMedico,
@@ -267,7 +266,6 @@ export function NewRequestDialog({
         );
       setRequestKey(crypto.randomUUID());
       setForm(empty);
-      setAnestesista(false);
       setPatientCode("");
       setPatientNotFound(false);
       setTemCti(false);
@@ -465,13 +463,6 @@ export function NewRequestDialog({
             <div className="grid gap-4 sm:grid-cols-2">
               {isMedico ? (
                 <>
-                  <label className="flex items-center gap-2 sm:col-span-2">
-                    <Checkbox
-                      checked={anestesista}
-                      onCheckedChange={(v) => setAnestesista(v === true)}
-                    />
-                    Necessita anestesista
-                  </label>
                   <div className="grid gap-2">
                     <Label htmlFor="honorario">
                       Honorário solicitado (R$)

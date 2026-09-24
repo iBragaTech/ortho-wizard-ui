@@ -13,27 +13,44 @@ export const lateralidadeOptions = [
 ];
 
 export const regimeInternacaoOptions = [
-  "Ambulatorial",
-  "Internação hospitalar",
-  "Day clinic",
-  "Home care",
+  "Externo",
+  "Interno",
 ];
 
-export const tipoCirurgiaOptions = ["Eletiva", "Urgência", "Emergência"];
+export const tipoCirurgiaOptions = [
+  "AMB",
+  "AIH",
+  "APAC",
+];
 
 export const origemPacienteOptions = [
-  "Pronto socorro",
-  "Ambulatório",
-  "Internação",
-  "Domicílio",
-  "Outro",
+  "W eletiva",
+  "Convênio eletivo",
+  "Particular eletiva",
+  "WU",
+  "CMC",
+  "Urgencia Pronto atendimento",
+  "Urgência UPA",
+  "Urgência internado",
+  "Outros",
 ];
 
-export const porteCirurgiaOptions = ["Pequeno", "Médio", "Grande", "Especial"];
+export const porteCirurgiaOptions = [
+  "Pequeno",
+  "Médio",
+  "Grande",
+];
 
-export const anestesiaOptions = ["Geral", "Regional", "Local", "Sedação"];
+export const anestesiaOptions = [
+  "Local",
+  "Equipe",
+];
 
-export const anatomiaPatologicaOptions = ["Não", "Sim"];
+export const anatomiaPatologicaOptions = [
+  "Sim",
+  "Não",
+  "Congelação pré-operatória",
+];
 
 export const equipamentosOptions = [
   "Bisturi Bipolar",
@@ -52,8 +69,6 @@ export const equipamentosOptions = [
 ];
 
 export const movimentoPacienteOptions = [
-  "Não se aplica",
-  "Deambulando",
-  "Macas",
   "Cadeira de rodas",
+  "Maca",
 ];

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, FileSearch, FileText, Plus, Wallet } from "lucide-react";
+import { CheckCircle2, FileSearch, FileText, History, Plus, Stethoscope, Wallet } from "lucide-react";
 import { AppShell } from "@/components/portal/app-shell";
 import { PageHeader } from "@/components/portal/page-header";
 import { RequestTable } from "@/components/portal/request-table";
@@ -8,8 +8,10 @@ import { EmptyState } from "@/components/portal/empty-state";
 import { MetricCard } from "@/components/portal/metric-card";
 import { SearchAndFilters, type Filters } from "@/components/portal/search-and-filters";
 import { NewRequestDialog } from "@/components/portal/new-request-dialog";
+import { Button } from "@/components/ui/button";
 import { formatCurrency, totalOf } from "@/data/mock";
 import { useRequests } from "@/lib/data/hooks";
+import { useSession } from "@/lib/auth/session";
 
 export const Route = createFileRoute("/orcamentos/")({
   head: () => ({
@@ -34,6 +36,8 @@ export const Route = createFileRoute("/orcamentos/")({
 
 function OrcamentosPage() {
   const { data: requests = [] } = useRequests();
+  const { user } = useSession();
+  const isMedico = user?.perfil === "Médico";
   const [filters, setFilters] = useState<Filters>({
     busca: "",
     status: "todos",
@@ -45,6 +49,8 @@ function OrcamentosPage() {
   const concluidos = requests.filter((r) => r.status === "concluido");
   const soma = concluidos.reduce((acc, r) => acc + (totalOf(r) ?? 0), 0);
   const media = concluidos.length ? soma / concluidos.length : 0;
+  const aguardandoHonorarios = requests.filter((r) => r.honorariosMedicos === null);
+  const honorariosPreenchidos = requests.filter((r) => r.honorariosMedicos !== null);
 
   const filtered = useMemo(
     () =>
@@ -68,28 +74,54 @@ function OrcamentosPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Orçamentos"
-        description="Todos os orçamentos registrados no portal, do pedido inicial ao valor consolidado."
+        title={isMedico ? "Meus orçamentos" : "Orçamentos"}
+        description={
+          isMedico
+            ? "Crie orçamentos, preencha honorários pendentes e acompanhe seu histórico."
+            : "Todos os orçamentos registrados no portal, do pedido inicial ao valor consolidado."
+        }
         actions={
           <NewRequestDialog
+            origem={isMedico ? "medico" : "comercial"}
             trigger={
-              <button className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto">
+              <Button className="w-full sm:w-auto">
                 <Plus className="h-4 w-4" /> Novo orçamento
-              </button>
+              </Button>
             }
           />
         }
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <MetricCard
-          label="Concluídos"
-          value={concluidos.length}
-          icon={CheckCircle2}
-          tone="success"
-        />
-        <MetricCard label="Valor consolidado" value={formatCurrency(soma)} icon={Wallet} />
-        <MetricCard label="Ticket médio" value={formatCurrency(media)} icon={FileText} />
+        {isMedico ? (
+          <>
+            <MetricCard
+              label="Aguardando seus honorários"
+              value={aguardandoHonorarios.length}
+              icon={Stethoscope}
+              tone="warning"
+              hint={`${aguardandoHonorarios.length} solicitações aguardando preenchimento`}
+            />
+            <MetricCard
+              label="Honorários preenchidos"
+              value={honorariosPreenchidos.length}
+              icon={CheckCircle2}
+              tone="success"
+            />
+            <MetricCard label="Total no histórico" value={requests.length} icon={History} />
+          </>
+        ) : (
+          <>
+            <MetricCard
+              label="Concluídos"
+              value={concluidos.length}
+              icon={CheckCircle2}
+              tone="success"
+            />
+            <MetricCard label="Valor consolidado" value={formatCurrency(soma)} icon={Wallet} />
+            <MetricCard label="Ticket médio" value={formatCurrency(media)} icon={FileText} />
+          </>
+        )}
       </div>
 
       <SearchAndFilters filters={filters} onChange={setFilters} />
@@ -101,7 +133,7 @@ function OrcamentosPage() {
           description="Ajuste os filtros ou o termo de busca para visualizar outros resultados."
         />
       ) : (
-        <RequestTable requests={filtered} manage />
+        <RequestTable requests={filtered} manage={!isMedico} />
       )}
     </AppShell>
   );

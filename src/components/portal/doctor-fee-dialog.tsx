@@ -15,9 +15,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { type ConsultationRequest } from "@/data/mock";
 import { useSaveDoctorFees } from "@/lib/data/hooks";
+import { useDoctorBlockTime } from "@/lib/data/use-doctor-block-time";
 
 function toNumber(value: string): number | null {
-  const clean = value.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  const clean = value
+    .replace(/[^\d,.-]/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
   if (!clean.trim()) return null;
   const n = Number(clean);
   return Number.isFinite(n) ? n : null;
@@ -31,13 +35,18 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
   const filled = request.honorariosMedicos !== null;
   const [open, setOpen] = useState(false);
   const save = useSaveDoctorFees();
+  const blockTime = useDoctorBlockTime({
+    open,
+    medical: true,
+    procedureCode: request.tasy?.procedimentos[0]?.codigo,
+    initialValue: request.tempoBloco,
+  });
 
   const initial = {
     honorario: fromNumber(request.honorariosMedicos),
     diaria: fromNumber(request.diaria),
     cti: fromNumber(request.cti),
     fisioterapia: request.fisioterapia !== null ? String(request.fisioterapia) : "",
-    tempoBloco: request.tempoBloco,
     opme: request.opme,
     anatomo: request.anatomoPatologico,
     sangue: request.reservaSangue,
@@ -55,6 +64,10 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
     setForm((f) => ({ ...f, [key]: value }));
 
   async function handleSave() {
+    if (blockTime.loading) {
+      toast.info("Aguarde a consulta do tempo médio do médico.");
+      return;
+    }
     try {
       await save.mutateAsync({
         id: request.id,
@@ -67,19 +80,26 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
           reservaSangue: form.sangue,
           equipeMultidisciplinar: form.equipe,
           fisioterapia: form.fisioterapia ? Number(form.fisioterapia) : null,
-          tempoBloco: form.tempoBloco,
+          tempoBloco: blockTime.value,
           obsMedico: form.obs,
         },
       });
       toast.success("Honorários enviados ao Comercial.");
       setOpen(false);
+      blockTime.reset();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível salvar os honorários.");
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) blockTime.reset();
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant={filled ? "outline" : "default"} size="sm" className="w-full sm:w-auto">
           {filled ? "Revisar honorários" : "Preencher honorários"}
@@ -137,13 +157,23 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
                 />
               </div>
               <div className="grid gap-2">
-<Label htmlFor="tempo-bloco">Tempo de bloco (minutos)</Label>
+                <Label htmlFor="tempo-bloco">Tempo de bloco (minutos)</Label>
                 <Input
                   id="tempo-bloco"
-placeholder="Insira o tempo em minutos"
-                  value={form.tempoBloco}
-                  onChange={(e) => set("tempoBloco")(e.target.value)}
+                  placeholder="Insira o tempo em minutos"
+                  value={blockTime.value}
+                  readOnly={blockTime.readOnly}
+                  aria-busy={blockTime.loading}
+                  aria-describedby="tempo-bloco-hint"
+                  onChange={(e) => blockTime.setValue(e.target.value)}
                 />
+                <p
+                  id="tempo-bloco-hint"
+                  className="text-xs text-muted-foreground"
+                  aria-live="polite"
+                >
+                  {blockTime.hint}
+                </p>
               </div>
             </div>
           </section>
@@ -154,7 +184,9 @@ placeholder="Insira o tempo em minutos"
             </h3>
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="opme">OPME (descrição detalhada do item, quantidade e fornecedor)</Label>
+                <Label htmlFor="opme">
+                  OPME (descrição detalhada do item, quantidade e fornecedor)
+                </Label>
                 <Textarea
                   id="opme"
                   rows={3}

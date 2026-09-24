@@ -41,6 +41,7 @@ import { isValidCpf, telefonePessoaTasy } from "@/lib/data/tasy";
 import { getTasyClient } from "@/lib/data/tasy-supabase";
 import { getTasyExportStatus } from "@/lib/data/tasy-export";
 import { createRequestKey } from "@/lib/request-key";
+import { useDoctorBlockTime } from "@/lib/data/use-doctor-block-time";
 
 const empty = {
   nome: "",
@@ -55,7 +56,6 @@ const empty = {
   diariaEnf: "",
   diariaCti: "",
   anatomo: "",
-  bloco: "",
   // Campos do Médico
   honorario: "",
   diaria: "",
@@ -95,11 +95,20 @@ export function NewRequestDialog({
   const origem = user?.perfil === "Médico" ? "medico" : origemProp;
   const isMedico = origem === "medico";
   const patientFieldsEditable = patientNotFound;
+  const blockTime = useDoctorBlockTime({
+    open,
+    medical: isMedico,
+    procedureCode: procedimento[0]?.codigo,
+  });
 
   const set = (key: keyof typeof empty) => (value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
 
   async function handleSubmit() {
+    if (blockTime.loading) {
+      toast.info("Aguarde a consulta do tempo médio do médico.");
+      return;
+    }
     if (!form.nome.trim() || !form.cpf.trim()) {
       toast.error("Informe ao menos nome e CPF do paciente.");
       return;
@@ -116,7 +125,7 @@ export function NewRequestDialog({
       toast.error("Informe um e-mail válido.");
       return;
     }
-    const blocoMinutos = toNumber(form.bloco);
+    const blocoMinutos = toNumber(blockTime.value);
     if (blocoMinutos === null || blocoMinutos < 1 || !Number.isInteger(blocoMinutos)) {
       toast.error("Informe o tempo de bloco em minutos (número inteiro maior que zero).");
       return;
@@ -192,7 +201,7 @@ export function NewRequestDialog({
           sangue.length && `Reserva de sangue: ${sangue.join("; ")}`,
           multidisciplinar.length &&
             `Equipe multidisciplinar/Fisioterapia: ${multidisciplinar.join("; ")}`,
-          form.bloco && `Tempo de bloco: ${form.bloco}`,
+          blockTime.value && `Tempo de bloco: ${blockTime.value}`,
         ]
           .filter(Boolean)
           .join("\n");
@@ -256,7 +265,7 @@ export function NewRequestDialog({
                 reservaSangue: sangue.join("; "),
                 equipeMultidisciplinar: multidisciplinar.join("; "),
                 fisioterapia: null,
-                tempoBloco: form.bloco,
+                tempoBloco: blockTime.value,
                 obsMedico: form.obsMedico,
               },
             }
@@ -278,6 +287,7 @@ export function NewRequestDialog({
         );
       setRequestKey(createRequestKey());
       setForm(empty);
+      blockTime.reset();
       setPatientCode("");
       setPatientNotFound(false);
       setTemCti(false);
@@ -301,6 +311,7 @@ export function NewRequestDialog({
       onOpenChange={(next) => {
         setOpen(next);
         if (!next) {
+          blockTime.reset();
           setPatientCode("");
           setPatientNotFound(false);
           setCatalogContext({ cdConvenio: "", cdCategoria: "" });
@@ -643,9 +654,15 @@ export function NewRequestDialog({
                   id="bloco"
                   inputMode="numeric"
                   placeholder="Insira o tempo em minutos"
-                  value={form.bloco}
-                  onChange={(e) => set("bloco")(e.target.value)}
+                  value={blockTime.value}
+                  readOnly={blockTime.readOnly}
+                  aria-busy={blockTime.loading}
+                  aria-describedby="bloco-hint"
+                  onChange={(e) => blockTime.setValue(e.target.value)}
                 />
+                <p id="bloco-hint" className="text-xs text-muted-foreground" aria-live="polite">
+                  {blockTime.hint}
+                </p>
               </div>
 
               {isMedico ? (

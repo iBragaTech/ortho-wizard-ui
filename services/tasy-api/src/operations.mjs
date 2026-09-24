@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { ApiError } from "./errors.mjs";
+import { tempoMedicoOperation } from "./tempos-medico.mjs";
 
 // The only known mapping supplied for this installation. Validate in homologation.
 // Reads only the authenticated principal's mapped username, not other users.
 export const operations = {
+  "medicos.tempo-procedimento": tempoMedicoOperation,
   "usuarios.consultar": {
     kind: "read",
     schema: z.object({ nmUsuario: z.string().trim().min(1).max(128) }).strict(),

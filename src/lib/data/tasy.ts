@@ -21,6 +21,11 @@ export interface PessoaFisicaTasy {
   nrDdiCelular: string | null;
 }
 
+export interface TempoMedicoTasy {
+  minutos: number | null;
+  motivo: "sem_medico" | "sem_media" | "multiplas_medias" | null;
+}
+
 export function isValidCpf(value: string): boolean {
   const digits = value.replace(/\D/g, "");
   return /^\d{11}$/.test(digits) && !/^(\d)\1{10}$/.test(digits);
@@ -118,6 +123,8 @@ export function createTasyClient(options: {
   }
 
   return {
+    consultarTempoMedico: (cdProcedimento: string) =>
+      executeOperation<TempoMedicoTasy>("medicos.tempo-procedimento", { cdProcedimento }),
     consultarUsuario: (nmUsuario: string) =>
       executeOperation<{ nmUsuario: string }>("usuarios.consultar", { nmUsuario }),
     consultarPessoaFisica: (cdPessoaFisica: string) =>

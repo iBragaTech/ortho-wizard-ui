@@ -65,6 +65,7 @@ test("administrator must provide a valid individual Tasy link; unique identity, 
   assert.equal(p.allPessoaFisica, true);
   assert.equal(p.canCreatePessoaFisica, false);
   assert.ok(p.operations.includes("orcamentos.enviar"));
+  assert.ok(p.operations.includes("medicos.tempo-procedimento"));
   await assert.rejects(
     run(
       "createUser",

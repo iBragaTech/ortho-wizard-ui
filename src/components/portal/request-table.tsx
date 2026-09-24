@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { RequestActions } from "./request-actions";
+import { DoctorFeeDialog } from "./doctor-fee-dialog";
 import { ArrowRight } from "lucide-react";
 import {
   Table,
@@ -13,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./status-badge";
 import { RequestCard } from "./request-card";
 import { formatCurrency, totalOf, type ConsultationRequest } from "@/data/mock";
+import { useSession } from "@/lib/auth/session";
 
 export function RequestTable({
   requests,
@@ -23,6 +25,9 @@ export function RequestTable({
   showNumber?: boolean;
   manage?: boolean;
 }) {
+  const { user } = useSession();
+  const isMedico = user?.perfil === "Médico";
+
   return (
     <>
       {/* Mobile: cards */}
@@ -30,6 +35,7 @@ export function RequestTable({
         {requests.map((r) => (
           <div key={r.id} className="space-y-2">
             <RequestCard request={r} />
+            {isMedico && <DoctorFeeDialog request={r} />}
             {manage && <RequestActions request={r} />}
           </div>
         ))}
@@ -68,12 +74,15 @@ export function RequestTable({
                     {formatCurrency(totalOf(r))}
                   </TableCell>
                   <TableCell className="text-right">
-                    {manage && <RequestActions request={r} />}
-                    <Button asChild size="sm" variant="ghost">
-                      <Link to="/orcamentos/$id" params={{ id: r.id }}>
-                        Visualizar <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
+                    <div className="inline-flex flex-wrap items-center justify-end gap-1">
+                      {isMedico && <DoctorFeeDialog request={r} />}
+                      {manage && !isMedico && <RequestActions request={r} />}
+                      <Button asChild size="sm" variant="ghost">
+                        <Link to="/orcamentos/$id" params={{ id: r.id }}>
+                          Visualizar <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

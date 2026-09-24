@@ -46,6 +46,7 @@ const empty = {
   nascimento: "",
   cpf: "",
   telefone: "",
+  email: "",
   convenio: "",
   categoriaConvenio: "",
   // Campos do Comercial
@@ -98,16 +99,25 @@ export function NewRequestDialog({
     setForm((f) => ({ ...f, [key]: value }));
 
   async function handleSubmit() {
-    if (isMedico && (toNumber(form.honorario) === null || toNumber(form.honorario)! < 0)) {
-      toast.error("Informe o honorário solicitado, inclusive quando for zero.");
-      return;
-    }
     if (!form.nome.trim() || !form.cpf.trim()) {
       toast.error("Informe ao menos nome e CPF do paciente.");
       return;
     }
     if (!isValidCpf(form.cpf)) {
       toast.error("Informe um CPF válido com 11 dígitos.");
+      return;
+    }
+    if (!form.email.trim()) {
+      toast.error("Informe o e-mail do paciente.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      toast.error("Informe um e-mail válido.");
+      return;
+    }
+    const blocoMinutos = toNumber(form.bloco);
+    if (blocoMinutos === null || blocoMinutos < 1 || !Number.isInteger(blocoMinutos)) {
+      toast.error("Informe o tempo de bloco em minutos (número inteiro maior que zero).");
       return;
     }
 
@@ -157,6 +167,7 @@ export function NewRequestDialog({
 
     const observacoes = isMedico
       ? [
+          `E-mail: ${form.email.trim()}`,
           convenioTexto,
           categoriaTexto,
           principalTexto && `Procedimento principal: ${principalTexto}`,
@@ -165,6 +176,7 @@ export function NewRequestDialog({
           .filter(Boolean)
           .join("\n")
       : [
+          `E-mail: ${form.email.trim()}`,
           convenioTexto,
           categoriaTexto,
           principalTexto && `Procedimento principal: ${principalTexto}`,
@@ -419,6 +431,20 @@ export function NewRequestDialog({
                   </p>
                 )}
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="email">
+                  E-mail
+                  <RequiredMark />
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  maxLength={255}
+                  placeholder="paciente@email.com"
+                  value={form.email}
+                  onChange={(e) => set("email")(e.target.value)}
+                />
+              </div>
               {open && (
                 <TasyInsuranceSelect
                   key={patientRevision}
@@ -463,10 +489,7 @@ export function NewRequestDialog({
               {isMedico ? (
                 <>
                   <div className="grid gap-2">
-                    <Label htmlFor="honorario">
-                      Honorário solicitado (R$)
-                      <RequiredMark />
-                    </Label>
+                    <Label htmlFor="honorario">Honorário solicitado (R$)</Label>
                     <Input
                       id="honorario"
                       inputMode="decimal"
@@ -611,7 +634,10 @@ export function NewRequestDialog({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="bloco">Tempo de bloco (minutos)</Label>
+                <Label htmlFor="bloco">
+                  Tempo de bloco (minutos)
+                  <RequiredMark />
+                </Label>
                 <Input
                   id="bloco"
                   inputMode="numeric"

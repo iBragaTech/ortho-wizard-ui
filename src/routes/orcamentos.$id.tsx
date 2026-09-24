@@ -6,6 +6,7 @@ import { localAuthEnabled } from "@/lib/data/local-api";
 import { AppShell } from "@/components/portal/app-shell";
 import { PageHeader } from "@/components/portal/page-header";
 import { PatientInfoCard, InfoField } from "@/components/portal/patient-info-card";
+import { RequestActions } from "@/components/portal/request-actions";
 import { FinancialSummary } from "@/components/portal/financial-summary";
 import { Timeline } from "@/components/portal/timeline";
 import { StatusBadge } from "@/components/portal/status-badge";
@@ -124,7 +125,10 @@ function RequestDetail() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-6">
-          <PatientInfoCard patient={request.paciente} />
+          <PatientInfoCard
+            patient={request.paciente}
+            actions={<RequestActions request={request} phoneOnly />}
+          />
 
           <Card className="shadow-card">
             <CardHeader>
@@ -247,10 +251,10 @@ function RequestDetail() {
                       />
                     </div>
                     <div className="grid gap-2 sm:col-span-2">
-<Label htmlFor="tempo-bloco">Tempo de bloco (minutos)</Label>
+                      <Label htmlFor="tempo-bloco">Tempo de bloco (minutos)</Label>
                       <Input
                         id="tempo-bloco"
-placeholder="Insira o tempo em minutos"
+                        placeholder="Insira o tempo em minutos"
                         defaultValue={request.tempoBloco}
                       />
                     </div>

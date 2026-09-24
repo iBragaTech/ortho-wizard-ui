@@ -44,6 +44,7 @@ const newRequest = z
       .transform((v) => v.replace(/\D/g, ""))
       .refine(validCpf, "CPF inválido."),
     telefone: z.string().max(40),
+    telefoneAnterior: z.string().max(40).optional(),
     especialidade: text.optional(),
     tipoConsulta: text.optional(),
     dataDesejada: date.optional(),
@@ -84,7 +85,7 @@ const rowDto = (row, user) => ({
   status: row.status,
   data: fmtDate(row.created_at),
 });
-async function getAccessible(db, id, user, lock = false) {
+async function getAccessible(db, id, user, lock = false, contactOnly = false) {
   const { rows } = await db.query(
     `SELECT * FROM portal.requests WHERE id = $1
     AND COALESCE(data->>'excluido','false') <> 'true'
@@ -92,12 +93,13 @@ async function getAccessible(db, id, user, lock = false) {
     [id, user.perfil, user.id],
   );
   if (!rows.length) throw new ApiError(404, "NOT_FOUND", "Orçamento não encontrado.");
-  if (lock && rows[0].status === "concluido")
+  if (lock && !contactOnly && rows[0].status === "concluido")
     throw new ApiError(409, "INVALID_STATE", "Orçamento aprovado não pode ser alterado.");
-  if (lock && rows[0].data.inativo)
+  if (lock && !contactOnly && rows[0].data.inativo)
     throw new ApiError(409, "INACTIVE_REQUEST", "Orçamento inativo não pode ser alterado.");
   if (
     lock &&
+    !contactOnly &&
     (await db.query("SELECT request_id FROM portal.tasy_exports WHERE request_id=$1", [id])).rows
       .length
   )
@@ -118,10 +120,51 @@ const event = (db, id, user, title, description = "") =>
 
 export function createPortalOperations(
   db,
-  { calculateQuote, auditIdentity = () => null, validateTasyLink } = {},
+  { calculateQuote, auditIdentity = () => null, validateTasyLink, syncPatientPhone } = {},
 ) {
   const handlers = {
     ...custosOperations({ db, getAccessible, event, calculateQuote, auditIdentity }),
+    updatePatientPhone: async (input, user) => {
+      allowed(user, ["Médico", "Administrador", "Comercial"]);
+      const value = parse(
+        z
+          .object({
+            id: uuid,
+            telefone: z.string().max(40),
+            anterior: z.string().max(40),
+            anteriorTasy: z.string().max(40).optional(),
+          })
+          .strict(),
+        input,
+      );
+      return db.transaction(async (tx) => {
+        const row = await getAccessible(tx, value.id, user, true, true);
+        if (row.data.paciente.telefone !== value.anterior)
+          throw new ApiError(409, "RECORD_CHANGED", "O telefone foi alterado. Atualize a página.");
+        if (!syncPatientPhone || !row.data.tasy?.cdPessoaFisica)
+          throw new ApiError(
+            503,
+            "TASY_DISABLED",
+            "O paciente precisa estar vinculado ao Tasy para atualizar o telefone.",
+          );
+        await syncPatientPhone(
+          {
+            cdPessoaFisica: row.data.tasy.cdPessoaFisica,
+            nrCpf: row.data.paciente.cpf.replace(/\D/g, ""),
+            telefone: value.telefone,
+            anterior: value.anteriorTasy ?? value.anterior,
+          },
+          user,
+          tx,
+        );
+        await tx.query(
+          "UPDATE portal.requests SET data=jsonb_set(data,'{paciente,telefone}',to_jsonb($2::text)),updated_at=now() WHERE id=$1",
+          [value.id, value.telefone],
+        );
+        await event(tx, value.id, user, "Telefone do paciente atualizado no Tasy");
+        return null;
+      });
+    },
     editRequest: async (input, user) => {
       const value = parse(
         z
@@ -147,6 +190,26 @@ export function createPortalOperations(
             "RECORD_CHANGED",
             "O orçamento foi alterado. Atualize a página antes de editar.",
           );
+        if (user.perfil === "Médico" && value.observacoes !== row.data.observacoes)
+          throw new ApiError(
+            403,
+            "FORBIDDEN",
+            "O médico pode editar somente o telefone nesta ação.",
+          );
+        if (value.telefone !== row.data.paciente.telefone && row.data.tasy?.cdPessoaFisica) {
+          if (!syncPatientPhone)
+            throw new ApiError(503, "TASY_DISABLED", "Conecte ao Tasy para atualizar o telefone.");
+          await syncPatientPhone(
+            {
+              cdPessoaFisica: row.data.tasy.cdPessoaFisica,
+              nrCpf: row.data.paciente.cpf.replace(/\D/g, ""),
+              telefone: value.telefone,
+              anterior: value.anterior.telefone,
+            },
+            user,
+            tx,
+          );
+        }
         const data = {
           ...row.data,
           paciente: { ...row.data.paciente, telefone: value.telefone },
@@ -249,6 +312,20 @@ export function createPortalOperations(
         );
       const referencia = calculateQuote ? await calculateQuote(value.tasy, user, value.cpf) : null;
       return db.transaction(async (tx) => {
+        if (value.telefoneAnterior !== undefined && value.telefone !== value.telefoneAnterior) {
+          if (!value.tasy || !syncPatientPhone)
+            throw new ApiError(503, "TASY_DISABLED", "Conecte ao Tasy para atualizar o telefone.");
+          await syncPatientPhone(
+            {
+              cdPessoaFisica: value.tasy.cdPessoaFisica,
+              nrCpf: value.cpf,
+              telefone: value.telefone,
+              anterior: value.telefoneAnterior,
+            },
+            user,
+            tx,
+          );
+        }
         const seq = await tx.query("SELECT nextval('portal.request_numbers')::text AS value");
         const numero = `SOL-${new Date().getUTCFullYear()}-${seq.rows[0].value.padStart(6, "0")}`;
         const data = {

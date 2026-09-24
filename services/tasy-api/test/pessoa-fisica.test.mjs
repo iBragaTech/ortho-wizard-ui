@@ -13,7 +13,11 @@ const principal = {
   tasyUsername: "arafaela",
   tasyEstablishment: 1,
   tasyProfile: 2,
-  operations: ["pessoas-fisicas.consultar", "pessoas-fisicas.salvar"],
+  operations: [
+    "pessoas-fisicas.consultar",
+    "pessoas-fisicas.salvar",
+    "pessoas-fisicas.atualizar-telefone",
+  ],
   pessoaFisicaIds: ["123"],
   canCreatePessoaFisica: true,
 };

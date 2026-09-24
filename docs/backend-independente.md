@@ -59,6 +59,26 @@ O novo esquema `portal` é criado por `src/portal/schema.sql`. Ele mantém usuá
 
 ## Tasy
 
+### Atualização do telefone pelo médico
+
+Ao selecionar um paciente existente na nova solicitação, o médico pode alterar o
+telefone; nome, CPF e nascimento continuam bloqueados. O telefone alterado é salvo
+no Tasy ao enviar a solicitação. Nos detalhes de um orçamento, **Editar telefone**
+consulta o contato atual no Tasy e permite salvá-lo sem alterar os demais campos,
+inclusive depois da aprovação (o conteúdo já enviado ao Tasy permanece preservado).
+
+A operação `pessoas-fisicas.atualizar-telefone` grava somente celular, DDD e DDI
+(número brasileiro com DDD, com `+55` opcional), além do usuário e data de auditoria.
+Ela exige vínculo Tasy ativo, acesso ao paciente, `TASY_WRITES_ENABLED=true` e
+`TASY_PESSOA_FISICA_DML_ENABLED=true`. O médico não recebe permissão para alterar
+os outros dados de uma pessoa existente. Alterações simultâneas são recusadas;
+nesse caso, consulte novamente o paciente antes de editar.
+
+O portal só salva a alteração local depois da confirmação Oracle. As duas bases
+não compartilham uma transação: se a confirmação da gravação for perdida, confira
+o resultado antes de repetir. Reenviar o mesmo telefone não altera novamente o
+cadastro; um telefone diferente registrado nesse intervalo gera conflito.
+
 A integração começa com `TASY_ENABLED=false`; nenhuma conexão Oracle é necessária para desenvolver o portal. A criação de um orçamento local não grava automaticamente uma pessoa no ERP.
 
 O arquivo `.local/principals.suggested.json` vincula o UUID da administradora a `arafaela`, estabelecimento `2`, perfil `1848`, permitindo apenas a consulta do próprio usuário Tasy. Para testar a integração, configure as variáveis Oracle e aponte `TASY_PRINCIPALS_FILE` para esse arquivo. Use exclusivamente o banco de homologação inicialmente.

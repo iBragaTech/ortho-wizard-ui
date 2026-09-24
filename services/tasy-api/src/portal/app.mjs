@@ -5,6 +5,7 @@ import { createPortalOperations } from "./operations.mjs";
 import { ApiError } from "../errors.mjs";
 import { createQuoteCalculator } from "./pricing.mjs";
 import { createExportService } from "./export.mjs";
+import { randomUUID } from "node:crypto";
 
 export async function createPortalApp({
   db,
@@ -52,6 +53,15 @@ export async function createPortalApp({
       : undefined,
     auditIdentity: async (user, tx) => (await resolvePrincipal(user, tx)).tasyUsername,
     validateTasyLink,
+    syncPatientPhone: tasyExecute
+      ? async (input, user, tx) =>
+          tasyExecute({
+            name: "pessoas-fisicas.atualizar-telefone",
+            body: input,
+            principal: await resolvePrincipal(user, tx),
+            requestId: randomUUID(),
+          })
+      : undefined,
   });
   const exports = createExportService({ db, send: budgetExporter, principals, resolvePrincipal });
   const signed = async (request) => {

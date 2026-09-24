@@ -88,7 +88,19 @@ export function createLinkResolver(db, validate) {
         cdPerfil: p.tasyProfile,
         cdEstabelecimento: p.tasyEstablishment,
       });
-    return { ...p, subject: user.id };
+    const operations = [...p.operations];
+    if (
+      ["Médico", "Administrador", "Comercial"].includes(user.perfil) &&
+      operations.includes("pessoas-fisicas.consultar") &&
+      !operations.includes("pessoas-fisicas.atualizar-telefone")
+    )
+      operations.push("pessoas-fisicas.atualizar-telefone");
+    return {
+      ...p,
+      operations,
+      subject: user.id,
+      ...(user.perfil === "Médico" ? { canUpdatePessoaFisica: false } : {}),
+    };
   };
 }
 

@@ -122,6 +122,7 @@ export interface NewRequestInput {
   nascimento: string; // yyyy-mm-dd
   cpf: string;
   telefone: string;
+  telefoneAnterior?: string;
   especialidade?: string;
   tipoConsulta?: string;
   dataDesejada?: string; // yyyy-mm-dd

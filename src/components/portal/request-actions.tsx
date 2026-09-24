@@ -3,6 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth/session";
 import { localAuthEnabled, portalCall } from "@/lib/data/local-api";
+import { getTasyClient } from "@/lib/data/tasy-supabase";
+import { telefonePessoaTasy } from "@/lib/data/tasy";
 import type { ConsultationRequest } from "@/data/mock";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,27 +19,59 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-export function RequestActions({ request }: { request: ConsultationRequest }) {
+export function RequestActions({
+  request,
+  phoneOnly = false,
+}: {
+  request: ConsultationRequest;
+  phoneOnly?: boolean;
+}) {
   const { user } = useSession();
   const cache = useQueryClient();
   const [action, setAction] = useState<"edit" | "deactivate" | "delete" | null>(null);
   const [phone, setPhone] = useState("");
+  const [tasyPhone, setTasyPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [reason, setReason] = useState("");
   const [previous, setPrevious] = useState({ telefone: "", observacoes: "" });
   const [busy, setBusy] = useState(false);
   if (!localAuthEnabled || !user) return null;
-  function open(next: typeof action) {
+  if (phoneOnly && !["Médico", "Administrador", "Comercial"].includes(user.perfil)) return null;
+  const editPhoneOnly = phoneOnly || user.perfil === "Médico";
+  async function open(next: typeof action) {
     setPhone(request.paciente.telefone);
     setNotes(request.observacoes);
     setPrevious({ telefone: request.paciente.telefone, observacoes: request.observacoes });
     setReason("");
     setAction(next);
+    if (next === "edit" && editPhoneOnly && request.tasy?.cdPessoaFisica) {
+      setBusy(true);
+      try {
+        const person = await getTasyClient().consultarPessoaFisica(request.tasy.cdPessoaFisica);
+        const currentPhone = telefonePessoaTasy(person);
+        setPhone(currentPhone);
+        setTasyPhone(currentPhone);
+      } catch (error) {
+        setAction(null);
+        toast.error(
+          error instanceof Error ? error.message : "Não foi possível consultar o telefone no Tasy.",
+        );
+      } finally {
+        setBusy(false);
+      }
+    } else setTasyPhone(request.paciente.telefone);
   }
   async function save() {
     setBusy(true);
     try {
-      if (action === "edit")
+      if (action === "edit" && editPhoneOnly)
+        await portalCall("updatePatientPhone", {
+          id: request.id,
+          telefone: phone,
+          anterior: previous.telefone,
+          anteriorTasy: tasyPhone,
+        });
+      else if (action === "edit")
         await portalCall("editRequest", {
           id: request.id,
           telefone: phone,
@@ -51,7 +85,9 @@ export function RequestActions({ request }: { request: ConsultationRequest }) {
         });
       toast.success(
         action === "edit"
-          ? "Orçamento atualizado."
+          ? editPhoneOnly
+            ? "Telefone atualizado no portal e no Tasy."
+            : "Orçamento atualizado."
           : action === "delete"
             ? "Orçamento excluído."
             : "Orçamento inativado.",
@@ -67,7 +103,9 @@ export function RequestActions({ request }: { request: ConsultationRequest }) {
   }
   const title =
     action === "edit"
-      ? "Editar orçamento"
+      ? editPhoneOnly
+        ? "Editar telefone"
+        : "Editar orçamento"
       : action === "delete"
         ? "Excluir orçamento"
         : "Inativar orçamento";
@@ -75,12 +113,14 @@ export function RequestActions({ request }: { request: ConsultationRequest }) {
     <>
       <div className="inline-flex flex-wrap gap-1">
         <Button size="sm" variant="outline" onClick={() => open("edit")}>
-          Editar
+          {editPhoneOnly ? "Editar telefone" : "Editar"}
         </Button>
-        <Button size="sm" variant="outline" onClick={() => open("deactivate")}>
-          Inativar
-        </Button>
-        {user.perfil === "Administrador" && (
+        {!phoneOnly && (
+          <Button size="sm" variant="outline" onClick={() => open("deactivate")}>
+            Inativar
+          </Button>
+        )}
+        {!phoneOnly && user.perfil === "Administrador" && (
           <Button size="sm" variant="destructive" onClick={() => open("delete")}>
             Excluir
           </Button>
@@ -99,7 +139,9 @@ export function RequestActions({ request }: { request: ConsultationRequest }) {
             </DialogTitle>
             <DialogDescription>
               {action === "edit"
-                ? "Edite o telefone de contato e as observações deste orçamento. Valores são preenchidos nas áreas do médico e do Comercial."
+                ? editPhoneOnly
+                  ? "Informe o telefone com DDD. Ao salvar, o contato também será atualizado no Tasy."
+                  : "Edite o telefone de contato e as observações deste orçamento. O telefone também será atualizado no Tasy."
                 : action === "delete"
                   ? "O orçamento será removido da lista. Seu histórico será preservado para auditoria."
                   : "O orçamento sairá da lista de ativos e ficará bloqueado para alterações."}
@@ -110,19 +152,24 @@ export function RequestActions({ request }: { request: ConsultationRequest }) {
               <Label htmlFor={`phone-${request.id}`}>Telefone</Label>
               <Input
                 id={`phone-${request.id}`}
+                type="tel"
                 value={phone}
                 maxLength={40}
                 disabled={busy}
                 onChange={(e) => setPhone(e.target.value)}
               />
-              <Label htmlFor={`notes-${request.id}`}>Observações</Label>
-              <Textarea
-                id={`notes-${request.id}`}
-                value={notes}
-                maxLength={8000}
-                disabled={busy}
-                onChange={(e) => setNotes(e.target.value)}
-              />
+              {!editPhoneOnly && (
+                <>
+                  <Label htmlFor={`notes-${request.id}`}>Observações</Label>
+                  <Textarea
+                    id={`notes-${request.id}`}
+                    value={notes}
+                    maxLength={8000}
+                    disabled={busy}
+                    onChange={(e) => setNotes(e.target.value)}
+                  />
+                </>
+              )}
             </>
           ) : (
             <>

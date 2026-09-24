@@ -76,6 +76,7 @@ export function NewRequestDialog({
   const [open, setOpen] = useState(false);
   const [patientRevision, setPatientRevision] = useState(0);
   const [patientCode, setPatientCode] = useState("");
+  const [originalPhone, setOriginalPhone] = useState("");
   const [patientNotFound, setPatientNotFound] = useState(false);
   const [form, setForm] = useState(empty);
   const [opme, setOpme] = useState<TasyOpmeItem[]>([]);
@@ -200,6 +201,9 @@ export function NewRequestDialog({
         nascimento: form.nascimento,
         cpf: form.cpf.trim(),
         telefone: form.telefone.trim(),
+        ...(localAuthEnabled && form.telefone.trim() !== originalPhone
+          ? { telefoneAnterior: originalPhone }
+          : {}),
         especialidade: principalTexto,
         observacoes,
         origem,
@@ -312,6 +316,7 @@ export function NewRequestDialog({
             {open && (
               <TasyPatientSearch
                 onNotFound={(cpf) => {
+                  setOriginalPhone("");
                   setPatientCode("");
                   setPatientNotFound(true);
                   setForm((f) => ({
@@ -323,6 +328,7 @@ export function NewRequestDialog({
                   }));
                 }}
                 onSelect={(person) => {
+                  setOriginalPhone(telefonePessoaTasy(person));
                   setPatientRevision((r) => r + 1);
                   setPatientCode(person.cdPessoaFisica);
                   setPatientNotFound(false);
@@ -389,11 +395,21 @@ export function NewRequestDialog({
                 <Label htmlFor="telefone">Telefone</Label>
                 <Input
                   id="telefone"
+                  type="tel"
+                  maxLength={40}
                   placeholder="(00) 00000-0000"
                   value={form.telefone}
-                  disabled={!patientFieldsEditable}
+                  disabled={
+                    !(patientFieldsEditable || (localAuthEnabled && isMedico && patientCode))
+                  }
                   onChange={(e) => set("telefone")(e.target.value)}
                 />
+                {localAuthEnabled && isMedico && patientCode && (
+                  <p className="text-xs text-muted-foreground">
+                    A alteração será salva no Tasy ao enviar a solicitação. Informe o DDD e o
+                    número.
+                  </p>
+                )}
               </div>
               {open && (
                 <TasyInsuranceSelect

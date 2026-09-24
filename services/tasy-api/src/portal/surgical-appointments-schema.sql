@@ -6,6 +6,7 @@ CREATE TABLE portal.surgical_appointments (
   doctor_name text NOT NULL,
   desired_date date NOT NULL,
   status text NOT NULL DEFAULT 'solicitado' CHECK (status IN ('solicitado','confirmado','cancelado')),
+  dados jsonb,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );

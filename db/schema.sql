@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS surgical_appointments (
   doctor_user_id uuid NOT NULL REFERENCES portal_users(id) ON DELETE RESTRICT,
   doctor_name    text NOT NULL,
   desired_date   date NOT NULL,
+  dados          jsonb,
   status         text NOT NULL DEFAULT 'solicitado' CHECK (status IN ('solicitado','confirmado','cancelado')),
   created_at     timestamptz NOT NULL DEFAULT now(),
   updated_at     timestamptz NOT NULL DEFAULT now()

@@ -170,6 +170,7 @@ const supabaseRepository = {
       desiredDate: row.desired_date,
       status: row.status,
       createdAt: row.created_at,
+      dados: (row.dados ?? null) as SurgicalAppointment["dados"],
     }));
   },
 
@@ -182,6 +183,7 @@ const supabaseRepository = {
       p_patient_name: input.patientName,
       p_patient_cpf: input.patientCpf,
       p_desired_date: input.desiredDate,
+      p_dados: input.dados ? JSON.parse(JSON.stringify(input.dados)) : null,
     });
     if (error) throw new Error(error.message);
     return data as string;

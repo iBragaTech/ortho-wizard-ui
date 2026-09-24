@@ -33,12 +33,12 @@ import {
 export const Route = createFileRoute("/agendamentos-cirurgicos")({
   head: () => ({
     meta: [
-      { title: "Agendamentos Cirúrgicos — Portal de Orçamentos" },
+      { title: "Solicitações Cirúrgicas — Portal de Orçamentos" },
       {
         name: "description",
         content: "Solicitação e acompanhamento de datas para agendamentos cirúrgicos.",
       },
-      { property: "og:title", content: "Agendamentos Cirúrgicos — Portal de Orçamentos" },
+      { property: "og:title", content: "Solicitações Cirúrgicas — Portal de Orçamentos" },
       {
         property: "og:description",
         content: "Acompanhe solicitações de agendamento cirúrgico por médico e paciente.",
@@ -106,10 +106,10 @@ function SurgicalAppointmentsPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Agendamentos Cirúrgicos"
+        title="Solicitações Cirúrgicas"
         description={
           isDoctor
-            ? "Solicite uma data e acompanhe seus agendamentos cirúrgicos."
+            ? "Solicite uma data e acompanhe suas solicitações cirúrgicas."
             : "Acompanhe as solicitações de agendamento enviadas pelos médicos."
         }
         actions={
@@ -117,7 +117,7 @@ function SurgicalAppointmentsPage() {
             <NewSurgicalAppointmentDialog
               trigger={
                 <Button className="w-full sm:w-auto">
-                  <Plus className="h-4 w-4" /> Novo agendamento
+                  <Plus className="h-4 w-4" /> Nova solicitação
                 </Button>
               }
             />

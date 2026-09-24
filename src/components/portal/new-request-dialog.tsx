@@ -242,7 +242,7 @@ export function NewRequestDialog({
                 anatomoPatologico: form.anatomo,
                 reservaSangue: sangue.join("; "),
                 equipeMultidisciplinar: multidisciplinar.join("; "),
-                fisioterapia: toNumber(form.fisioterapia),
+                fisioterapia: null,
                 tempoBloco: form.bloco,
                 obsMedico: form.obsMedico,
               },

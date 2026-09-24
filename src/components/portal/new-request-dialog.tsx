@@ -435,6 +435,20 @@ export function NewRequestDialog({
                   </p>
                 )}
               </div>
+              <div className="grid gap-2">
+                <Label htmlFor="email">
+                  E-mail
+                  <RequiredMark />
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  maxLength={255}
+                  placeholder="paciente@email.com"
+                  value={form.email}
+                  onChange={(e) => set("email")(e.target.value)}
+                />
+              </div>
               {open && (
                 <TasyInsuranceSelect
                   key={patientRevision}

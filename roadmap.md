@@ -3,3 +3,4 @@
 - [x] Tempo de bloco obrigatório (minutos, inteiro > 0)
 - [x] Honorário do médico: sem obrigatoriedade
 - [x] Unificar Área do Médico e Orçamentos em uma única tela adaptada por perfil
+- [x] Criar Agendamentos Cirúrgicos para Médico e Administrador

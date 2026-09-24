@@ -3,7 +3,14 @@
  * As listas definitivas virão de catálogos do Tasy; ajuste aqui quando integradas.
  */
 
-export const lateralidadeOptions = ["Direita", "Esquerda", "Bilateral", "Não se aplica"];
+export const lateralidadeOptions = [
+  "Bilateral (ambos)",
+  "Direito",
+  "Esquerdo",
+  "Inferior",
+  "Superior",
+  "Não se aplica",
+];
 
 export const regimeInternacaoOptions = [
   "Ambulatorial",

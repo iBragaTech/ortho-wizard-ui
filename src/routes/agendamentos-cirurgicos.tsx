@@ -117,7 +117,7 @@ function SurgicalAppointmentsPage() {
             <NewSurgicalAppointmentDialog
               trigger={
                 <Button className="w-full sm:w-auto">
-                  <Plus className="h-4 w-4" /> Novo agendamento
+                  <Plus className="h-4 w-4" /> Nova solicitação
                 </Button>
               }
             />

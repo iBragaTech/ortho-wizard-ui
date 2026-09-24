@@ -1,6 +1,7 @@
 import { z } from "zod";
 import oracledb from "oracledb";
 import { ApiError } from "./errors.mjs";
+import { phoneOperation } from "./pessoa-telefone.mjs";
 
 const code = z.string().regex(/^[0-9]{1,10}$/);
 const dateFormat = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -42,8 +43,59 @@ const selectPerson = `SELECT cd_pessoa_fisica AS "cdPessoaFisica",
 const canAccess = (principal, id) =>
   principal.allPessoaFisica === true || principal.pessoaFisicaIds?.includes(id) === true;
 
+export async function preparePersonWrite(connection, principal) {
+        if (!principal.tasyEstablishment || !principal.tasyProfile) {
+          throw new ApiError(
+            501,
+            "TASY_CONTEXT_NOT_CONFIGURED",
+            "Contexto Tasy ainda não configurado para gravação.",
+          );
+        }
+        // Signature confirmed from ALL_ARGUMENTS. Values are server-owned;
+        // the browser cannot select a Tasy identity, establishment or profile.
+        await connection.execute(
+          `BEGIN
+          TASY.wheb_usuario_pck.set_nm_usuario(nm_usuario_p => :nmUsuario);
+          TASY.wheb_usuario_pck.set_cd_estabelecimento(cd_estabelecimento_p => :cdEstabelecimento);
+          TASY.wheb_usuario_pck.set_cd_perfil(cd_perfil_p => :cdPerfil);
+          TASY.wheb_usuario_pck.set_ie_executar_trigger(ie_executar_p => :executarTriggers);
+        END;`,
+          {
+            nmUsuario: principal.tasyUsername,
+            cdEstabelecimento: principal.tasyEstablishment,
+            cdPerfil: principal.tasyProfile,
+            executarTriggers: "S",
+          },
+          { autoCommit: false },
+        );
+        // Verify on the same connection before DML; never disable ERP triggers.
+        const context = await connection.execute(
+          `SELECT
+          TASY.wheb_usuario_pck.get_ie_executar_trigger AS "triggers",
+          TASY.wheb_usuario_pck.get_nm_usuario AS "usuario",
+          TASY.wheb_usuario_pck.get_cd_estabelecimento AS "estabelecimento",
+          TASY.wheb_usuario_pck.get_cd_perfil AS "perfil" FROM dual`,
+          {},
+          { maxRows: 1 },
+        );
+        const session = context.rows?.[0];
+        if (
+          session?.triggers !== "S" ||
+          session.usuario !== principal.tasyUsername ||
+          String(session.estabelecimento) !== String(principal.tasyEstablishment) ||
+          String(session.perfil) !== String(principal.tasyProfile)
+        ) {
+          throw new ApiError(
+            503,
+            "TASY_CONTEXT_MISMATCH",
+            "A conexão não possui o contexto Tasy autorizado.",
+          );
+        }
+}
+
 export function pessoaFisicaOperations({ directDmlEnabled }) {
   return {
+    "pessoas-fisicas.atualizar-telefone": phoneOperation({ directDmlEnabled, selectPerson, canAccess, preparePersonWrite }),
     "pessoas-fisicas.buscar-cpf": {
       kind: "read",
       schema: z.object({ nrCpf: cpf }).strict(),
@@ -107,53 +159,7 @@ export function pessoaFisicaOperations({ directDmlEnabled }) {
             "Cadastro de pessoa física ainda não homologado para gravação.",
           );
         }
-        if (!principal.tasyEstablishment || !principal.tasyProfile) {
-          throw new ApiError(
-            501,
-            "TASY_CONTEXT_NOT_CONFIGURED",
-            "Contexto Tasy ainda não configurado para gravação.",
-          );
-        }
-        // Signature confirmed from ALL_ARGUMENTS. Values are server-owned;
-        // the browser cannot select a Tasy identity, establishment or profile.
-        await connection.execute(
-          `BEGIN
-          TASY.wheb_usuario_pck.set_nm_usuario(nm_usuario_p => :nmUsuario);
-          TASY.wheb_usuario_pck.set_cd_estabelecimento(cd_estabelecimento_p => :cdEstabelecimento);
-          TASY.wheb_usuario_pck.set_cd_perfil(cd_perfil_p => :cdPerfil);
-          TASY.wheb_usuario_pck.set_ie_executar_trigger(ie_executar_p => :executarTriggers);
-        END;`,
-          {
-            nmUsuario: principal.tasyUsername,
-            cdEstabelecimento: principal.tasyEstablishment,
-            cdPerfil: principal.tasyProfile,
-            executarTriggers: "S",
-          },
-          { autoCommit: false },
-        );
-        // Verify on the same connection before DML; never disable ERP triggers.
-        const context = await connection.execute(
-          `SELECT
-          TASY.wheb_usuario_pck.get_ie_executar_trigger AS "triggers",
-          TASY.wheb_usuario_pck.get_nm_usuario AS "usuario",
-          TASY.wheb_usuario_pck.get_cd_estabelecimento AS "estabelecimento",
-          TASY.wheb_usuario_pck.get_cd_perfil AS "perfil" FROM dual`,
-          {},
-          { maxRows: 1 },
-        );
-        const session = context.rows?.[0];
-        if (
-          session?.triggers !== "S" ||
-          session.usuario !== principal.tasyUsername ||
-          String(session.estabelecimento) !== String(principal.tasyEstablishment) ||
-          String(session.perfil) !== String(principal.tasyProfile)
-        ) {
-          throw new ApiError(
-            503,
-            "TASY_CONTEXT_MISMATCH",
-            "A conexão não possui o contexto Tasy autorizado.",
-          );
-        }
+        await preparePersonWrite(connection, principal);
         const binds = {
           nmPessoaFisica: input.nmPessoaFisica,
           dtNascimento: input.dtNascimento,

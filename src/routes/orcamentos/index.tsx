@@ -20,7 +20,7 @@ export const Route = createFileRoute("/orcamentos/")({
       {
         name: "description",
         content:
-          "Todos os orçamentos de consultas particulares, com filtros por status, médico, especialidade e período.",
+          "Todos os orçamentos de consultas particulares, com filtros por status, médico, procedimento e período.",
       },
       { property: "og:title", content: "Orçamentos — Portal de Orçamentos" },
       {

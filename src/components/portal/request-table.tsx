@@ -77,11 +77,11 @@ export function RequestTable({
                     <div className="inline-flex flex-wrap items-center justify-end gap-1">
                       {isMedico && <DoctorFeeDialog request={r} />}
                       {manage && !isMedico && <RequestActions request={r} />}
-                    <Button asChild size="sm" variant="ghost">
-                      <Link to="/orcamentos/$id" params={{ id: r.id }}>
-                        Visualizar <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
+                      <Button asChild size="sm" variant="ghost">
+                        <Link to="/orcamentos/$id" params={{ id: r.id }}>
+                          Visualizar <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

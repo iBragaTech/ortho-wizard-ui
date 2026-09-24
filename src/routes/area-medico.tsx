@@ -17,6 +17,8 @@ export const Route = createFileRoute("/area-medico")({
         property: "og:description",
         content: "Solicitações aguardando honorários e histórico de preenchimentos do médico.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: () => null,

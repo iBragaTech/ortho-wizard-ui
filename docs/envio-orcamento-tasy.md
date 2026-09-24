@@ -42,7 +42,7 @@ A criação local retorna seu identificador mesmo quando o envio falha. O portal
 informa a pendência e preserva os dados para reconciliação. Envios interrompidos
 quando a API é reiniciada ficam sem confirmação, disponíveis para reconciliação.
 
-O UUID local e o hash do conteúdo são registrados em `TASY.PORTAL_ORCAMENTO_ENVIO`
+O UUID local e o hash do conteúdo são registrados em `TASY.AEBMG_PORTAL_ORCAMENTO_ENVIO`
 na mesma transação Oracle que insere cabeçalho, procedimentos, materiais e histórico.
 A chave única impede uma segunda inclusão da mesma solicitação. A reconciliação
 reutiliza o conteúdo e o vínculo original, mesmo se a análise local tiver avançado.
@@ -53,6 +53,12 @@ revalidam pessoa/CPF, catálogo, vínculo de usuário e escopo de pacientes.
 Orçamentos sem os identificadores Tasy completos não podem ser enviados.
 
 ## Implantação em outro ambiente
+
+Instalações existentes com `TASY.PORTAL_ORCAMENTO_ENVIO` devem executar uma única
+vez `services/tasy-api/sql/renomear-portal-orcamento-envio.sql` e reiniciar a API
+com o código atualizado. O rename preserva os registros de controle, índices,
+constraints e privilégios. Instalações novas usam diretamente o nome
+`TASY.AEBMG_PORTAL_ORCAMENTO_ENVIO` no script de criação.
 
 1. Revisar o script `services/tasy-api/sql/portal-orcamento-envio.sql`, as triggers
    e os privilégios da conta de integração antes de criar a tabela de controle.

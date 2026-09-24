@@ -34,7 +34,7 @@ function mock({ duplicate = false, commitError = false, catalogValid = true, per
       calls.push({ sql, binds });
       if (sql.includes("get_nm_usuario"))
         return { rows: [{ usuario: "test", estab: 2, perfil: 1848, triggers: "S" }] };
-      if (sql.startsWith("INSERT INTO TASY.PORTAL_ORCAMENTO_ENVIO")) {
+      if (sql.startsWith("INSERT INTO TASY.AEBMG_PORTAL_ORCAMENTO_ENVIO")) {
         storedHash = binds.hash;
         if (duplicate) throw { errorNum: 1 };
       }

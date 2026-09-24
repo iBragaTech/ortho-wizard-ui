@@ -89,7 +89,7 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
       // Concurrent inserts wait on the PK: the losing transaction reads the committed result.
       try {
         await c.execute(
-          `INSERT INTO TASY.PORTAL_ORCAMENTO_ENVIO
+          `INSERT INTO TASY.AEBMG_PORTAL_ORCAMENTO_ENVIO
           (ID_PORTAL,HASH_CONTEUDO,ID_USUARIO_PORTAL,NM_USUARIO)
           VALUES (:id,:hash,:actor,:usuario)`,
           { id: snapshot.id, hash, actor: snapshot.actorId, usuario: principal.tasyUsername },
@@ -99,7 +99,7 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
         const previous = (
           await c.execute(
             `SELECT HASH_CONTEUDO AS "hash", TO_CHAR(NR_ORCAMENTO) AS "id"
-          FROM TASY.PORTAL_ORCAMENTO_ENVIO WHERE ID_PORTAL=:id`,
+          FROM TASY.AEBMG_PORTAL_ORCAMENTO_ENVIO WHERE ID_PORTAL=:id`,
             { id: snapshot.id },
           )
         ).rows?.[0];
@@ -248,7 +248,7 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
         { id, usuario: principal.tasyUsername, nota: note },
       );
       await c.execute(
-        "UPDATE TASY.PORTAL_ORCAMENTO_ENVIO SET NR_ORCAMENTO=:orc WHERE ID_PORTAL=:id",
+        "UPDATE TASY.AEBMG_PORTAL_ORCAMENTO_ENVIO SET NR_ORCAMENTO=:orc WHERE ID_PORTAL=:id",
         { orc: id, id: snapshot.id },
       );
       committing = true;

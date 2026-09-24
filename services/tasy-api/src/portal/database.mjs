@@ -128,5 +128,13 @@ export async function migrate(db) {
       );
       await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (5)");
     }
+    if (
+      !(await tx.query("SELECT version FROM portal.schema_migrations WHERE version=6")).rows.length
+    ) {
+      await tx.exec(
+        await readFile(new URL("./surgical-appointments-schema.sql", import.meta.url), "utf8"),
+      );
+      await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (6)");
+    }
   });
 }

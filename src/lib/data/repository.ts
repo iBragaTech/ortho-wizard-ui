@@ -19,6 +19,10 @@ import type {
   RequestStatus,
   TimelineEvent,
 } from "@/data/mock";
+import type {
+  NewSurgicalAppointmentInput,
+  SurgicalAppointment,
+} from "@/data/surgical-appointments";
 
 export interface InstitutionSettings {
   nome: string;
@@ -148,6 +152,41 @@ export interface DoctorFeesInput {
 }
 
 const supabaseRepository = {
+  async listSurgicalAppointments(): Promise<SurgicalAppointment[]> {
+    const sessionRaw = localStorage.getItem("portal.session");
+    if (!sessionRaw) return [];
+    const session = JSON.parse(sessionRaw) as { id: string; perfil: string };
+    const { data, error } = await (supabase as any).rpc("listar_agendamentos_cirurgicos", {
+      p_user_id: session.id,
+      p_perfil: session.perfil,
+    });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((row: any) => ({
+      id: row.id,
+      patientName: row.patient_name,
+      patientCpf: row.patient_cpf,
+      doctorUserId: row.doctor_user_id,
+      doctorName: row.doctor_name,
+      desiredDate: row.desired_date,
+      status: row.status,
+      createdAt: row.created_at,
+    }));
+  },
+
+  async createSurgicalAppointment(input: NewSurgicalAppointmentInput): Promise<string> {
+    const sessionRaw = localStorage.getItem("portal.session");
+    if (!sessionRaw) throw new Error("Sessão não encontrada.");
+    const session = JSON.parse(sessionRaw) as { id: string };
+    const { data, error } = await (supabase as any).rpc("criar_agendamento_cirurgico", {
+      p_user_id: session.id,
+      p_patient_name: input.patientName,
+      p_patient_cpf: input.patientCpf,
+      p_desired_date: input.desiredDate,
+    });
+    if (error) throw new Error(error.message);
+    return data as string;
+  },
+
   async listRequests(): Promise<ConsultationRequest[]> {
     const data = unwrap(
       await supabase

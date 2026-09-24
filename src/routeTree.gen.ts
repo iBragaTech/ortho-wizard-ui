@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgendamentosCirurgicosRouteImport } from './routes/agendamentos-cirurgicos'
 import { Route as AreaComercialRouteImport } from './routes/area-comercial'
 import { Route as AreaMedicoRouteImport } from './routes/area-medico'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
@@ -23,6 +24,11 @@ import { Route as OrcamentosIdRouteImport } from './routes/orcamentos.$id'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgendamentosCirurgicosRoute = AgendamentosCirurgicosRouteImport.update({
+  id: '/agendamentos-cirurgicos',
+  path: '/agendamentos-cirurgicos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AreaComercialRoute = AreaComercialRouteImport.update({
@@ -73,6 +79,7 @@ const OrcamentosIdRoute = OrcamentosIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agendamentos-cirurgicos': typeof AgendamentosCirurgicosRoute
   '/area-comercial': typeof AreaComercialRoute
   '/area-medico': typeof AreaMedicoRoute
   '/configuracoes': typeof ConfiguracoesRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agendamentos-cirurgicos': typeof AgendamentosCirurgicosRoute
   '/area-comercial': typeof AreaComercialRoute
   '/area-medico': typeof AreaMedicoRoute
   '/configuracoes': typeof ConfiguracoesRoute
@@ -97,6 +105,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agendamentos-cirurgicos': typeof AgendamentosCirurgicosRoute
   '/area-comercial': typeof AreaComercialRoute
   '/area-medico': typeof AreaMedicoRoute
   '/configuracoes': typeof ConfiguracoesRoute
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agendamentos-cirurgicos'
     | '/area-comercial'
     | '/area-medico'
     | '/configuracoes'
@@ -123,6 +133,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agendamentos-cirurgicos'
     | '/area-comercial'
     | '/area-medico'
     | '/configuracoes'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/agendamentos-cirurgicos'
     | '/area-comercial'
     | '/area-medico'
     | '/configuracoes'
@@ -147,6 +159,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgendamentosCirurgicosRoute: typeof AgendamentosCirurgicosRoute
   AreaComercialRoute: typeof AreaComercialRoute
   AreaMedicoRoute: typeof AreaMedicoRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
@@ -163,6 +176,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agendamentos-cirurgicos': {
+      id: '/agendamentos-cirurgicos'
+      path: '/agendamentos-cirurgicos'
+      fullPath: '/agendamentos-cirurgicos'
+      preLoaderRoute: typeof AgendamentosCirurgicosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/area-comercial': {
@@ -247,6 +267,7 @@ const OrcamentosRouteWithChildren = OrcamentosRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgendamentosCirurgicosRoute: AgendamentosCirurgicosRoute,
   AreaComercialRoute: AreaComercialRoute,
   AreaMedicoRoute: AreaMedicoRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,

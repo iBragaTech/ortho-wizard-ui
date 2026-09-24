@@ -79,6 +79,7 @@ const surgicalAppointmentInput = z
       .transform((value) => value.replace(/\D/g, ""))
       .refine(validCpf, "CPF inválido."),
     desiredDate: date.refine((value) => value !== "", "Informe a data desejada."),
+    dados: z.record(z.unknown()).optional(),
   })
   .strict();
 const allowed = (user, roles) => {
@@ -150,7 +151,7 @@ export function createPortalOperations(
       const result = await db.query(
         `SELECT id,patient_name AS "patientName",patient_cpf AS "patientCpf",
         doctor_user_id AS "doctorUserId",doctor_name AS "doctorName",
-        desired_date::text AS "desiredDate",status,created_at AS "createdAt"
+        desired_date::text AS "desiredDate",status,created_at AS "createdAt",dados
         FROM portal.surgical_appointments
         WHERE ($1 = 'Administrador' OR doctor_user_id = $2)
         ORDER BY desired_date,created_at DESC`,
@@ -165,9 +166,16 @@ export function createPortalOperations(
         throw new ApiError(400, "INVALID_DATE", "A data desejada não pode estar no passado.");
       const result = await db.query(
         `INSERT INTO portal.surgical_appointments
-        (patient_name,patient_cpf,doctor_user_id,doctor_name,desired_date)
-        VALUES ($1,$2,$3,$4,$5) RETURNING id`,
-        [value.patientName, value.patientCpf, user.id, user.nome, value.desiredDate],
+        (patient_name,patient_cpf,doctor_user_id,doctor_name,desired_date,dados)
+        VALUES ($1,$2,$3,$4,$5,$6::jsonb) RETURNING id`,
+        [
+          value.patientName,
+          value.patientCpf,
+          user.id,
+          user.nome,
+          value.desiredDate,
+          value.dados ? JSON.stringify(value.dados) : null,
+        ],
       );
       return result.rows[0].id;
     },

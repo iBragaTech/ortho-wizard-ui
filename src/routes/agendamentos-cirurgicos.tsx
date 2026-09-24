@@ -106,10 +106,10 @@ function SurgicalAppointmentsPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Agendamentos Cirúrgicos"
+        title="Solicitações Cirúrgicas"
         description={
           isDoctor
-            ? "Solicite uma data e acompanhe seus agendamentos cirúrgicos."
+            ? "Solicite uma data e acompanhe suas solicitações cirúrgicas."
             : "Acompanhe as solicitações de agendamento enviadas pelos médicos."
         }
         actions={

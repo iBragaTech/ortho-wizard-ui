@@ -33,7 +33,7 @@ import {
 export const Route = createFileRoute("/agendamentos-cirurgicos")({
   head: () => ({
     meta: [
-      { title: "Agendamentos Cirúrgicos — Portal de Orçamentos" },
+      { title: "Solicitações Cirúrgicas — Portal de Orçamentos" },
       {
         name: "description",
         content: "Solicitação e acompanhamento de datas para agendamentos cirúrgicos.",

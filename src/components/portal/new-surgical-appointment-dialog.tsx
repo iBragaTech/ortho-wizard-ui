@@ -35,11 +35,22 @@ export function NewSurgicalAppointmentDialog({ trigger }: { trigger: ReactNode }
 
   async function submit() {
     const cpf = form.patientCpf.replace(/\D/g, "");
-    if (!form.patientName.trim()) return toast.error("Informe o nome do paciente.");
-    if (!isValidCpf(cpf)) return toast.error("Informe um CPF válido.");
-    if (!form.desiredDate) return toast.error("Informe a data desejada.");
-    if (form.desiredDate < today())
-      return toast.error("A data desejada não pode estar no passado.");
+    if (!form.patientName.trim()) {
+      toast.error("Informe o nome do paciente.");
+      return;
+    }
+    if (!isValidCpf(cpf)) {
+      toast.error("Informe um CPF válido.");
+      return;
+    }
+    if (!form.desiredDate) {
+      toast.error("Informe a data desejada.");
+      return;
+    }
+    if (form.desiredDate < today()) {
+      toast.error("A data desejada não pode estar no passado.");
+      return;
+    }
 
     try {
       await create.mutateAsync({

@@ -42,9 +42,12 @@ export function useSettings() {
 }
 
 export function useSurgicalAppointments() {
+  const { user } = useSession();
+  const allowed = user?.perfil === "Administrador" || user?.perfil === "Médico";
   return useQuery({
     queryKey: ["surgical_appointments"],
     queryFn: () => repository.listSurgicalAppointments(),
+    enabled: allowed,
   });
 }
 

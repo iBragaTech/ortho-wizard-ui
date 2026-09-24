@@ -171,6 +171,7 @@ export function NewRequestDialog({
 
     const observacoes = isMedico
       ? [
+          `E-mail: ${form.email.trim()}`,
           convenioTexto,
           categoriaTexto,
           principalTexto && `Procedimento principal: ${principalTexto}`,
@@ -179,6 +180,7 @@ export function NewRequestDialog({
           .filter(Boolean)
           .join("\n")
       : [
+          `E-mail: ${form.email.trim()}`,
           convenioTexto,
           categoriaTexto,
           principalTexto && `Procedimento principal: ${principalTexto}`,

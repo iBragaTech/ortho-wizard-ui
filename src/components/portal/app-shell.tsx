@@ -43,7 +43,7 @@ import { toast } from "sonner";
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/orcamentos", label: "Orçamentos", icon: FileText },
-  { to: "/agendamentos-cirurgicos", label: "Agendamentos Cirúrgicos", icon: CalendarDays },
+  { to: "/agendamentos-cirurgicos", label: "Solicitações Cirúrgicas", icon: CalendarDays },
   { to: "/area-comercial", label: "Área Comercial", icon: Briefcase },
   { to: "/usuarios", label: "Usuários", icon: Users },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
@@ -52,7 +52,7 @@ const nav = [
 const titles: Record<string, string> = {
   "/": "Dashboard",
   "/orcamentos": "Orçamentos",
-  "/agendamentos-cirurgicos": "Agendamentos Cirúrgicos",
+  "/agendamentos-cirurgicos": "Solicitações Cirúrgicas",
   "/area-comercial": "Área Comercial",
   "/usuarios": "Usuários",
   "/configuracoes": "Configurações",

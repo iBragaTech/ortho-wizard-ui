@@ -37,7 +37,7 @@ test("OPME enforces all four active levels and hospital groups with bound search
       execute: async (sql, binds) => {
         for (const alias of ["a", "b", "c", "d"])
           assert.ok(sql.includes(`${alias}.ie_situacao = 'A'`));
-        assert.match(sql, /d.cd_grupo_material IN \(59, 60, 61\)/);
+        assert.match(sql, /d.cd_grupo_material IN \(59, 60, 61,\s*13\)/);
         assert.match(sql, /OFFSET :offset ROWS FETCH NEXT 101 ROWS ONLY/);
         assert.ok(!sql.includes(input.busca));
         assert.deepEqual(binds, input);

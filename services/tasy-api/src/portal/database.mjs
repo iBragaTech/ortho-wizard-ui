@@ -120,5 +120,13 @@ export async function migrate(db) {
       );
       await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (4)");
     }
+    if (
+      !(await tx.query("SELECT version FROM portal.schema_migrations WHERE version=5")).rows.length
+    ) {
+      await tx.exec(
+        "ALTER TABLE portal.tasy_exports DROP CONSTRAINT tasy_exports_state_check; ALTER TABLE portal.tasy_exports ADD CONSTRAINT tasy_exports_state_check CHECK (state IN ('queued','sending','unknown','confirmed'));",
+      );
+      await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (5)");
+    }
   });
 }

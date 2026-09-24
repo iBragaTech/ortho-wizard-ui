@@ -90,6 +90,12 @@ export function createLinkResolver(db, validate) {
       });
     const operations = [...p.operations];
     if (
+      ["Médico", "Comercial", "Custos", "Administrador"].includes(user.perfil) &&
+      operations.includes("pessoas-fisicas.consultar") &&
+      !operations.includes("orcamentos.enviar")
+    )
+      operations.push("orcamentos.enviar");
+    if (
       ["Médico", "Administrador", "Comercial"].includes(user.perfil) &&
       operations.includes("pessoas-fisicas.consultar") &&
       !operations.includes("pessoas-fisicas.atualizar-telefone")

@@ -59,6 +59,13 @@ O novo esquema `portal` é criado por `src/portal/schema.sql`. Ele mantém usuá
 
 ## Tasy
 
+### Inclusão automática de solicitações
+
+Com `TASY_BUDGET_EXPORT_ENABLED=true` e gravações habilitadas, a criação inclui
+a solicitação no Tasy como **Aguardando cotação**. O número e eventuais pendências
+aparecem nos detalhes. A análise de Custos continua no portal. Veja
+[envio automático e reconciliação](envio-orcamento-tasy.md).
+
 ### Atualização do telefone pelo médico
 
 Ao selecionar um paciente existente na nova solicitação, o médico pode alterar o

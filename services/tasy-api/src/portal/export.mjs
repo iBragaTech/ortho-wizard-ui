@@ -21,13 +21,67 @@ export function createExportService({ db, send, principals, resolvePrincipal }) 
     VALUES ($1,$2,$3,$4)`,
       [id, user.id, title, description],
     );
-  return {
+  const service = {
+    enqueue: async (tx, id, user) => {
+      if (!send) throw new ApiError(403, "EXPORT_DISABLED", "Envio ao Tasy não habilitado.");
+      const principal = resolvePrincipal ? await resolvePrincipal(user, tx) : principals[user.id];
+      if (
+        !principal?.enabled ||
+        !principal.operations.includes("orcamentos.enviar") ||
+        !principal.tasyEstablishment ||
+        !principal.tasyProfile
+      )
+        throw new ApiError(403, "FORBIDDEN", "Usuário sem vínculo autorizado para envio ao Tasy.");
+      const row = await access(tx, id, user, true);
+      if (!tasySelection.safeParse(row.data.tasy).success)
+        throw new ApiError(
+          400,
+          "MISSING_TASY_SELECTION",
+          "Selecione paciente e itens do Tasy antes de enviar.",
+        );
+      const snapshot = {
+        id,
+        numero: row.numero,
+        actorId: user.id,
+        mode: "initial",
+        data: row.data,
+        context: { establishment: principal.tasyEstablishment, profile: principal.tasyProfile },
+      };
+      await tx.query(
+        `INSERT INTO portal.tasy_exports(request_id,actor_id,tasy_username,snapshot,state)
+        VALUES ($1,$2,$3,$4::jsonb,'queued')`,
+        [id, user.id, principal.tasyUsername, JSON.stringify(snapshot)],
+      );
+      await log(
+        tx,
+        id,
+        user,
+        "Solicitação aguardando envio ao Tasy",
+        "Envio automático para aguardando cotação.",
+      );
+    },
+    drainQueued: async () => {
+      const { rows } =
+        await db.query(`SELECT e.request_id,u.id,u.perfil,u.nome FROM portal.tasy_exports e
+        JOIN portal.users u ON u.id=e.actor_id WHERE e.state='queued' AND u.ativo=true
+        ORDER BY e.created_at LIMIT 10`);
+      for (const row of rows) {
+        try {
+          await service.submit({ id: row.request_id }, row);
+        } catch (error) {
+          await db.query(
+            "UPDATE portal.tasy_exports SET error_code=$2,updated_at=now() WHERE request_id=$1 AND state='queued'",
+            [row.request_id, error instanceof ApiError ? error.code : "EXPORT_FAILED"],
+          );
+        }
+      }
+    },
     status: async (id, user) => {
       await access(db, id, user);
       return (
         (
           await db.query(
-            "SELECT state,tasy_id,error_code,updated_at FROM portal.tasy_exports WHERE request_id=$1",
+            "SELECT state,tasy_id,error_code,updated_at,snapshot->>'mode' AS mode FROM portal.tasy_exports WHERE request_id=$1",
             [id],
           )
         ).rows[0] ?? null
@@ -67,11 +121,17 @@ export function createExportService({ db, send, principals, resolvePrincipal }) 
               "Reconcilie o envio com o vínculo Tasy original.",
             );
           if (previous.state === "confirmed") return { confirmed: previous.tasy_id };
+          await tx.query(
+            "UPDATE portal.tasy_exports SET state='sending',error_code=NULL,updated_at=now() WHERE request_id=$1",
+            [id],
+          );
           await log(
             tx,
             id,
             user,
-            "Reconciliação de envio Tasy solicitada",
+            previous.state === "queued"
+              ? "Envio Tasy iniciado"
+              : "Reconciliação de envio Tasy solicitada",
             "Mesma chave e conteúdo do envio original.",
           );
           return { snapshot: previous.snapshot };
@@ -86,7 +146,9 @@ export function createExportService({ db, send, principals, resolvePrincipal }) 
           throw new ApiError(403, "FORBIDDEN", "Contexto Tasy incompleto.");
         const snapshot = {
           id,
+          numero: row.numero,
           actorId: user.id,
+          mode: "initial",
           data: row.data,
           context: { establishment: principal.tasyEstablishment, profile: principal.tasyProfile },
         };
@@ -154,4 +216,5 @@ export function createExportService({ db, send, principals, resolvePrincipal }) 
       }
     },
   };
+  return service;
 }

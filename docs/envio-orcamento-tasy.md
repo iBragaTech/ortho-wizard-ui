@@ -1,87 +1,66 @@
-# Envio de orçamento ao Tasy — implementação para homologação
+# Inclusão automática de solicitações no Tasy
 
-## O que está implementado
+## Funcionamento
 
-No detalhe do orçamento, a seção **Registro no Tasy** permite enviar e reconciliar
-um orçamento. O envio cria ORCAMENTO_PACIENTE no status 5 (Aguardando cotação,
-conforme exemplo fornecido pela TI), seus procedimentos e materiais OPME, com
-quantidade 1 por item. As sequences nativas fornecem os códigos. O primeiro
-procedimento é a referência dos adicionais e materiais.
+Com `TASY_ENABLED=true`, `TASY_WRITES_ENABLED=true` e
+`TASY_BUDGET_EXPORT_ENABLED=true`, criar uma solicitação no portal também inicia
+sua inclusão no Tasy, no status **5 — Aguardando cotação**. O portal envia paciente,
+convênio, categoria, procedimentos, materiais/OPME e as quantidades selecionadas.
+O usuário, estabelecimento e perfil são obtidos do vínculo Tasy validado no servidor.
 
-Os identificadores de paciente, convênio, categoria, código/origem dos procedimentos
-e materiais são persistidos em campos estruturados nos novos orçamentos locais.
-O backend revalida CPF/pessoa, permissões e itens ativos antes da inclusão.
+A seção **Registro no Tasy**, nos detalhes da solicitação, mostra o número retornado.
+Solicitações anteriores à ativação podem ser incluídas pelo botão dessa seção.
+Não é necessário aprovar por Custos para fazer a inclusão inicial.
 
-NM_USUARIO, estabelecimento e perfil vêm do vínculo mantido no servidor. Datas
-Oracle usam SYSDATE; o controle usa SYSTIMESTAMP. Um registro explícito em
-ORCAMENTO_HISTORICO guarda a origem, UUID local, UUID do responsável e os totais
-informados no portal, identificados como valores ainda não precificados no ERP.
-As triggers existentes continuam ativas.
+A análise e aprovação de Custos continuam no portal. O conteúdo inicial enviado
+permanece preservado; revisões posteriores de itens, valores e status do portal
+não são sincronizadas automaticamente com o orçamento já criado no Tasy.
+O envio não executa rotinas de fechamento nem confirma preços finais.
+As triggers nativas continuam ativas e podem preencher valores conforme as regras do ERP.
 
-O portal registra início, reconciliação, confirmação e falha em portal.events,
-com data/hora e usuário autenticado. portal.tasy_exports preserva a cópia do
-conteúdo enviado, responsável, usuário Tasy, estado e número retornado.
+## Persistência, repetição e falhas
 
-## Limitações explícitas
+A solicitação e sua fila de envio são salvas na mesma transação local. A migração 5
+acrescenta o estado `queued` sem recriar dados existentes. O navegador mantém uma
+chave por solicitação: repetir a criação após perda da resposta recupera a mesma
+solicitação do mesmo usuário, sem criar outra.
 
-- Envia para cotação, não como orçamento com preços finais. Não executa
-  GERAR_CONSULTA_PRECO nem distribui totais manuais entre parcelas Oracle.
-- Ainda exige paciente já cadastrado e acessível ao usuário. A inclusão automática
-  de pessoa física não faz parte deste envio.
-- Orçamentos antigos sem os identificadores estruturados não são exportados.
-- Após iniciar o envio, a edição local fica bloqueada para preservar o conteúdo.
-  Atualização de orçamento já exportado e cancelamento/reabertura exigem fluxo próprio.
-- Quantidades configuráveis, precificação e histórico detalhado de negociação
-  por parcela ainda precisam de implementação. A cópia preserva o estado no envio,
-  não substitui um histórico de todas as edições anteriores.
-- Não houve INSERT real no Oracle para validar esta implementação. Os testes do
-  escritor Oracle usam simulação; os testes de estado local usam PostgreSQL/PGlite.
+- `queued`: inclusão aguardando processamento; a API verifica a fila a cada 30 segundos e ao iniciar.
+- `sending`: tentativa em andamento.
+- `confirmed`: gravação confirmada, com número do Tasy.
+- `unknown`: sem confirmação; usar **Reconciliar envio** na mesma solicitação.
 
-## Ativação em homologação
+A criação local retorna seu identificador mesmo quando o envio falha. O portal
+informa a pendência e preserva os dados para reconciliação. Envios interrompidos
+quando a API é reiniciada ficam sem confirmação, disponíveis para reconciliação.
 
-1. Com o DBA, revisar `services/tasy-api/sql/portal-orcamento-envio.sql` e executar
-   na homologação. A tabela TASY.PORTAL_ORCAMENTO_ENVIO precisa estar no mesmo
-   banco e participar da mesma transação dos registros nativos. Seu papel é
-   garantir que a chave UUID do portal corresponda a somente um orçamento.
-2. Conceder à conta de integração somente as permissões necessárias: tabelas,
-   sequences, contexto de sessão e histórico usados em `src/orcamento-export.mjs`.
-3. Revisar triggers de cabeçalho, procedimentos e materiais, dependências e
-   histórico. Confirmar status 5 e os campos obrigatórios de negócio. Nenhuma
-   rotina chamada por triggers pode confirmar parcialmente esta transação;
-   transações autônomas devem ser avaliadas separadamente.
-4. No vínculo do usuário local, adicionar `orcamentos.enviar` em `operations`.
-   Manter o escopo de pessoas explicitamente autorizado, estabelecimento e perfil.
-5. Em `.env.portal`, configurar:
+O UUID local e o hash do conteúdo são registrados em `TASY.PORTAL_ORCAMENTO_ENVIO`
+na mesma transação Oracle que insere cabeçalho, procedimentos, materiais e histórico.
+A chave única impede uma segunda inclusão da mesma solicitação. A reconciliação
+reutiliza o conteúdo e o vínculo original, mesmo se a análise local tiver avançado.
+Nunca apagar o registro de controle para forçar novo envio.
 
-   ```dotenv
-   TASY_BUDGET_EXPORT_ENABLED=true
-   TASY_WRITES_ENABLED=true
-   TASY_PESSOA_FISICA_DML_ENABLED=false
-   ```
+O histórico guarda o responsável, início, confirmação e falhas. Consultas ao Tasy
+revalidam pessoa/CPF, catálogo, vínculo de usuário e escopo de pacientes.
+Orçamentos sem os identificadores Tasy completos não podem ser enviados.
 
-   A chave de gravação global também afeta outras operações permitidas. Não
-   liberar operações adicionais no vínculo sem necessidade.
-6. Reiniciar `npm run portal:start`. A migração local 2 cria a tabela de envios
-   sem recriar o banco nem alterar usuários e orçamentos existentes.
-7. Criar um novo orçamento com paciente Tasy, convênio/categoria e procedimento
-   principal; conferir itens e usar **Enviar ao Tasy para cotação** nos detalhes.
-8. Conferir cabeçalho, itens, quantidades, usuário e histórico no Tasy. Só depois
-   ampliar o uso. Gravação de produção não está habilitada por este trabalho.
+## Implantação em outro ambiente
 
-## Falhas, repetição e relatórios
+1. Revisar o script `services/tasy-api/sql/portal-orcamento-envio.sql`, as triggers
+   e os privilégios da conta de integração antes de criar a tabela de controle.
+2. Configurar as três variáveis acima e os vínculos individuais Tasy.
+   Usuários ativos com permissão de consulta de pacientes recebem a operação de
+   envio para o escopo que já possuem; nenhuma identidade é recebida do navegador.
+3. Reiniciar a API. A migração local é aplicada automaticamente.
+4. Conferir uma inclusão, quantidades, status, usuário e histórico no ambiente de destino.
 
-A chave de integração é o UUID do orçamento. O Oracle armazena também um hash
-canônico do conteúdo. A chave é inserida na mesma transação dos itens: outra
-tentativa não deve gerar uma segunda inclusão. Em perda de resposta, o portal
-preserva estado desconhecido e permite **Reconciliar envio** com a mesma chave,
-conteúdo e contexto. Não apagar a tabela de controle nem criar outro orçamento
-para contornar uma resposta desconhecida.
+## Validação em homologação — 24/09/2026
 
-Se o erro é de catálogo/permissão, a cópia permanece preservada. A correção ou
-liberação exige análise administrativa; não há botão para descartar uma tentativa
-cujo resultado ainda possa existir no Oracle.
+A tabela de controle foi criada em **TASYHML**. A solicitação **SOL-2026-000001**
+foi registrada como orçamento **13490**, estabelecimento **2**, status **5**.
+Foram conferidos um procedimento, dois materiais e suas quantidades. Uma segunda
+chamada retornou o mesmo número com `recuperado=true`.
 
-Para relatórios, relacionar portal.requests.id com portal.tasy_exports.request_id,
-e tasy_id com ORCAMENTO_PACIENTE.NR_SEQUENCIA_ORCAMENTO. No Oracle, a tabela de
-controle guarda ID_PORTAL, ID_USUARIO_PORTAL, NM_USUARIO, DT_ENVIO e NR_ORCAMENTO.
-Restringir o acesso a esses dados às equipes autorizadas.
+Os testes automatizados verificam inclusão automática pela API, fila persistente,
+repetição da criação, falha Oracle sem perda da solicitação, reconciliação com o
+mesmo conteúdo e continuidade da aprovação por Custos.

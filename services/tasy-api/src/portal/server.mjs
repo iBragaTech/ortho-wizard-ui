@@ -74,7 +74,11 @@ try {
     oracle &&
     process.env.TASY_BUDGET_EXPORT_ENABLED === "true" &&
     process.env.TASY_WRITES_ENABLED === "true"
-      ? createBudgetExporter({ pool: oracle, enabled: true })
+      ? createBudgetExporter({
+          pool: oracle,
+          enabled: true,
+          audit: (event) => app.log.warn(event, "tasy_export"),
+        })
       : undefined;
   app = await createPortalApp({
     db,

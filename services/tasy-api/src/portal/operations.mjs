@@ -36,6 +36,7 @@ const validCpf = (value) => {
 };
 const newRequest = z
   .object({
+    requestKey: z.string().uuid().optional(),
     nome: z.string().trim().min(1).max(120),
     nascimento: date,
     cpf: z
@@ -100,8 +101,12 @@ async function getAccessible(db, id, user, lock = false, contactOnly = false) {
   if (
     lock &&
     !contactOnly &&
-    (await db.query("SELECT request_id FROM portal.tasy_exports WHERE request_id=$1", [id])).rows
-      .length
+    (
+      await db.query(
+        "SELECT request_id FROM portal.tasy_exports WHERE request_id=$1 AND COALESCE(snapshot->>'mode','legacy') <> 'initial'",
+        [id],
+      )
+    ).rows.length
   )
     throw new ApiError(
       409,
@@ -120,7 +125,13 @@ const event = (db, id, user, title, description = "") =>
 
 export function createPortalOperations(
   db,
-  { calculateQuote, auditIdentity = () => null, validateTasyLink, syncPatientPhone } = {},
+  {
+    calculateQuote,
+    auditIdentity = () => null,
+    validateTasyLink,
+    syncPatientPhone,
+    enqueueExport,
+  } = {},
 ) {
   const handlers = {
     ...custosOperations({ db, getAccessible, event, calculateQuote, auditIdentity }),
@@ -298,6 +309,19 @@ export function createPortalOperations(
       rowDto(await getAccessible(db, parse(idInput, input).id, user), user),
     createRequest: async (input, user) => {
       const value = parse(newRequest, input);
+      const existingRequest = async (queryDb) => {
+        if (!value.requestKey) return null;
+        const existing = (
+          await queryDb.query("SELECT id,created_by FROM portal.requests WHERE id=$1", [
+            value.requestKey,
+          ])
+        ).rows[0];
+        if (existing && existing.created_by !== user.id)
+          throw new ApiError(409, "REQUEST_KEY_CONFLICT", "Chave de solicitação já utilizada.");
+        return existing?.id ?? null;
+      };
+      const previousId = await existingRequest(db);
+      if (previousId) return previousId;
       if (
         (user.perfil === "Médico" && value.origem !== "medico") ||
         (user.perfil === "Comercial" && value.origem !== "comercial")
@@ -370,16 +394,18 @@ export function createPortalOperations(
           ...(value.tasy ? { tasy: value.tasy } : {}),
         };
         const result = await tx.query(
-          `INSERT INTO portal.requests(numero,created_by,assigned_to,status,data)
-          VALUES ($1,$2,$3,$4,$5::jsonb) RETURNING id`,
+          `INSERT INTO portal.requests(numero,created_by,assigned_to,status,data,id)
+          VALUES ($1,$2,$3,$4,$5::jsonb,COALESCE($6::uuid,gen_random_uuid())) ON CONFLICT(id) DO NOTHING RETURNING id`,
           [
             numero,
             user.id,
             value.origem === "medico" ? user.id : null,
             "em_analise",
             JSON.stringify(data),
+            value.requestKey ?? null,
           ],
         );
+        if (!result.rows.length) return await existingRequest(tx);
         const id = result.rows[0].id;
         await event(
           tx,
@@ -394,6 +420,7 @@ export function createPortalOperations(
           }),
         );
         if (value.medico) await event(tx, id, user, "Honorários preenchidos");
+        if (enqueueExport) await enqueueExport(tx, id, user);
         return id;
       });
     },

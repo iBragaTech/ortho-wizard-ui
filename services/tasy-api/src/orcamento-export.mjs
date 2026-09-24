@@ -15,7 +15,7 @@ export function canonicalJson(value) {
 
 // Exports a quotation draft, not a priced/finalized quote. No calculation routines
 // are called here: some of them COMMIT independently of the caller.
-export function createBudgetExporter({ pool, enabled = false }) {
+export function createBudgetExporter({ pool, enabled = false, audit = () => {} }) {
   return async (snapshot, principal) => {
     if (!enabled)
       throw new ApiError(
@@ -172,7 +172,7 @@ export function createBudgetExporter({ pool, enabled = false }) {
           convenio: selection.cdConvenio,
           categoria: selection.cdCategoria,
           usuario: principal.tasyUsername,
-          obs: `Portal ${snapshot.id}. Aguardando cotacao. Valores do portal nao constituem precificacao Tasy.`,
+          obs: `Portal ${snapshot.numero || snapshot.id}. Aguardando cotacao. Valores do portal nao constituem precificacao Tasy.`,
         },
       );
       let primary;
@@ -229,6 +229,12 @@ export function createBudgetExporter({ pool, enabled = false }) {
       return { nrOrcamento: id, recuperado: false };
     } catch (error) {
       if (c) await c.rollback().catch(() => {});
+      audit({
+        operation: "orcamentos.enviar",
+        outcome: committing ? "unknown" : "failed",
+        code: error.code,
+        oracleError: error.errorNum,
+      });
       if (error instanceof ApiError && !committing) throw error;
       throw new ApiError(
         503,

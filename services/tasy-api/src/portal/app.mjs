@@ -47,7 +47,9 @@ export async function createPortalApp({
         throw new ApiError(503, "TASY_DISABLED", "Integração Tasy desabilitada.");
       }),
   });
+  const exports = createExportService({ db, send: budgetExporter, principals, resolvePrincipal });
   const run = createPortalOperations(db, {
+    enqueueExport: budgetExporter ? exports.enqueue : undefined,
     calculateQuote: tasyExecute
       ? createQuoteCalculator({ execute: tasyExecute, principals, resolvePrincipal })
       : undefined,
@@ -63,7 +65,31 @@ export async function createPortalApp({
           })
       : undefined,
   });
-  const exports = createExportService({ db, send: budgetExporter, principals, resolvePrincipal });
+  if (budgetExporter) {
+    let draining;
+    let timer;
+    const drain = () => {
+      if (!draining)
+        draining = exports
+          .drainQueued()
+          .catch(() => app.log.warn("Não foi possível processar a fila de envios Tasy."))
+          .finally(() => {
+            draining = undefined;
+          });
+    };
+    app.addHook("onReady", async () => {
+      await db.query(
+        "UPDATE portal.tasy_exports SET state='unknown',error_code='PROCESS_INTERRUPTED',updated_at=now() WHERE state='sending'",
+      );
+      drain();
+      timer = setInterval(drain, 30000);
+      timer.unref();
+    });
+    app.addHook("preClose", async () => {
+      clearInterval(timer);
+      if (draining) await draining;
+    });
+  }
   const signed = async (request) => {
     request.portalUser = await auth.authenticate(request.headers.authorization);
   };
@@ -80,10 +106,26 @@ export async function createPortalApp({
     await auth.logout(request.portalUser);
     return { data: null, requestId: request.id };
   });
-  app.post("/v1/portal/:operation", { onRequest: signed }, async (request) => ({
-    data: await run(request.params.operation, request.body, request.portalUser),
-    requestId: request.id,
-  }));
+  app.post("/v1/portal/:operation", { onRequest: signed }, async (request) => {
+    const data = await run(request.params.operation, request.body, request.portalUser);
+    if (request.params.operation === "createRequest" && budgetExporter) {
+      try {
+        await exports.submit({ id: data }, request.portalUser);
+      } catch (error) {
+        // Creation is already durable. Return its ID even when Oracle is unavailable;
+        // retrying creation would produce a second request instead of reconciling this one.
+        app.log.warn(
+          {
+            requestId: request.id,
+            operation: "automatic_tasy_export",
+            code: error instanceof ApiError ? error.code : "EXPORT_FAILED",
+          },
+          "tasy_export_pending",
+        );
+      }
+    }
+    return { data, requestId: request.id };
+  });
   app.get("/v1/requests/:id/tasy", { onRequest: signed }, async (request) => {
     if (!/^[0-9a-f-]{36}$/i.test(request.params.id))
       throw new ApiError(400, "INVALID_INPUT", "Identificador inválido.");

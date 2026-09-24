@@ -109,6 +109,7 @@ function unwrapId(res: { data: any; error: { message: string } | null }): { id: 
 }
 
 export interface NewRequestInput {
+  requestKey?: string;
   tasy?: {
     cdPessoaFisica: string;
     cdConvenio: string;

@@ -103,7 +103,7 @@ test("disabled exports and inaccessible patients are blocked before Oracle", asy
     canonicalJson({ a: { c: 3, d: 4 }, b: 2 }),
   );
 });
-test("persistent export audit freezes snapshot, reconciles and enforces request ownership", async (t) => {
+test("persistent initial snapshot reconciles without blocking local pricing and enforces ownership", async (t) => {
   const db = await openDatabase({ PORTAL_DB_MODE: "pglite", PORTAL_DATA_DIR: ":memory:" });
   t.after(() => db.close());
   await migrate(db);
@@ -130,13 +130,10 @@ test("persistent export audit freezes snapshot, reconciles and enforces request 
   });
   await assert.rejects(service.submit({ id: snapshot.id }, user));
   assert.equal((await service.status(snapshot.id, user)).state, "unknown");
-  await assert.rejects(
-    createPortalOperations(db)(
-      "saveHospitalValue",
-      { id: snapshot.id, valor: 10, obs: "test" },
-      user,
-    ),
-    (e) => e.code === "EXPORT_FROZEN",
+  await createPortalOperations(db)(
+    "saveHospitalValue",
+    { id: snapshot.id, valor: 10, obs: "test" },
+    user,
   );
   await service.submit({ id: snapshot.id }, user);
   assert.equal(bodies[0], bodies[1]);
@@ -147,5 +144,5 @@ test("persistent export audit freezes snapshot, reconciles and enforces request 
     service.status(snapshot.id, { id: "00000000-0000-4000-8000-000000000003", perfil: "Médico" }),
     (e) => e.code === "NOT_FOUND",
   );
-  assert.equal((await db.query("SELECT count(*)::int AS n FROM portal.events")).rows[0].n, 4);
+  assert.equal((await db.query("SELECT count(*)::int AS n FROM portal.events")).rows[0].n, 5);
 });

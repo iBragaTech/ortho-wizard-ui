@@ -8,9 +8,9 @@ com rastreabilidade por data/hora e NM_USUARIO para relatórios futuros.
 
 ## Envio ao Tasy e rastreabilidade
 
-Foi implementado o envio para **aguardando cotação**, desabilitado até implantação
-e validação em homologação. Veja [escopo e ativação](envio-orcamento-tasy.md).
-O cálculo final e a inclusão automática do paciente ainda estão pendentes.
+O envio para **aguardando cotação** ocorre automaticamente na criação da solicitação
+e está habilitado e validado em TASYHML. Veja [escopo, ativação e validação](envio-orcamento-tasy.md).
+Revisões posteriores e fechamento do orçamento no Tasy não são sincronizados por este fluxo.
 
 Requisitos do fluxo completo:
 

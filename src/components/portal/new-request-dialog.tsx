@@ -39,6 +39,7 @@ import { TasyPatientSearch } from "@/components/portal/tasy-patient-search";
 import { TagInput } from "@/components/portal/tag-input";
 import { isValidCpf, telefonePessoaTasy } from "@/lib/data/tasy";
 import { getTasyClient } from "@/lib/data/tasy-supabase";
+import { getTasyExportStatus } from "@/lib/data/tasy-export";
 
 const empty = {
   nome: "",
@@ -74,6 +75,7 @@ export function NewRequestDialog({
   origem?: "comercial" | "medico";
 }) {
   const [open, setOpen] = useState(false);
+  const [requestKey, setRequestKey] = useState(() => crypto.randomUUID());
   const [patientRevision, setPatientRevision] = useState(0);
   const [patientCode, setPatientCode] = useState("");
   const [originalPhone, setOriginalPhone] = useState("");
@@ -196,7 +198,8 @@ export function NewRequestDialog({
         setPatientCode(tasyPatientCode);
         toast.success(`Pessoa cadastrada no Tasy com código ${tasyPatientCode}.`);
       }
-      await create.mutateAsync({
+      const createdId = await create.mutateAsync({
+        ...(localAuthEnabled ? { requestKey } : {}),
         nome: form.nome.trim(),
         nascimento: form.nascimento,
         cpf: form.cpf.trim(),
@@ -248,13 +251,21 @@ export function NewRequestDialog({
             }
           : {}),
       });
-      toast.success(
-        localAuthEnabled
-          ? "Solicitação enviada para aprovação de Custos."
-          : isMedico
+      if (localAuthEnabled) {
+        const exportStatus = await getTasyExportStatus(createdId).catch(() => null);
+        if (exportStatus?.state === "confirmed")
+          toast.success(`Solicitação criada no Tasy: ${exportStatus.tasy_id}. Aguardando cotação.`);
+        else
+          toast.warning(
+            "Solicitação salva no portal. O envio ao Tasy está pendente; acompanhe nos detalhes da solicitação.",
+          );
+      } else
+        toast.success(
+          isMedico
             ? "Orçamento criado e enviado ao Comercial."
             : "Orçamento criado e enviado ao médico.",
-      );
+        );
+      setRequestKey(crypto.randomUUID());
       setForm(empty);
       setAnestesista(false);
       setPatientCode("");

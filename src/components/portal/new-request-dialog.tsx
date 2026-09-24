@@ -111,6 +111,19 @@ export function NewRequestDialog({
       toast.error("Informe um CPF válido com 11 dígitos.");
       return;
     }
+    if (!form.email.trim()) {
+      toast.error("Informe o e-mail do paciente.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      toast.error("Informe um e-mail válido.");
+      return;
+    }
+    const blocoMinutos = toNumber(form.bloco);
+    if (blocoMinutos === null || blocoMinutos < 1 || !Number.isInteger(blocoMinutos)) {
+      toast.error("Informe o tempo de bloco em minutos (número inteiro maior que zero).");
+      return;
+    }
 
     if (
       localAuthEnabled &&

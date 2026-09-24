@@ -40,6 +40,7 @@ import { TagInput } from "@/components/portal/tag-input";
 import { isValidCpf, telefonePessoaTasy } from "@/lib/data/tasy";
 import { getTasyClient } from "@/lib/data/tasy-supabase";
 import { getTasyExportStatus } from "@/lib/data/tasy-export";
+import { createRequestKey } from "@/lib/request-key";
 
 const empty = {
   nome: "",
@@ -75,7 +76,7 @@ export function NewRequestDialog({
   origem?: "comercial" | "medico";
 }) {
   const [open, setOpen] = useState(false);
-  const [requestKey, setRequestKey] = useState(() => crypto.randomUUID());
+  const [requestKey, setRequestKey] = useState(createRequestKey);
   const [patientRevision, setPatientRevision] = useState(0);
   const [patientCode, setPatientCode] = useState("");
   const [originalPhone, setOriginalPhone] = useState("");
@@ -275,7 +276,7 @@ export function NewRequestDialog({
             ? "Orçamento criado e enviado ao Comercial."
             : "Orçamento criado e enviado ao médico.",
         );
-      setRequestKey(crypto.randomUUID());
+      setRequestKey(createRequestKey());
       setForm(empty);
       setPatientCode("");
       setPatientNotFound(false);

@@ -1,6 +1,7 @@
 // Hooks de leitura/escrita do portal. Todas as telas consomem o repositório
 // através daqui — a origem dos dados pode mudar sem tocar na interface.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "@/lib/auth/session";
 import {
   repository,
   type DoctorFeesInput,
@@ -9,7 +10,14 @@ import {
 } from "./repository";
 
 export function useRequests() {
-  return useQuery({ queryKey: ["requests"], queryFn: () => repository.listRequests() });
+  const { user } = useSession();
+  const isMedico = user?.perfil === "Médico";
+  const nome = user?.nome;
+  return useQuery({
+    queryKey: ["requests"],
+    queryFn: () => repository.listRequests(),
+    select: (rows) => (isMedico ? rows.filter((r) => r.medico === nome) : rows),
+  });
 }
 
 export function useRequest(id: string) {

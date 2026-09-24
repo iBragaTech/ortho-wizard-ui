@@ -641,7 +641,10 @@ export function NewRequestDialog({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="bloco">Tempo de bloco (minutos)</Label>
+                <Label htmlFor="bloco">
+                  Tempo de bloco (minutos)
+                  <RequiredMark />
+                </Label>
                 <Input
                   id="bloco"
                   inputMode="numeric"

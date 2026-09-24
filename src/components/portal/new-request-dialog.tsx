@@ -85,7 +85,6 @@ export function NewRequestDialog({
   const [adicionais, setAdicionais] = useState<TasyProcedureItem[]>([]);
   const [catalogContext, setCatalogContext] = useState({ cdConvenio: "", cdCategoria: "" });
   const [temCti, setTemCti] = useState(false);
-  const [anestesista, setAnestesista] = useState(false);
   const [sangue, setSangue] = useState<string[]>([]);
   const [multidisciplinar, setMultidisciplinar] = useState<string[]>([]);
   const create = useCreateRequest();
@@ -240,7 +239,7 @@ export function NewRequestDialog({
                 opme: opmeTexto,
                 anatomoPatologico: form.anatomo,
                 reservaSangue: sangue.join("; "),
-                equipeMultidisciplinar: `Anestesista: ${anestesista ? "Sim" : "Não"}. ${multidisciplinar.join("; ")}`,
+                equipeMultidisciplinar: multidisciplinar.join("; "),
                 fisioterapia: toNumber(form.fisioterapia),
                 tempoBloco: form.bloco,
                 obsMedico: form.obsMedico,
@@ -256,7 +255,6 @@ export function NewRequestDialog({
             : "Orçamento criado e enviado ao médico.",
       );
       setForm(empty);
-      setAnestesista(false);
       setPatientCode("");
       setPatientNotFound(false);
       setTemCti(false);

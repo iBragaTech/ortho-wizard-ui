@@ -489,10 +489,7 @@ export function NewRequestDialog({
               {isMedico ? (
                 <>
                   <div className="grid gap-2">
-                    <Label htmlFor="honorario">
-                      Honorário solicitado (R$)
-                      <RequiredMark />
-                    </Label>
+                    <Label htmlFor="honorario">Honorário solicitado (R$)</Label>
                     <Input
                       id="honorario"
                       inputMode="decimal"

@@ -10,6 +10,13 @@ export interface ProcedureItem {
   porte?: string;
 }
 
+export interface ProcedureSelectionItem {
+  codigo: string;
+  nome: string;
+  quantidade: number;
+  origem: "catalogo" | "digitado";
+}
+
 export const procedureCatalog: ProcedureItem[] = [
   { codigo: "3.07.12.05-8", descricao: "Artroplastia total de quadril não cimentada", porte: "10C" },
   { codigo: "3.07.12.06-6", descricao: "Artroplastia total de joelho", porte: "10B" },

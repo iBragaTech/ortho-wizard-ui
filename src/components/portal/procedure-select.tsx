@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
-import { Check, ChevronsUpDown, Plus, X } from "lucide-react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Command,
   CommandEmpty,
@@ -12,7 +11,11 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { listProcedures } from "@/data/procedure-catalog";
+import {
+  listProcedures,
+  type ProcedureSelectionItem,
+} from "@/data/procedure-catalog";
+import { ItemQuantity } from "./item-quantity";
 
 /**
  * Seleção de procedimentos com busca, mesma mecânica do OPME:
@@ -25,52 +28,49 @@ export function ProcedureSelect({
   multiple = false,
   placeholder = "Pesquisar procedimento...",
 }: {
-  value: string[];
-  onChange: (value: string[]) => void;
+  value: ProcedureSelectionItem[];
+  onChange: (value: ProcedureSelectionItem[]) => void;
   multiple?: boolean;
   placeholder?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const items = useMemo(() => listProcedures(), []);
-  const selected = value.map(
-    (code) =>
-      items.find((i) => i.codigo === code) ?? {
-        codigo: code,
-        descricao: code,
-        porte: undefined,
-        custom: true as const,
-      },
-  );
-
-  function toggle(codigo: string) {
+  function toggle(item: ProcedureSelectionItem) {
+    const selected = value.some((current) => current.codigo === item.codigo);
     if (!multiple) {
-      onChange(value.includes(codigo) ? [] : [codigo]);
+      onChange(selected ? [] : [item]);
       setOpen(false);
       return;
     }
-    onChange(value.includes(codigo) ? value.filter((c) => c !== codigo) : [...value, codigo]);
+    onChange(selected ? value.filter((current) => current.codigo !== item.codigo) : [...value, item]);
   }
 
   const trimmed = query.trim();
   const canAddCustom =
     trimmed.length > 0 &&
     !items.some((i) => `${i.codigo} ${i.descricao}`.toLowerCase() === trimmed.toLowerCase()) &&
-    !value.some((v) => v.toLowerCase() === trimmed.toLowerCase());
+    !value.some((item) => item.nome.toLowerCase() === trimmed.toLowerCase());
 
   function addCustom() {
     if (!canAddCustom) return;
-    onChange(multiple ? [...value, trimmed] : [trimmed]);
+    const item: ProcedureSelectionItem = {
+      codigo: trimmed,
+      nome: trimmed,
+      quantidade: 1,
+      origem: "digitado",
+    };
+    onChange(multiple ? [...value, item] : [item]);
     setQuery("");
     if (!multiple) setOpen(false);
   }
 
   const label =
-    selected.length === 0
+    value.length === 0
       ? placeholder
       : multiple
-        ? `${selected.length} procedimento(s) selecionado(s)`
-        : `${selected[0]!.codigo} · ${selected[0]!.descricao}`;
+        ? `${value.length} procedimento(s) selecionado(s)`
+        : `${value[0]?.codigo} · ${value[0]?.nome}`;
 
   return (
     <div className="grid gap-2">
@@ -127,12 +127,21 @@ export function ProcedureSelect({
                   <CommandItem
                     key={item.codigo}
                     value={`${item.codigo} ${item.descricao}`}
-                    onSelect={() => toggle(item.codigo)}
+                    onSelect={() =>
+                      toggle({
+                        codigo: item.codigo,
+                        nome: item.descricao,
+                        quantidade: 1,
+                        origem: "catalogo",
+                      })
+                    }
                   >
                     <Check
                       className={cn(
                         "h-4 w-4",
-                        value.includes(item.codigo) ? "opacity-100" : "opacity-0",
+                        value.some((current) => current.codigo === item.codigo)
+                          ? "opacity-100"
+                          : "opacity-0",
                       )}
                     />
                     <div className="min-w-0">
@@ -150,22 +159,38 @@ export function ProcedureSelect({
         </PopoverContent>
       </Popover>
 
-      {selected.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {selected.map((item) => (
-            <Badge key={item.codigo} variant="secondary" className="max-w-full gap-1 py-1">
-              <span className="truncate">
-                {"custom" in item ? item.descricao : `${item.codigo} · ${item.descricao}`}
+      {value.length > 0 ? (
+        <div>
+          {value.map((item) => (
+            <div
+              key={`${item.origem}:${item.codigo}`}
+              className="grid items-center gap-3 border-b py-2 text-sm last:border-b-0 sm:grid-cols-[minmax(0,1fr)_5rem_auto]"
+            >
+              <span className="min-w-0 break-words">
+                {item.codigo === item.nome ? item.nome : `${item.codigo} - ${item.nome}`}
               </span>
-              <button
+              <ItemQuantity
+                inline
+                name={item.nome}
+                value={item.quantidade}
+                onChange={(quantidade) =>
+                  onChange(
+                    value.map((current) =>
+                      current.codigo === item.codigo ? { ...current, quantidade } : current,
+                    ),
+                  )
+                }
+              />
+              <Button
                 type="button"
-                aria-label={`Remover ${item.descricao}`}
-                onClick={() => toggle(item.codigo)}
-                className="rounded-full p-0.5 hover:bg-background/60"
+                variant="ghost"
+                className="justify-self-start sm:justify-self-end"
+                aria-label={`Remover ${item.nome}`}
+                onClick={() => toggle(item)}
               >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
+                Remover
+              </Button>
+            </div>
           ))}
         </div>
       ) : null}

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { TagInput } from "./tag-input";
+import { ProcedureSelect } from "./procedure-select";
 import { RequiredMark } from "./item-quantity";
 import { useCreateSurgicalAppointment } from "@/lib/data/hooks";
 import { useSession } from "@/lib/auth/session";
@@ -241,8 +242,14 @@ export function NewSurgicalAppointmentDialog({ trigger }: { trigger: ReactNode }
       return void toast.error("Informe se haverá utilização de CTI no POI.");
     if (form.ctiResposta === "sim" && !form.motivoCti.trim())
       return void toast.error("Informe o motivo da solicitação de vaga no CTI.");
-    if (!form.procedimentoPrincipal.trim())
+    if (!form.procedimentoPrincipal.length)
       return void toast.error("Informe o procedimento principal.");
+    if (
+      [...form.procedimentoPrincipal, ...form.procedimentosAdicionais].some(
+        (item) => !Number.isInteger(item.quantidade) || item.quantidade < 1 || item.quantidade > 10000,
+      )
+    )
+      return void toast.error("Informe quantidades inteiras entre 1 e 10.000.");
     if (!form.lateralidade) return void toast.error("Informe a lateralidade.");
     if (!form.regimeInternacao) return void toast.error("Informe o regime de internação.");
     if (!form.origemPaciente) return void toast.error("Informe a origem do paciente.");
@@ -272,7 +279,7 @@ export function NewSurgicalAppointmentDialog({ trigger }: { trigger: ReactNode }
     const desiredDate = form.dataCirurgia.slice(0, 10);
     const dados: SurgicalRequestDetails = {
       ...form,
-      procedimentoPrincipal: form.procedimentoPrincipal.trim(),
+      procedimentoPrincipal: form.procedimentoPrincipal,
       origemOutros: form.origemOutros.trim(),
       convenio: form.convenio.trim(),
       motivoCti: form.motivoCti.trim(),
@@ -390,19 +397,18 @@ export function NewSurgicalAppointmentDialog({ trigger }: { trigger: ReactNode }
           <div className="grid gap-4">
             <SectionTitle>Informações sobre a cirurgia</SectionTitle>
             <Field label={<span>Procedimento principal <RequiredMark /></span>}>
-              <Input
+              <ProcedureSelect
                 value={form.procedimentoPrincipal}
-                maxLength={160}
-                placeholder="Nome ou código do procedimento"
-                onChange={(event) => setD("procedimentoPrincipal", event.target.value)}
+                onChange={(items) => setD("procedimentoPrincipal", items)}
+                placeholder="Pesquisar procedimento principal..."
               />
             </Field>
             <Field label="Procedimentos adicionais">
-              <TagInput
+              <ProcedureSelect
                 value={form.procedimentosAdicionais}
                 onChange={(items) => setD("procedimentosAdicionais", items)}
-                placeholder="Nome ou código do procedimento"
-                hint="Pressione Enter para adicionar mais itens"
+                placeholder="Pesquisar procedimentos adicionais..."
+                multiple
               />
             </Field>
             <div className="grid gap-4 sm:grid-cols-3">

@@ -1,3 +1,5 @@
+import type { ProcedureSelectionItem } from "./procedure-catalog";
+
 export type SurgicalAppointmentStatus = "solicitado" | "confirmado" | "cancelado";
 
 /** Item de material com quantidade (OPME e reserva de fios cirúrgicos). */
@@ -13,8 +15,8 @@ export interface SurgicalRequestDetails {
   cid: string;
   ctiResposta: "" | "sim" | "nao";
   motivoCti: string;
-  procedimentoPrincipal: string;
-  procedimentosAdicionais: string[];
+  procedimentoPrincipal: ProcedureSelectionItem[];
+  procedimentosAdicionais: ProcedureSelectionItem[];
   lateralidade: string;
   regimeInternacao: string;
   tipo: string;
@@ -68,7 +70,7 @@ export const emptySurgicalRequestDetails: SurgicalRequestDetails = {
   cid: "",
   ctiResposta: "",
   motivoCti: "",
-  procedimentoPrincipal: "",
+  procedimentoPrincipal: [],
   procedimentosAdicionais: [],
   lateralidade: "",
   regimeInternacao: "",

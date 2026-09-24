@@ -24,8 +24,7 @@ export function useDoctorBlockTime({
     localAuthEnabled &&
     !!procedureCode &&
     !!user &&
-    ["Médico", "Administrador"].includes(user.perfil) &&
-    !initialValue.trim();
+    ["Médico", "Administrador"].includes(user.perfil);
   const query = useQuery({
     queryKey: ["doctor-block-time", user?.id, procedureCode],
     enabled,
@@ -35,13 +34,25 @@ export function useDoctorBlockTime({
   });
   const minutes = enabled ? query.data?.minutos : null;
   const loading = enabled && query.isFetching;
-  const readOnly = loading || (enabled && !query.error && minutes != null);
+  const readOnly = false;
   const value =
-    enabled && !query.error && minutes != null
-      ? String(minutes)
-      : manual?.context === context
-        ? manual.value
-        : initialValue;
+    manual?.context === context
+      ? manual.value
+      : initialValue.trim()
+        ? initialValue
+        : enabled && !query.error && minutes != null
+          ? String(minutes)
+          : initialValue;
+  const warning =
+    !loading &&
+    !query.error &&
+    minutes != null &&
+    value.trim() &&
+    Number.isFinite(Number(value)) &&
+    Number(value) > 0 &&
+    Number(value) !== minutes
+      ? `O tempo médio de cirurgia do médico ${user?.nome ?? ""} para este procedimento é de ${minutes} minutos. Você informou ${value} minutos. O tempo informado será mantido.`
+      : null;
   const hint = loading
     ? "Consultando o tempo médio do médico…"
     : !enabled
@@ -60,6 +71,7 @@ export function useDoctorBlockTime({
     loading,
     readOnly,
     hint,
+    warning,
     setValue: (value: string) => setManual({ context, value }),
     reset: () => setManual(null),
   };

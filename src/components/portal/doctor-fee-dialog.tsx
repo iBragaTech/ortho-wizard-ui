@@ -174,6 +174,11 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
                 >
                   {blockTime.hint}
                 </p>
+                {blockTime.warning && (
+                  <p role="alert" className="text-sm text-amber-700 dark:text-amber-400">
+                    {blockTime.warning}
+                  </p>
+                )}
               </div>
             </div>
           </section>

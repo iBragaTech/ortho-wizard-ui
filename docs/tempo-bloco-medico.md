@@ -6,11 +6,17 @@ consulta `medicos.tempo-procedimento` e preenche **Tempo de bloco (minutos)** co
 `CD_PESSOA_FISICA` do `NM_USUARIO` vinculado à sessão; o navegador envia apenas o
 código do procedimento. A operação é somente leitura.
 
-Durante a consulta, o campo e o envio aguardam o resultado. Uma média disponível
-preenche o campo e impede edição. Sem média positiva, sem pessoa vinculada ou em
+Durante a consulta, o envio aguarda o resultado, mas o campo permite digitação.
+Uma média disponível preenche o campo apenas se ainda não houver valor salvo ou
+digitado. Um valor diferente mostra um alerta informativo com a média e o tempo
+informado, sem impedir o salvamento nem exigir confirmação. Sem média positiva, sem pessoa vinculada ou em
 caso de falha na consulta, o campo permite digitação e explica o motivo. A troca do
 procedimento consulta a nova combinação, sem reaproveitar o tempo digitado para
 outro procedimento. Tempos já salvos são preservados na revisão de honorários.
+
+O orçamento salva somente o `tempoBloco` informado pelo médico. A média do Tasy
+é consultada para o preenchimento inicial e o alerta, sem cópia adicional no
+orçamento ou no histórico. Os dados para indicadores serão consultados no Tasy.
 
 A consulta original com `COUNT(*)` verifica divergências em um agendamento; ela
 não retorna os minutos e depende de um `NR_SEQUENCIA` que a nova solicitação ainda

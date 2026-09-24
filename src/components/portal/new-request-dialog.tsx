@@ -663,6 +663,11 @@ export function NewRequestDialog({
                 <p id="bloco-hint" className="text-xs text-muted-foreground" aria-live="polite">
                   {blockTime.hint}
                 </p>
+                {blockTime.warning && (
+                  <p role="alert" className="text-sm text-amber-700 dark:text-amber-400">
+                    {blockTime.warning}
+                  </p>
+                )}
               </div>
 
               {isMedico ? (

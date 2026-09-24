@@ -46,6 +46,7 @@ const empty = {
   nascimento: "",
   cpf: "",
   telefone: "",
+  email: "",
   convenio: "",
   categoriaConvenio: "",
   // Campos do Comercial

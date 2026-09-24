@@ -151,6 +151,7 @@ export const PERFIS: Perfil[] = ["Administrador", "Comercial", "Médico", "Custo
 export const ACESSO: Record<string, Perfil[]> = {
   "/": PERFIS,
   "/orcamentos": PERFIS,
+  "/agendamentos-cirurgicos": ["Administrador", "Médico"],
   "/area-comercial": ["Administrador", "Comercial"],
   "/usuarios": ["Administrador"],
   "/configuracoes": ["Administrador"],

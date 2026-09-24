@@ -104,6 +104,24 @@ CREATE TABLE IF NOT EXISTS institution_settings (
   updated_at         timestamptz NOT NULL DEFAULT now()
 );
 
+-- Solicitações de agendamento cirúrgico feitas pelos médicos
+CREATE TABLE IF NOT EXISTS surgical_appointments (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_name   text NOT NULL CHECK (char_length(btrim(patient_name)) BETWEEN 1 AND 120),
+  patient_cpf    text NOT NULL CHECK (patient_cpf ~ '^[0-9]{11}$'),
+  doctor_user_id uuid NOT NULL REFERENCES portal_users(id) ON DELETE RESTRICT,
+  doctor_name    text NOT NULL,
+  desired_date   date NOT NULL,
+  status         text NOT NULL DEFAULT 'solicitado' CHECK (status IN ('solicitado','confirmado','cancelado')),
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  updated_at     timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_surgical_appointments_doctor
+  ON surgical_appointments(doctor_user_id, desired_date);
+CREATE INDEX IF NOT EXISTS idx_surgical_appointments_status
+  ON surgical_appointments(status, desired_date);
+
 -- Atualização automática de updated_at
 CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger AS $$
 BEGIN
@@ -115,4 +133,6 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_requests_updated BEFORE UPDATE ON consultation_requests
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 CREATE TRIGGER trg_doctors_updated BEFORE UPDATE ON doctors
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_surgical_appointments_updated BEFORE UPDATE ON surgical_appointments
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();

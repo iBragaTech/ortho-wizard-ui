@@ -1,6 +1,10 @@
 import type { ConsultationRequest, Doctor, PortalUser, TimelineEvent } from "@/data/mock";
 import type { DoctorFeesInput, InstitutionSettings, NewRequestInput } from "./repository";
 import { localAuth, portalCall } from "./local-api";
+import type {
+  NewSurgicalAppointmentInput,
+  SurgicalAppointment,
+} from "@/data/surgical-appointments";
 
 export const localRepository = {
   async listRequests(): Promise<ConsultationRequest[]> {
@@ -34,5 +38,9 @@ export const localRepository = {
   }) => portalCall<void>("createUser", input),
   getSettings: () => portalCall<InstitutionSettings>("getSettings"),
   saveSettings: (input: InstitutionSettings) => portalCall<void>("saveSettings", input),
+  listSurgicalAppointments: () =>
+    portalCall<SurgicalAppointment[]>("listSurgicalAppointments"),
+  createSurgicalAppointment: (input: NewSurgicalAppointmentInput) =>
+    portalCall<string>("createSurgicalAppointment", input),
   signIn: localAuth.signIn,
 };

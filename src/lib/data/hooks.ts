@@ -8,6 +8,7 @@ import {
   type InstitutionSettings,
   type NewRequestInput,
 } from "./repository";
+import type { NewSurgicalAppointmentInput } from "@/data/surgical-appointments";
 
 export function useRequests() {
   const { user } = useSession();
@@ -38,6 +39,25 @@ export function usePortalUsers() {
 
 export function useSettings() {
   return useQuery({ queryKey: ["settings"], queryFn: () => repository.getSettings() });
+}
+
+export function useSurgicalAppointments() {
+  const { user } = useSession();
+  const allowed = user?.perfil === "Administrador" || user?.perfil === "Médico";
+  return useQuery({
+    queryKey: ["surgical_appointments"],
+    queryFn: () => repository.listSurgicalAppointments(),
+    enabled: allowed,
+  });
+}
+
+export function useCreateSurgicalAppointment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: NewSurgicalAppointmentInput) =>
+      repository.createSurgicalAppointment(input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["surgical_appointments"] }),
+  });
 }
 
 function useInvalidateRequests() {

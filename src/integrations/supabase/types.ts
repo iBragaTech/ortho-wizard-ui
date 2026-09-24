@@ -280,11 +280,64 @@ export type Database = {
           },
         ]
       }
+      surgical_appointments: {
+        Row: {
+          created_at: string
+          desired_date: string
+          doctor_name: string
+          doctor_user_id: string
+          id: string
+          patient_cpf: string
+          patient_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          desired_date: string
+          doctor_name: string
+          doctor_user_id: string
+          id?: string
+          patient_cpf: string
+          patient_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          desired_date?: string
+          doctor_name?: string
+          doctor_user_id?: string
+          id?: string
+          patient_cpf?: string
+          patient_name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "surgical_appointments_doctor_user_id_fkey"
+            columns: ["doctor_user_id"]
+            isOneToOne: false
+            referencedRelation: "portal_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      criar_agendamento_cirurgico: {
+        Args: {
+          p_desired_date: string
+          p_patient_cpf: string
+          p_patient_name: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       criar_usuario: {
         Args: {
           p_email: string
@@ -302,6 +355,19 @@ export type Database = {
       definir_senha: {
         Args: { p_senha: string; p_user_id: string }
         Returns: undefined
+      }
+      listar_agendamentos_cirurgicos: {
+        Args: { p_perfil: string; p_user_id: string }
+        Returns: {
+          created_at: string
+          desired_date: string
+          doctor_name: string
+          doctor_user_id: string
+          id: string
+          patient_cpf: string
+          patient_name: string
+          status: string
+        }[]
       }
       verificar_login: {
         Args: { p_email: string; p_senha: string }

@@ -71,6 +71,16 @@ const settings = z
   .strict();
 const uuid = z.string().uuid();
 const idInput = z.object({ id: uuid }).strict();
+const surgicalAppointmentInput = z
+  .object({
+    patientName: z.string().trim().min(1).max(120),
+    patientCpf: z
+      .string()
+      .transform((value) => value.replace(/\D/g, ""))
+      .refine(validCpf, "CPF inválido."),
+    desiredDate: date.refine((value) => value !== "", "Informe a data desejada."),
+  })
+  .strict();
 const allowed = (user, roles) => {
   if (!roles.includes(user.perfil))
     throw new ApiError(403, "FORBIDDEN", "Operação não autorizada para seu perfil.");
@@ -135,6 +145,32 @@ export function createPortalOperations(
 ) {
   const handlers = {
     ...custosOperations({ db, getAccessible, event, calculateQuote, auditIdentity }),
+    listSurgicalAppointments: async (_input, user) => {
+      allowed(user, ["Administrador", "Médico"]);
+      const result = await db.query(
+        `SELECT id,patient_name AS "patientName",patient_cpf AS "patientCpf",
+        doctor_user_id AS "doctorUserId",doctor_name AS "doctorName",
+        desired_date::text AS "desiredDate",status,created_at AS "createdAt"
+        FROM portal.surgical_appointments
+        WHERE ($1 = 'Administrador' OR doctor_user_id = $2)
+        ORDER BY desired_date,created_at DESC`,
+        [user.perfil, user.id],
+      );
+      return result.rows;
+    },
+    createSurgicalAppointment: async (input, user) => {
+      allowed(user, ["Médico"]);
+      const value = parse(surgicalAppointmentInput, input);
+      if (value.desiredDate < new Date().toISOString().slice(0, 10))
+        throw new ApiError(400, "INVALID_DATE", "A data desejada não pode estar no passado.");
+      const result = await db.query(
+        `INSERT INTO portal.surgical_appointments
+        (patient_name,patient_cpf,doctor_user_id,doctor_name,desired_date)
+        VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+        [value.patientName, value.patientCpf, user.id, user.nome, value.desiredDate],
+      );
+      return result.rows[0].id;
+    },
     updatePatientPhone: async (input, user) => {
       allowed(user, ["Médico", "Administrador", "Comercial"]);
       const value = parse(

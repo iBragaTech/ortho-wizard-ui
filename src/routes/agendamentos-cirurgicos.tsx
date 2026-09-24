@@ -38,7 +38,7 @@ export const Route = createFileRoute("/agendamentos-cirurgicos")({
         name: "description",
         content: "Solicitação e acompanhamento de datas para agendamentos cirúrgicos.",
       },
-      { property: "og:title", content: "Agendamentos Cirúrgicos — Portal de Orçamentos" },
+      { property: "og:title", content: "Solicitações Cirúrgicas — Portal de Orçamentos" },
       {
         property: "og:description",
         content: "Acompanhe solicitações de agendamento cirúrgico por médico e paciente.",

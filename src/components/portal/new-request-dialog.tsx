@@ -99,10 +99,6 @@ export function NewRequestDialog({
     setForm((f) => ({ ...f, [key]: value }));
 
   async function handleSubmit() {
-    if (isMedico && (toNumber(form.honorario) === null || toNumber(form.honorario)! < 0)) {
-      toast.error("Informe o honorário solicitado, inclusive quando for zero.");
-      return;
-    }
     if (!form.nome.trim() || !form.cpf.trim()) {
       toast.error("Informe ao menos nome e CPF do paciente.");
       return;

@@ -103,7 +103,7 @@ function SelectField({
 }) {
   return (
     <Field label={label}>
-      <Select value={value || undefined} onValueChange={onChange}>
+      <Select value={value} onValueChange={onChange}>
         <SelectTrigger id={id} aria-label={typeof label === "string" ? label : undefined}>
           <SelectValue placeholder={placeholder ?? "Selecione…"} />
         </SelectTrigger>

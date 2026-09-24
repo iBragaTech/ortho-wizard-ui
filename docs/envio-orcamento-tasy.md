@@ -8,6 +8,14 @@ sua inclusão no Tasy, no status **5 — Aguardando cotação**. O portal envia 
 convênio, categoria, procedimentos, materiais/OPME e as quantidades selecionadas.
 O usuário, estabelecimento e perfil são obtidos do vínculo Tasy validado no servidor.
 
+O campo `honorariosMedicos` do portal é gravado em
+`ORCAMENTO_PACIENTE_PROC.VL_MEDICO` do **procedimento principal**. O valor é enviado
+uma única vez, sem multiplicação pela quantidade e sem repeti-lo nos procedimentos
+adicionais. Zero é preservado; honorário não informado permanece nulo. Antes do
+commit, a integração confere se o Tasy manteve o valor gravado. Se ele for alterado
+por uma regra do ERP, a inclusão é desfeita e a solicitação fica disponível para
+conferência e reconciliação.
+
 A seção **Registro no Tasy**, nos detalhes da solicitação, mostra o número retornado.
 Solicitações anteriores à ativação podem ser incluídas pelo botão dessa seção.
 Não é necessário aprovar por Custos para fazer a inclusão inicial.
@@ -60,6 +68,11 @@ A tabela de controle foi criada em **TASYHML**. A solicitação **SOL-2026-00000
 foi registrada como orçamento **13490**, estabelecimento **2**, status **5**.
 Foram conferidos um procedimento, dois materiais e suas quantidades. Uma segunda
 chamada retornou o mesmo número com `recuperado=true`.
+
+O mapeamento de honorários foi acrescentado posteriormente. O procedimento
+principal **52368** do orçamento **13490** recebeu **R$ 1.000,00** em `VL_MEDICO`,
+conforme o valor original registrado no histórico do envio. A correção preservou
+os demais valores e gerou uma entrada de histórico no Tasy.
 
 Os testes automatizados verificam inclusão automática pela API, fila persistente,
 repetição da criação, falha Oracle sem perda da solicitação, reconciliação com o

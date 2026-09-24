@@ -58,7 +58,6 @@ const empty = {
   honorario: "",
   diaria: "",
   cti: "",
-  fisioterapia: "",
   obsMedico: "",
 };
 
@@ -496,16 +495,6 @@ export function NewRequestDialog({
                       placeholder="0,00"
                       value={form.cti}
                       onChange={(e) => set("cti")(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="fisioterapia">Fisioterapia (quantidade)</Label>
-                    <Input
-                      id="fisioterapia"
-                      inputMode="numeric"
-                      placeholder="Ex.: 10"
-                      value={form.fisioterapia}
-                      onChange={(e) => set("fisioterapia")(e.target.value)}
                     />
                   </div>
                 </>

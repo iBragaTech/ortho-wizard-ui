@@ -36,6 +36,7 @@ export function RequestActions({
   const [previous, setPrevious] = useState({ telefone: "", observacoes: "" });
   const [busy, setBusy] = useState(false);
   if (!localAuthEnabled || !user) return null;
+  if (request.tasyGerenciado && !phoneOnly) return null;
   if (phoneOnly && !["Médico", "Administrador", "Comercial"].includes(user.perfil)) return null;
   const editPhoneOnly = phoneOnly || user.perfil === "Médico";
   async function open(next: typeof action) {

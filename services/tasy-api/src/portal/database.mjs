@@ -136,5 +136,15 @@ export async function migrate(db) {
       );
       await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (6)");
     }
+    if (
+      !(await tx.query("SELECT version FROM portal.schema_migrations WHERE version=7")).rows.length
+    ) {
+      await tx.exec(`ALTER TABLE portal.requests DROP CONSTRAINT requests_status_check;
+        ALTER TABLE portal.requests ADD CONSTRAINT requests_status_check CHECK
+        (status IN ('pendente','em_analise','aguardando_medico','aguardando_comercial','concluido',
+        'aguardando_cotacao','em_aprovacao','aguardando_pagamento','aguardando_documentacao',
+        'cancelado_paciente','cancelado_estabelecimento'));`);
+      await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (7)");
+    }
   });
 }

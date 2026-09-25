@@ -20,7 +20,7 @@ export function SolicitationWorkspace({ origem }: { origem: "medico" | "comercia
     <AppShell>
       <PageHeader
         title={origem === "medico" ? `Olá, ${user?.nome ?? ""}` : "Área Comercial"}
-        description="Crie solicitações e acompanhe a aprovação de Custos. O orçamento aprovado fica disponível para impressão."
+        description="Crie solicitações e acompanhe a revisão dos valores e o pagamento. O PDF fica disponível após a revisão de Custos."
         actions={<NewRequestDialog origem={origem} trigger={<Button>Nova solicitação</Button>} />}
       />
       <label className="flex items-center gap-3 text-sm">
@@ -30,7 +30,7 @@ export function SolicitationWorkspace({ origem }: { origem: "medico" | "comercia
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         >
-          <option value="pendentes">Aguardando Custos</option>
+          <option value="pendentes">Em andamento</option>
           <option value="aprovados">Aprovados</option>
           <option value="todos">Todos</option>
         </select>

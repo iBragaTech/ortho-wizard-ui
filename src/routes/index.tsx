@@ -36,7 +36,7 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-const flow = [
+const legacyFlow = [
   { label: "Solicitação", icon: ClipboardList, desc: "Registro inicial" },
   { label: "Médico", icon: Stethoscope, desc: "Honorários médicos" },
   { label: "Comercial", icon: Briefcase, desc: "Valores hospitalares" },
@@ -45,11 +45,26 @@ const flow = [
 
 function Dashboard() {
   const { data: requests = [] } = useRequests();
+  const managed = requests.some((r) => r.tasyGerenciado);
+  const flow = managed
+    ? [
+        { label: "Médico", icon: Stethoscope, desc: "Cria o orçamento no portal" },
+        { label: "Custos", icon: Search, desc: "Revisa valores no Tasy" },
+        { label: "Paciente", icon: FileText, desc: "Recebe o PDF e paga" },
+        { label: "Tesouraria", icon: CheckCircle2, desc: "Registra o pagamento no Tasy" },
+      ]
+    : legacyFlow;
   const metrics = {
-    pendentes: requests.filter((r) => r.status === "pendente").length,
-    emAnalise: requests.filter((r) => r.status === "em_analise").length,
-    aguardandoMedico: requests.filter((r) => r.status === "aguardando_medico").length,
-    aguardandoComercial: requests.filter((r) => r.status === "aguardando_comercial").length,
+    pendentes: requests.filter((r) => ["pendente", "aguardando_documentacao"].includes(r.status))
+      .length,
+    emAnalise: requests.filter((r) => ["em_analise", "aguardando_cotacao"].includes(r.status))
+      .length,
+    aguardandoMedico: requests.filter((r) =>
+      ["aguardando_medico", "em_aprovacao"].includes(r.status),
+    ).length,
+    aguardandoComercial: requests.filter((r) =>
+      ["aguardando_comercial", "aguardando_pagamento"].includes(r.status),
+    ).length,
     concluidos: requests.filter((r) => r.status === "concluido").length,
   };
 
@@ -68,27 +83,37 @@ function Dashboard() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <MetricCard label="Pendentes" value={metrics.pendentes} icon={ClipboardList} hint="Aguardando triagem" />
-        <MetricCard label="Em análise" value={metrics.emAnalise} icon={Search} hint="Sob avaliação interna" />
         <MetricCard
-          label="Aguardando médico"
+          label="Pendentes"
+          value={metrics.pendentes}
+          icon={ClipboardList}
+          hint="Aguardando triagem"
+        />
+        <MetricCard
+          label={managed ? "Aguardando cotação" : "Em análise"}
+          value={metrics.emAnalise}
+          icon={Search}
+          hint="Sob avaliação de Custos"
+        />
+        <MetricCard
+          label={managed ? "Em aprovação" : "Aguardando médico"}
           value={metrics.aguardandoMedico}
           icon={Stethoscope}
           tone="warning"
-          hint="Honorários pendentes"
+          hint={managed ? "PDF disponível ao médico" : "Honorários pendentes"}
         />
         <MetricCard
-          label="Aguardando Comercial"
+          label={managed ? "Comprovante pendente" : "Aguardando Comercial"}
           value={metrics.aguardandoComercial}
           icon={Briefcase}
-          hint="Valores hospitalares"
+          hint={managed ? "Aguardando Tesouraria" : "Valores hospitalares"}
         />
         <MetricCard
           label="Orçamentos concluídos"
           value={metrics.concluidos}
           icon={CheckCircle2}
           tone="success"
-          hint="Prontos para envio"
+          hint={managed ? "Pagamento registrado" : "Prontos para envio"}
         />
       </div>
 
@@ -96,7 +121,8 @@ function Dashboard() {
         <CardHeader className="gap-1">
           <CardTitle className="text-base">Fluxo atual das solicitações</CardTitle>
           <p className="inline-flex w-fit items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-            <Timer className="h-3.5 w-3.5" /> Representação inicial — sujeita a ajustes
+            <Timer className="h-3.5 w-3.5" />{" "}
+            {managed ? "Acompanhamento do Tasy" : "Representação inicial — sujeita a ajustes"}
           </p>
         </CardHeader>
         <CardContent>

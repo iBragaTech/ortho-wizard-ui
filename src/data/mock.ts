@@ -1,7 +1,17 @@
 // Dados fictícios (mock) — camada isolada para facilitar a futura troca por API/PostgreSQL.
 
 export type RequestStatus =
-  "pendente" | "em_analise" | "aguardando_medico" | "aguardando_comercial" | "concluido";
+  | "pendente"
+  | "em_analise"
+  | "aguardando_medico"
+  | "aguardando_comercial"
+  | "concluido"
+  | "aguardando_cotacao"
+  | "em_aprovacao"
+  | "aguardando_pagamento"
+  | "aguardando_documentacao"
+  | "cancelado_paciente"
+  | "cancelado_estabelecimento";
 
 export interface Patient {
   nome: string;
@@ -12,6 +22,31 @@ export interface Patient {
 }
 
 export interface ConsultationRequest {
+  tasyGerenciado?: boolean;
+  tasyRetorno?: {
+    id?: string;
+    statusCode?: number;
+    statusLabel?: string;
+    total?: number | null;
+    receipt?: boolean;
+    completo?: boolean;
+    consultadoEm: string;
+    validUntil?: string | null;
+    erro?: string | null;
+    itens?: Array<{
+      id: string;
+      tipo: string;
+      codigo: string;
+      origem?: string;
+      descricao: string;
+      quantidade: number;
+      total: number | null;
+      medico: number;
+      anestesista: number;
+      desconto: number;
+      contabilizado: number;
+    }>;
+  };
   honorariosSolicitados?: number | null;
   tasy?: {
     cdPessoaFisica: string;
@@ -98,6 +133,12 @@ export const statusLabels: Record<RequestStatus, string> = {
   aguardando_medico: "Aguardando médico",
   aguardando_comercial: "Aguardando Comercial",
   concluido: "Concluído",
+  aguardando_cotacao: "Aguardando cotação",
+  em_aprovacao: "Em aprovação",
+  aguardando_pagamento: "Aguardando comprovante de pagamento",
+  aguardando_documentacao: "Aguardando documentação",
+  cancelado_paciente: "Cancelado pelo paciente",
+  cancelado_estabelecimento: "Cancelado pelo estabelecimento",
 };
 
 export const especialidades = [
@@ -535,12 +576,14 @@ export const metrics = {
 };
 
 export function totalOf(r: ConsultationRequest): number | null {
+  if (r.tasyGerenciado) return r.tasyRetorno?.total ?? null;
   if (r.precificacao && !r.precificacao.referencia.completo) return null;
   if (r.honorariosMedicos === null && r.valorHospitalar === null) return null;
   return (r.honorariosMedicos ?? 0) + (r.valorHospitalar ?? 0);
 }
 
 export function medicalFeesTotal(r: ConsultationRequest): number | null {
+  if (r.tasyGerenciado) return r.honorariosMedicos;
   const numericFields = [r.honorariosMedicos, r.diaria, r.cti];
   if (numericFields.every((v) => v === null)) return null;
   return numericFields.reduce<number>((acc, v) => acc + (v ?? 0), 0);

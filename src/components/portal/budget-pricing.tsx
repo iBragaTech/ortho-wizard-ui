@@ -1,4 +1,5 @@
 import { useSession } from "@/lib/auth/session";
+import { TasyReturnPricing } from "./tasy-return-pricing";
 import { CostsReview } from "./costs-review";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -58,6 +59,7 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
       setBusy(false);
     }
   }
+  if (request.tasyGerenciado) return <TasyReturnPricing request={request} />;
   if (!canReview && request.status !== "concluido")
     return (
       <Card>

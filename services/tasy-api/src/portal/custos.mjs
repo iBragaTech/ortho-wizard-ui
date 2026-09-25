@@ -10,12 +10,18 @@ export function requireCustos(user) {
 }
 export function visibleRequest(row, user) {
   const data = structuredClone(row.data);
-  if (!isCustos(user) && row.status !== "concluido") {
+  if (
+    !isCustos(user) &&
+    row.status !== "concluido" &&
+    !(data.tasyGerenciado && ["em_aprovacao", "aguardando_pagamento"].includes(row.status))
+  ) {
     delete data.precificacao;
     data.honorariosMedicos = null;
     data.valorHospitalar = null;
     data.diaria = null;
     data.cti = null;
+    if (data.tasyRetorno)
+      data.tasyRetorno = { ...data.tasyRetorno, itens: [], total: null, completo: false };
   }
   return data;
 }

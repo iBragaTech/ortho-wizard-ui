@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./status-badge";
+import { quoteStatusLabel } from "@/lib/tasy-workflow";
 import { RequestCard } from "./request-card";
 import { formatCurrency, totalOf, type ConsultationRequest } from "@/data/mock";
 import { useSession } from "@/lib/auth/session";
@@ -68,7 +69,7 @@ export function RequestTable({
                   <TableCell className="text-muted-foreground">{r.especialidade}</TableCell>
                   <TableCell className="text-muted-foreground">{r.data}</TableCell>
                   <TableCell>
-                    <StatusBadge status={r.status} />
+                    <StatusBadge status={r.status} label={quoteStatusLabel(r)} />
                   </TableCell>
                   <TableCell className="text-right font-medium">
                     {formatCurrency(totalOf(r))}

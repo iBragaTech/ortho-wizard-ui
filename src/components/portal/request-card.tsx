@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, CalendarDays, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "./status-badge";
+import { quoteStatusLabel } from "@/lib/tasy-workflow";
 import { formatCurrency, totalOf, type ConsultationRequest } from "@/data/mock";
 
 export function RequestCard({ request }: { request: ConsultationRequest }) {
@@ -10,11 +11,9 @@ export function RequestCard({ request }: { request: ConsultationRequest }) {
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
         <div className="min-w-0">
           <p className="text-xs font-medium text-muted-foreground">{request.numero}</p>
-          <p className="truncate text-sm font-semibold text-foreground">
-            {request.paciente.nome}
-          </p>
+          <p className="truncate text-sm font-semibold text-foreground">{request.paciente.nome}</p>
         </div>
-        <StatusBadge status={request.status} />
+        <StatusBadge status={request.status} label={quoteStatusLabel(request)} />
       </div>
 
       <div className="mt-3 space-y-1.5 text-sm text-muted-foreground">

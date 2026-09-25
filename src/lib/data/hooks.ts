@@ -16,17 +16,26 @@ export function useRequests() {
   const nome = user?.nome;
   return useQuery({
     queryKey: ["requests"],
+    refetchInterval: 30000,
     queryFn: () => repository.listRequests(),
     select: (rows) => (isMedico ? rows.filter((r) => r.medico === nome) : rows),
   });
 }
 
 export function useRequest(id: string) {
-  return useQuery({ queryKey: ["requests", id], queryFn: () => repository.getRequest(id) });
+  return useQuery({
+    queryKey: ["requests", id],
+    queryFn: () => repository.getRequest(id),
+    refetchInterval: 15000,
+  });
 }
 
 export function useTimeline(id: string) {
-  return useQuery({ queryKey: ["timeline", id], queryFn: () => repository.getTimeline(id) });
+  return useQuery({
+    queryKey: ["timeline", id],
+    queryFn: () => repository.getTimeline(id),
+    refetchInterval: 30000,
+  });
 }
 
 export function useDoctors() {
@@ -54,8 +63,7 @@ export function useSurgicalAppointments() {
 export function useCreateSurgicalAppointment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: NewSurgicalAppointmentInput) =>
-      repository.createSurgicalAppointment(input),
+    mutationFn: (input: NewSurgicalAppointmentInput) => repository.createSurgicalAppointment(input),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["surgical_appointments"] }),
   });
 }

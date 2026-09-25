@@ -4,7 +4,13 @@ import { localAuthEnabled } from "@/lib/data/local-api";
 import { getTasyExportStatus, sendTasyExport } from "@/lib/data/tasy-export";
 import { Button } from "@/components/ui/button";
 
-export function TasyBudgetExport({ id }: { id: string }) {
+export function TasyBudgetExport({
+  id,
+  managed = false,
+}: {
+  id: string;
+  managed?: boolean | undefined;
+}) {
   const client = useQueryClient();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -40,12 +46,13 @@ export function TasyBudgetExport({ id }: { id: string }) {
         materiais e quantidades informados, como aguardando cotação.
       </p>
       {status.data?.state === "confirmed" ? (
-        <p>Registrado no Tasy: {status.data.tasy_id} — aguardando cotação.</p>
+        <p>Registrado no Tasy: {status.data.tasy_id}.</p>
       ) : (
         <>
           <p className="text-sm">
-            A análise de Custos continua no portal. Revisões posteriores de itens e valores não
-            alteram o registro inicial no Tasy.
+            {managed
+              ? "Após o envio, Custos e Tesouraria dão continuidade ao orçamento no Tasy."
+              : "A análise de Custos continua no portal. Revisões posteriores não alteram o registro inicial no Tasy."}
           </p>
           {status.data?.state === "unknown" && (
             <p>
@@ -74,8 +81,9 @@ export function TasyBudgetExport({ id }: { id: string }) {
       )}
       {(error || status.error) && <p role="alert">{error || status.error?.message}</p>}
       <p className="text-xs text-muted-foreground">
-        O registro inicial permanece aguardando cotação no Tasy. A aprovação e as revisões
-        posteriores são realizadas no portal.
+        {managed
+          ? "Valores e andamento são atualizados a partir do Tasy."
+          : "O registro inicial permanece aguardando cotação no Tasy. A aprovação e as revisões posteriores são realizadas no portal."}
       </p>
     </section>
   );

@@ -10,6 +10,7 @@ import { catalogoOperations } from "../catalogos.mjs";
 import { precoOperations } from "../precos.mjs";
 import { createBudgetExporter } from "../orcamento-export.mjs";
 import { readEncryptedSecret } from "../secrets.mjs";
+import { createBudgetReader } from "../orcamento-retorno.mjs";
 let db, oracle, app;
 try {
   const origin = process.env.PORTAL_ORIGIN || "http://localhost:5173";
@@ -86,6 +87,11 @@ try {
     principals,
     tasyExecute,
     budgetExporter,
+    budgetReader:
+      oracle && process.env.TASY_RETURN_SYNC_ENABLED === "true"
+        ? createBudgetReader({ pool: oracle })
+        : undefined,
+    approvalRule: process.env.TASY_APPROVAL_RULE,
     validateTasyLink: createTasyLinkValidator(oracle),
   });
   app.addHook("onClose", async () => {

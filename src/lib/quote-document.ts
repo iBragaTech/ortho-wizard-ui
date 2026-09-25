@@ -2,6 +2,7 @@ import type { ConsultationRequest } from "@/data/mock";
 import { formatCurrency, medicalFeesTotal } from "@/data/mock";
 import type { InstitutionSettings } from "@/lib/data/repository";
 import logoHorizontal from "@/assets/logo-horizontal.png";
+import { canPrintQuote, quoteStatusLabel } from "./tasy-workflow";
 
 function esc(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -60,6 +61,34 @@ function savedField(request: ConsultationRequest, label: string): string {
 /** Monta as linhas do quadro de procedimentos a partir dos dados da solicitação. */
 function buildItems(request: ConsultationRequest): LineItem[] {
   const items: LineItem[] = [];
+  if (request.tasyGerenciado && request.tasyRetorno?.completo) {
+    for (const item of request.tasyRetorno.itens ?? []) {
+      if (!item.contabilizado) continue;
+      items.push({
+        tipo: item.tipo,
+        codigo: item.codigo,
+        descricao: item.descricao || item.codigo,
+        qtde: item.quantidade,
+        medico: item.medico,
+        anestesista: item.anestesista,
+        hospital: (item.total ?? 0) - item.medico - item.anestesista,
+        desconto: 0,
+      });
+    }
+    const gross = items.reduce((sum, i) => sum + i.medico + i.anestesista + i.hospital, 0);
+    const adjustment = Math.round(((request.tasyRetorno.total ?? 0) - gross) * 100) / 100;
+    if (adjustment)
+      items.push({
+        codigo: "—",
+        descricao: "Descontos e ajustes do Tasy",
+        qtde: 1,
+        medico: 0,
+        anestesista: 0,
+        hospital: adjustment,
+        desconto: 0,
+      });
+    return items;
+  }
   const descriptions = savedDescriptions(request);
   if (request.precificacao?.referencia.completo) {
     const ref = request.precificacao.referencia;
@@ -170,9 +199,15 @@ export function buildQuoteHtml(
   request: ConsultationRequest,
   institution: InstitutionSettings,
 ): string {
-  if (request.status !== "concluido")
-    throw new Error("Aguarde a aprovação de Custos para imprimir o orçamento.");
-  if (request.precificacao && !request.precificacao.referencia.completo) {
+  if (!canPrintQuote(request))
+    throw new Error(
+      "Aguarde a revisão de Custos e a atualização dos valores para gerar o orçamento.",
+    );
+  if (
+    !request.tasyGerenciado &&
+    request.precificacao &&
+    !request.precificacao.referencia.completo
+  ) {
     throw new Error("Há itens sem preço confirmado. Conclua o cálculo antes de gerar o orçamento.");
   }
   const agora = new Date();
@@ -308,7 +343,7 @@ export function buildQuoteHtml(
   <table>
     ${field("Paciente", request.paciente.nome)}
     ${field("Data Orçamento", fmt(agora))}
-    ${field("Data Validade", fmt(validade))}
+    ${field("Data Validade", request.tasyGerenciado ? (request.tasyRetorno?.validUntil ? new Date(`${request.tasyRetorno.validUntil}T12:00:00`).toLocaleDateString("pt-BR") : "—") : fmt(validade))}
     ${field("Data Aprovação", approvalDate)}
     ${field("Telefone/Cel", request.paciente.telefone)}
   </table>
@@ -319,7 +354,7 @@ export function buildQuoteHtml(
     ${field("Solicitante", request.solicitante || request.medico || "—")}
     ${field("Nome do médico", `${request.medico} · ${request.crm}`)}
     ${field("Categoria", categoriaLabel || tasy?.cdCategoria || "—")}
-    ${field("Status Orçamento", request.status === "concluido" ? "Aprovado" : "Em aprovação")}
+    ${field("Status Orçamento", quoteStatusLabel(request) || (request.status === "concluido" ? "Aprovado" : "Em aprovação"))}
   </table>
 </div>
 

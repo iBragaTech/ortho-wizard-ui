@@ -105,6 +105,12 @@ async function getAccessible(db, id, user, lock = false, contactOnly = false) {
     [id, user.perfil, user.id],
   );
   if (!rows.length) throw new ApiError(404, "NOT_FOUND", "Orçamento não encontrado.");
+  if (lock && !contactOnly && rows[0].data.tasyGerenciado)
+    throw new ApiError(
+      409,
+      "TASY_MANAGED",
+      "Os valores, itens e a aprovação deste orçamento são alterados no Tasy.",
+    );
   if (lock && !contactOnly && rows[0].status === "concluido")
     throw new ApiError(409, "INVALID_STATE", "Orçamento aprovado não pode ser alterado.");
   if (lock && !contactOnly && rows[0].data.inativo)
@@ -142,6 +148,7 @@ export function createPortalOperations(
     validateTasyLink,
     syncPatientPhone,
     enqueueExport,
+    tasyManaged = false,
   } = {},
 ) {
   const handlers = {
@@ -266,6 +273,7 @@ export function createPortalOperations(
           );
         }
         const data = {
+          ...(tasyManaged ? { tasyGerenciado: true } : {}),
           ...row.data,
           paciente: { ...row.data.paciente, telefone: value.telefone },
           observacoes: value.observacoes,
@@ -444,7 +452,7 @@ export function createPortalOperations(
             numero,
             user.id,
             value.origem === "medico" ? user.id : null,
-            "em_analise",
+            tasyManaged ? "aguardando_cotacao" : "em_analise",
             JSON.stringify(data),
             value.requestKey ?? null,
           ],
@@ -746,7 +754,12 @@ export function createPortalOperations(
       return result.rows.map((row) => ({
         titulo: row.titulo,
         descricao:
-          !isCustos(user) && request.status !== "concluido"
+          !isCustos(user) &&
+          request.status !== "concluido" &&
+          !(
+            request.data.tasyGerenciado &&
+            ["em_aprovacao", "aguardando_pagamento"].includes(request.status)
+          )
             ? "Movimentação registrada; detalhes financeiros disponíveis após aprovação."
             : row.descricao,
         data: fmtTime(row.created_at),

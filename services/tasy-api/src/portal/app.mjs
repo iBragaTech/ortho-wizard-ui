@@ -6,6 +6,7 @@ import { ApiError } from "../errors.mjs";
 import { createQuoteCalculator } from "./pricing.mjs";
 import { createExportService } from "./export.mjs";
 import { randomUUID } from "node:crypto";
+import { createReturnSync } from "./tasy-return.mjs";
 
 export async function createPortalApp({
   db,
@@ -15,6 +16,8 @@ export async function createPortalApp({
   logger = true,
   budgetExporter,
   validateTasyLink,
+  budgetReader,
+  approvalRule,
 }) {
   await importLegacyLinks(db, principals);
   const resolvePrincipal = createLinkResolver(db, validateTasyLink);
@@ -48,6 +51,9 @@ export async function createPortalApp({
       }),
   });
   const exports = createExportService({ db, send: budgetExporter, principals, resolvePrincipal });
+  const returnSync = budgetReader
+    ? createReturnSync({ db, read: budgetReader, approvalRule })
+    : null;
   const run = createPortalOperations(db, {
     enqueueExport: budgetExporter ? exports.enqueue : undefined,
     calculateQuote: tasyExecute
@@ -55,6 +61,7 @@ export async function createPortalApp({
       : undefined,
     auditIdentity: async (user, tx) => (await resolvePrincipal(user, tx)).tasyUsername,
     validateTasyLink,
+    tasyManaged: !!returnSync,
     syncPatientPhone: tasyExecute
       ? async (input, user, tx) =>
           tasyExecute({
@@ -88,6 +95,22 @@ export async function createPortalApp({
     app.addHook("preClose", async () => {
       clearInterval(timer);
       if (draining) await draining;
+    });
+  }
+  if (returnSync) {
+    let timer;
+    const sync = () =>
+      returnSync.sync().catch(() => app.log.warn("Sincronização de retorno Tasy pendente."));
+    app.addHook("onReady", async () => {
+      await db.query(`UPDATE portal.requests r SET data=data || '{"tasyGerenciado":true}'::jsonb
+        WHERE EXISTS (SELECT 1 FROM portal.tasy_exports e WHERE e.request_id=r.id)`);
+      void sync();
+      timer = setInterval(() => void sync(), 30000);
+      timer.unref();
+    });
+    app.addHook("preClose", async () => {
+      clearInterval(timer);
+      await returnSync.sync();
     });
   }
   const signed = async (request) => {

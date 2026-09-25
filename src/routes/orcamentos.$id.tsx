@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency, medicalFeesTotal } from "@/data/mock";
 import { useRequest, useTimeline, useSettings } from "@/lib/data/hooks";
 import { openQuoteDocument, downloadQuoteFile } from "@/lib/quote-document";
+import { canPrintQuote, quoteStatusLabel } from "@/lib/tasy-workflow";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -88,16 +89,14 @@ function RequestDetail() {
         description={`${request.paciente.nome} · ${request.especialidade}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge status={request.status} className="px-3 py-1.5 text-sm" />
+            <StatusBadge
+              status={request.status}
+              label={quoteStatusLabel(request)}
+              className="px-3 py-1.5 text-sm"
+            />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  disabled={
-                    request.status !== "concluido" ||
-                    (!!request.precificacao && !request.precificacao.referencia.completo)
-                  }
-                >
+                <Button size="sm" disabled={!canPrintQuote(request)}>
                   <FileText className="h-4 w-4" /> Gerar arquivo do paciente
                 </Button>
               </DropdownMenuTrigger>
@@ -353,7 +352,7 @@ function RequestDetail() {
         </div>
 
         <div className="space-y-6">
-          <TasyBudgetExport id={id} />
+          <TasyBudgetExport id={id} managed={request.tasyGerenciado} />
           <FinancialSummary
             honorarios={medicalFeesTotal(request)}
             hospitalar={request.valorHospitalar}

@@ -46,6 +46,7 @@ const newRequest = z
       .refine(validCpf, "CPF inválido."),
     telefone: z.string().max(40),
     telefoneAnterior: z.string().max(40).optional(),
+    email: z.string().trim().email().max(255).optional(),
     especialidade: text.optional(),
     tipoConsulta: text.optional(),
     dataDesejada: date.optional(),
@@ -147,6 +148,7 @@ export function createPortalOperations(
     auditIdentity = () => null,
     validateTasyLink,
     syncPatientPhone,
+    syncPatientEmail,
     enqueueExport,
     tasyManaged = false,
   } = {},
@@ -388,6 +390,19 @@ export function createPortalOperations(
         );
       const referencia = calculateQuote ? await calculateQuote(value.tasy, user, value.cpf) : null;
       return db.transaction(async (tx) => {
+        if (value.origem === "medico" && value.email && value.tasy) {
+          if (!syncPatientEmail)
+            throw new ApiError(
+              503,
+              "TASY_DISABLED",
+              "Conecte ao Tasy para registrar o e-mail do paciente.",
+            );
+          await syncPatientEmail(
+            { cdPessoaFisica: value.tasy.cdPessoaFisica, nrCpf: value.cpf, email: value.email },
+            user,
+            tx,
+          );
+        }
         if (value.telefoneAnterior !== undefined && value.telefone !== value.telefoneAnterior) {
           if (!value.tasy || !syncPatientPhone)
             throw new ApiError(503, "TASY_DISABLED", "Conecte ao Tasy para atualizar o telefone.");
@@ -410,7 +425,7 @@ export function createPortalOperations(
             cpf: value.cpf,
             telefone: value.telefone,
             nascimento: fmtDate(value.nascimento),
-            email: "",
+            email: value.email ?? "",
           },
           solicitante: user.nome,
           medico: value.origem === "medico" ? user.nome : "—",

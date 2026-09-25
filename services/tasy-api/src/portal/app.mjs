@@ -62,6 +62,15 @@ export async function createPortalApp({
     auditIdentity: async (user, tx) => (await resolvePrincipal(user, tx)).tasyUsername,
     validateTasyLink,
     tasyManaged: !!returnSync,
+    syncPatientEmail: tasyExecute
+      ? async (input, user, tx) =>
+          tasyExecute({
+            name: "pessoas-fisicas.atualizar-email",
+            body: input,
+            principal: await resolvePrincipal(user, tx),
+            requestId: randomUUID(),
+          })
+      : undefined,
     syncPatientPhone: tasyExecute
       ? async (input, user, tx) =>
           tasyExecute({

@@ -128,6 +128,7 @@ export interface NewRequestInput {
   cpf: string;
   telefone: string;
   telefoneAnterior?: string;
+  email?: string;
   especialidade?: string;
   tipoConsulta?: string;
   dataDesejada?: string; // yyyy-mm-dd

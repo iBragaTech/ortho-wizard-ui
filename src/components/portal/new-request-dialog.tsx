@@ -219,7 +219,7 @@ export function NewRequestDialog({
         toast.success(`Pessoa cadastrada no Tasy com código ${tasyPatientCode}.`);
       }
       const createdId = await create.mutateAsync({
-        ...(localAuthEnabled ? { requestKey } : {}),
+        ...(localAuthEnabled ? { requestKey, email: form.email.trim() } : {}),
         nome: form.nome.trim(),
         nascimento: form.nascimento,
         cpf: form.cpf.trim(),
@@ -357,6 +357,7 @@ export function NewRequestDialog({
                     nascimento: "",
                     cpf,
                     telefone: "",
+                    email: "",
                   }));
                 }}
                 onSelect={(person) => {
@@ -373,6 +374,7 @@ export function NewRequestDialog({
                     nascimento: person.dtNascimento ?? "",
                     cpf: person.nrCpf ?? "",
                     telefone: telefonePessoaTasy(person),
+                    email: person.dsEmail?.trim() ?? "",
                     convenio: "",
                     categoriaConvenio: "",
                   }));

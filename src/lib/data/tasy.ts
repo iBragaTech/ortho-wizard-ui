@@ -19,6 +19,7 @@ export interface PessoaFisicaTasy {
   nrTelefoneCelular: string | null;
   nrDddCelular: string | null;
   nrDdiCelular: string | null;
+  dsEmail?: string | null;
 }
 
 export interface TempoMedicoTasy {

@@ -2,6 +2,7 @@ import { z } from "zod";
 import oracledb from "oracledb";
 import { ApiError } from "./errors.mjs";
 import { phoneOperation } from "./pessoa-telefone.mjs";
+import { emailOperation } from "./pessoa-email.mjs";
 
 const code = z.string().regex(/^[0-9]{1,10}$/);
 const dateFormat = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -42,6 +43,16 @@ const selectPerson = `SELECT cd_pessoa_fisica AS "cdPessoaFisica",
   FROM TASY.pessoa_fisica WHERE cd_pessoa_fisica = :cdPessoaFisica`;
 const canAccess = (principal, id) =>
   principal.allPessoaFisica === true || principal.pessoaFisicaIds?.includes(id) === true;
+
+// Keep write/locking queries unchanged. Only expose a unique residential contact.
+const selectPersonWithEmail = selectPerson.replace(
+  'TRIM(nr_ddi_celular) AS "nrDdiCelular"',
+  `TRIM(nr_ddi_celular) AS "nrDdiCelular",
+   (SELECT CASE WHEN COUNT(*)=1 THEN MAX(TRIM(c.ds_email)) END
+    FROM TASY.compl_pessoa_fisica c
+    WHERE c.cd_pessoa_fisica=pessoa_fisica.cd_pessoa_fisica
+      AND c.ie_tipo_complemento=1) AS "dsEmail"`,
+);
 
 export async function preparePersonWrite(connection, principal) {
   if (!principal.tasyEstablishment || !principal.tasyProfile) {
@@ -95,6 +106,11 @@ export async function preparePersonWrite(connection, principal) {
 
 export function pessoaFisicaOperations({ directDmlEnabled }) {
   return {
+    "pessoas-fisicas.atualizar-email": emailOperation({
+      directDmlEnabled,
+      canAccess,
+      preparePersonWrite,
+    }),
     "pessoas-fisicas.atualizar-telefone": phoneOperation({
       directDmlEnabled,
       selectPerson,
@@ -108,7 +124,7 @@ export function pessoaFisicaOperations({ directDmlEnabled }) {
         principal.allPessoaFisica === true || principal.pessoaFisicaIds?.length > 0,
       execute: async ({ connection, input, principal }) => {
         const result = await connection.execute(
-          selectPerson.replace(
+          selectPersonWithEmail.replace(
             "cd_pessoa_fisica = :cdPessoaFisica",
             "nr_cpf = :nrCpf AND ROWNUM <= 2",
           ),
@@ -135,7 +151,7 @@ export function pessoaFisicaOperations({ directDmlEnabled }) {
       schema: z.object({ cdPessoaFisica: code }).strict(),
       authorize: ({ input, principal }) => canAccess(principal, input.cdPessoaFisica),
       execute: async ({ connection, input }) => {
-        const result = await connection.execute(selectPerson, input, { maxRows: 2 });
+        const result = await connection.execute(selectPersonWithEmail, input, { maxRows: 2 });
         if (!result.rows?.length)
           throw new ApiError(404, "NOT_FOUND", "Pessoa física não encontrada.");
         if (result.rows.length !== 1)

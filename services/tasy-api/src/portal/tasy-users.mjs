@@ -91,6 +91,12 @@ export function createLinkResolver(db, validate) {
     const operations = [...p.operations];
     if (
       ["Médico", "Administrador"].includes(user.perfil) &&
+      operations.includes("pessoas-fisicas.consultar") &&
+      !operations.includes("pessoas-fisicas.atualizar-email")
+    )
+      operations.push("pessoas-fisicas.atualizar-email");
+    if (
+      ["Médico", "Administrador"].includes(user.perfil) &&
       !operations.includes("medicos.tempo-procedimento")
     )
       operations.push("medicos.tempo-procedimento");

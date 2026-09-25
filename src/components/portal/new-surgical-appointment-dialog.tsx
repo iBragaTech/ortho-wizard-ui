@@ -253,7 +253,7 @@ export function NewSurgicalAppointmentDialog({ trigger }: { trigger: ReactNode }
     if (!form.lateralidade) return void toast.error("Informe a lateralidade.");
     if (!form.regimeInternacao) return void toast.error("Informe o regime de internação.");
     if (!form.origemPaciente) return void toast.error("Informe a origem do paciente.");
-    if (form.origemPaciente === "Outro" && !form.origemOutros.trim())
+    if (form.origemPaciente === "Outros" && !form.origemOutros.trim())
       return void toast.error("Descreva a origem do paciente.");
     if (!form.convenio.trim()) return void toast.error("Informe o convênio.");
     if (!form.dataCirurgia) return void toast.error("Informe a data da cirurgia.");
@@ -443,7 +443,7 @@ export function NewSurgicalAppointmentDialog({ trigger }: { trigger: ReactNode }
                 onChange={(value) => setD("origemPaciente", value)}
                 options={origemPacienteOptions}
               />
-              {form.origemPaciente === "Outro" ? (
+              {form.origemPaciente === "Outros" ? (
                 <Field label={<span>Outros <RequiredMark /></span>}>
                   <Input
                     value={form.origemOutros}

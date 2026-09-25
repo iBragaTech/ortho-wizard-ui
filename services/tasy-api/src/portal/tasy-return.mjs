@@ -68,7 +68,9 @@ export function createReturnSync({ db, read, approvalRule }) {
             tasyGerenciado: true,
             tasyRetorno: retorno,
             honorariosMedicos: complete ? Math.round(fees * 100) / 100 : null,
-            valorHospitalar: complete ? Math.round((snapshot.total - fees) * 100) / 100 : null,
+            // The native quote total does not establish that VL_MEDICO is included.
+            // Preserve it directly; subtracting the separately recorded fees invents negatives.
+            valorHospitalar: complete ? Math.round(snapshot.total * 100) / 100 : null,
             diaria: null,
             cti: null,
             dataAprovacao:

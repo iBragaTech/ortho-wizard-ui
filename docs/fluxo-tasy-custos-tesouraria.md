@@ -57,6 +57,11 @@ priorizando os menos recentemente consultados. O detalhe do portal atualiza a
 cada 15 segundos. As consultas usam a ligação do portal, paciente e estabelecimento
 originais e uma transação Oracle somente leitura. Não há novos objetos Oracle.
 
+Os campos médico/anestesista são exibidos separadamente como informação. Não são
+subtraídos dos valores dos itens nem somados novamente ao total nativo. Por exemplo,
+procedimento de R$ 500,00, materiais de R$ 28,18 e campo médico de R$ 1.000,00
+mantêm o total Tasy de R$ 528,18, sem criar um valor hospitalar negativo.
+
 Os valores dos itens já são totais, não são multiplicados novamente pela
 quantidade. O total final vem de `TASY.OBTER_VALOR_ORC_PAC`; descontos e diferenças
 do total nativo aparecem no PDF como ajustes do Tasy. Itens agendáveis excluídos

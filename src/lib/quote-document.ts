@@ -71,11 +71,11 @@ function buildItems(request: ConsultationRequest): LineItem[] {
         qtde: item.quantidade,
         medico: item.medico,
         anestesista: item.anestesista,
-        hospital: (item.total ?? 0) - item.medico - item.anestesista,
+        hospital: item.total ?? 0,
         desconto: 0,
       });
     }
-    const gross = items.reduce((sum, i) => sum + i.medico + i.anestesista + i.hospital, 0);
+    const gross = items.reduce((sum, i) => sum + i.hospital, 0);
     const adjustment = Math.round(((request.tasyRetorno.total ?? 0) - gross) * 100) / 100;
     if (adjustment)
       items.push({
@@ -231,7 +231,8 @@ export function buildQuoteHtml(
   const somaAnest = items.reduce((a, i) => a + i.anestesista, 0);
   const somaHosp = items.reduce((a, i) => a + i.hospital, 0);
   const somaDesc = items.reduce((a, i) => a + i.desconto, 0);
-  const totalProc = somaMedico + somaAnest + somaHosp - somaDesc;
+  const totalProc =
+    (request.tasyGerenciado ? somaHosp : somaMedico + somaAnest + somaHosp) - somaDesc;
   const totalMaterial =
     materials.reduce((sum, item) => sum + Math.round(item.hospital * 100), 0) / 100;
   const totalGeral = Math.round((totalProc + totalMaterial) * 100) / 100;
@@ -247,7 +248,7 @@ export function buildQuoteHtml(
     <td class="r">${num(i.anestesista)}</td>
     <td class="r">${num(i.hospital)}</td>
     <td class="r">${num(i.desconto)}</td>
-    <td class="r">${num(i.medico + i.anestesista + i.hospital - i.desconto)}</td>
+    <td class="r">${num((request.tasyGerenciado ? i.hospital : i.medico + i.anestesista + i.hospital) - i.desconto)}</td>
   </tr>`,
     )
     .join("\n");
@@ -362,7 +363,7 @@ export function buildQuoteHtml(
   <thead>
     <tr>
       <th>Código</th><th style="text-align:left">Procedimento</th><th>Qtde</th>
-      <th>Médico</th><th>Anestesista</th><th>Hospital</th><th>Descontos</th><th>Total</th>
+      <th>Médico${request.tasyGerenciado ? " (informativo)" : ""}</th><th>Anestesista${request.tasyGerenciado ? " (informativo)" : ""}</th><th>${request.tasyGerenciado ? "Valor procedimento Tasy" : "Hospital"}</th><th>Descontos</th><th>Total</th>
     </tr>
   </thead>
   <tbody>
@@ -385,6 +386,7 @@ ${linhas}
 </table>
 
 <div class="notes">
+  ${request.tasyGerenciado ? "<p>O total reproduz o orçamento do Tasy. Os campos médico e anestesista são apresentados separadamente como informação, sem soma ou subtração adicional ao total.</p>" : ""}
   ${
     detalhes.length
       ? `<h3>DADOS DO PROCEDIMENTO:</h3><table class="detalhes">${detalhes

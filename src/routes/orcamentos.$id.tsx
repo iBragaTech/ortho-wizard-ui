@@ -356,6 +356,7 @@ function RequestDetail() {
           <FinancialSummary
             honorarios={medicalFeesTotal(request)}
             hospitalar={request.valorHospitalar}
+            tasyTotal={request.tasyGerenciado ? (request.tasyRetorno?.total ?? null) : undefined}
           />
 
           <Card className="shadow-card">

@@ -145,7 +145,7 @@ test("sync preserves source values, updates items/status, blocks local approval 
   assert.equal(row.status, "em_aprovacao");
   assert.equal(row.tasyRetorno.total, 250);
   assert.equal(row.honorariosMedicos, 100);
-  assert.equal(row.valorHospitalar, 150);
+  assert.equal(row.valorHospitalar, 250);
   await assert.rejects(run("approveRequest", { id, revisao: 1 }, user), { code: "TASY_MANAGED" });
   await assert.rejects(run("saveHospitalValue", { id, valor: 20, obs: "test" }, user), {
     code: "TASY_MANAGED",
@@ -158,6 +158,16 @@ test("sync preserves source values, updates items/status, blocks local approval 
   const before = await count();
   await sync.sync();
   assert.equal(await count(), before);
+  snapshot = {
+    ...snapshot,
+    total: 528.18,
+    itens: [{ ...snapshot.itens[0], total: 500, medico: 1000 }],
+  };
+  await sync.sync();
+  row = await run("getRequest", { id }, user);
+  assert.equal(row.valorHospitalar, 528.18);
+  assert.equal(row.honorariosMedicos, 1000);
+  assert.equal(row.tasyRetorno.itens[0].total, 500);
   snapshot = { ...snapshot, statusCode: 2, statusLabel: "Aprovado" };
   await sync.sync();
   assert.equal((await run("getRequest", { id }, user)).status, "aguardando_pagamento");
@@ -167,7 +177,7 @@ test("sync preserves source values, updates items/status, blocks local approval 
   failure = true;
   await sync.sync();
   row = await run("getRequest", { id }, user);
-  assert.equal(row.tasyRetorno.total, 250);
+  assert.equal(row.tasyRetorno.total, 528.18);
   assert.ok(row.tasyRetorno.erro);
   failure = false;
   snapshot = { ...snapshot, statusCode: 4 };

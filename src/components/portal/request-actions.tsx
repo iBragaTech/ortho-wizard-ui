@@ -37,7 +37,7 @@ export function RequestActions({
   const [busy, setBusy] = useState(false);
   if (!localAuthEnabled || !user) return null;
   if (request.tasyGerenciado && !phoneOnly) return null;
-  if (phoneOnly && !["Médico", "Administrador", "Comercial"].includes(user.perfil)) return null;
+  if (phoneOnly) return null;
   const editPhoneOnly = phoneOnly || user.perfil === "Médico";
   async function open(next: typeof action) {
     setPhone(request.paciente.telefone);
@@ -113,9 +113,7 @@ export function RequestActions({
   return (
     <>
       <div className="inline-flex flex-wrap gap-1">
-        <Button size="sm" variant="outline" onClick={() => open("edit")}>
-          {editPhoneOnly ? "Editar telefone" : "Editar"}
-        </Button>
+        {/* Orçamento salvo não pode mais ser editado. */}
         {!phoneOnly && (
           <Button size="sm" variant="outline" onClick={() => open("deactivate")}>
             Inativar

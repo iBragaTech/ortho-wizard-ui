@@ -16,17 +16,16 @@ export const tempoMedicoOperation = {
       throw new ApiError(403, "INVALID_TASY_LINK", "Usuário Tasy ativo não encontrado.");
     const cdMedico = users.rows[0].cdMedico;
     if (!cdMedico) return { minutos: null, motivo: "sem_medico" };
-    // This installed view already calculates the doctor's average. It does not
-    // expose NR_PROC_INTERNO; distinct results must not be averaged or picked at random.
+    // Portal rule: sum the internal-procedure averages for this doctor/procedure.
+    // Equal averages from different records must each contribute; no origin filter.
     const result = await connection.execute(
-      `SELECT DISTINCT qt_media_medico AS "minutos" FROM TASY.tempo_proced_medico
+      `SELECT SUM(qt_media_medico) AS "minutos" FROM TASY.tempo_proced_medico
        WHERE cd_medico=:cdMedico AND cd_procedimento=:cdProcedimento
-         AND qt_media_medico>0 FETCH FIRST 2 ROWS ONLY`,
+         AND qt_media_medico>0`,
       { cdMedico, cdProcedimento: input.cdProcedimento },
-      { maxRows: 2 },
+      { maxRows: 1 },
     );
     if (!result.rows?.length) return { minutos: null, motivo: "sem_media" };
-    if (result.rows.length !== 1) return { minutos: null, motivo: "multiplas_medias" };
     const minutes = Number(result.rows[0].minutos);
     if (!Number.isFinite(minutes) || minutes <= 0 || !Number.isSafeInteger(Math.round(minutes)))
       return { minutos: null, motivo: "sem_media" };

@@ -48,8 +48,8 @@ test("average is read using only the authenticated Tasy username and its person 
   assert.deepEqual(identity.binds, { nmUsuario: "doctor" });
   const query = f.calls.find((c) => c.sql?.includes("FROM TASY.tempo_proced_medico"));
   assert.deepEqual(query.binds, { cdMedico: "123", cdProcedimento: "456" });
-  assert.match(query.sql, /SELECT DISTINCT qt_media_medico/);
-  assert.match(query.sql, /FETCH FIRST 2 ROWS ONLY/);
+  assert.match(query.sql, /SELECT SUM\(qt_media_medico\)/);
+  assert.doesNotMatch(query.sql, /DISTINCT|FETCH FIRST|IE_ORIGEM/i);
   assert.doesNotMatch(query.sql, /AGENDA_PACIENTE|NR_PROC_INTERNO|QT_MEDIO_TEMPO_GERAL/i);
   assert.ok(!f.calls.includes("commit"));
   assert.deepEqual(f.calls.slice(-2), ["rollback", "close"]);
@@ -75,14 +75,14 @@ test("callers cannot select another doctor, username or supply SQL; explicit per
   });
 });
 
-test("missing person, missing mean and conflicting means explicitly allow manual input", async () => {
+test("missing person or sum explicitly allows manual input", async () => {
   const absent = fixture({ users: [{ cdMedico: null }] });
   assert.deepEqual(await absent.run(), { minutos: null, motivo: "sem_medico" });
   assert.ok(!absent.calls.some((c) => c.sql?.includes("FROM TASY.tempo_proced_medico")));
   assert.deepEqual(await fixture({ averages: [] }).run(), { minutos: null, motivo: "sem_media" });
-  assert.deepEqual(await fixture({ averages: [{ minutos: 90 }, { minutos: 120 }] }).run(), {
-    minutos: null,
-    motivo: "multiplas_medias",
+  assert.deepEqual(await fixture({ averages: [{ minutos: 77 }] }).run(), {
+    minutos: 77,
+    motivo: null,
   });
   for (const minutos of [0, -1, null, NaN, Infinity])
     assert.deepEqual(await fixture({ averages: [{ minutos }] }).run(), {

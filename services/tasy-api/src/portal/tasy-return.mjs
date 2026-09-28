@@ -21,11 +21,15 @@ export function createReturnSync({ db, read, approvalRule }) {
   // The rule must be explicitly configured; enabling sync never silently chooses approval policy.
   returnStatus({ statusCode: 5, receipt: false }, approvalRule);
   let running;
-  const run = async () => {
-    const { rows } = await db.query(`SELECT e.request_id,e.tasy_id,e.snapshot,e.actor_id
+  const run = async (requestId = null) => {
+    const { rows } = await db.query(
+      `SELECT e.request_id,e.tasy_id,e.snapshot,e.actor_id
       FROM portal.tasy_exports e JOIN portal.requests r ON r.id=e.request_id
       WHERE e.state='confirmed' AND COALESCE(r.data->>'excluido','false') <> 'true'
-      ORDER BY COALESCE(r.data->'tasyRetorno'->>'consultadoEm',''),e.request_id LIMIT 100`);
+      AND ($1::uuid IS NULL OR e.request_id=$1)
+      ORDER BY COALESCE(r.data->'tasyRetorno'->>'consultadoEm',''),e.request_id LIMIT 100`,
+      [requestId],
+    );
     for (const row of rows) {
       try {
         const snapshot = await read({
@@ -112,9 +116,20 @@ export function createReturnSync({ db, read, approvalRule }) {
     }
   };
   return {
-    sync: () =>
-      (running ??= run().finally(() => {
-        running = undefined;
-      })),
+    refresh: (id) => {
+      const task = (running ?? Promise.resolve()).then(() => run(id));
+      running = task;
+      return task.finally(() => {
+        if (running === task) running = undefined;
+      });
+    },
+    sync: () => {
+      if (running) return running;
+      const task = run();
+      running = task;
+      return task.finally(() => {
+        if (running === task) running = undefined;
+      });
+    },
   };
 }

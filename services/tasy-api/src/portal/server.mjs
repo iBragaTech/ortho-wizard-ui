@@ -11,6 +11,7 @@ import { precoOperations } from "../precos.mjs";
 import { createBudgetExporter } from "../orcamento-export.mjs";
 import { readEncryptedSecret } from "../secrets.mjs";
 import { createBudgetReader } from "../orcamento-retorno.mjs";
+import { createHospitalMailer } from "../mail-transport.mjs";
 let db, oracle, app;
 try {
   const origin = process.env.PORTAL_ORIGIN || "http://localhost:5173";
@@ -92,6 +93,14 @@ try {
         ? createBudgetReader({ pool: oracle })
         : undefined,
     approvalRule: process.env.TASY_APPROVAL_RULE,
+    emailSender:
+      oracle && process.env.PORTAL_EMAIL_ENABLED === "true"
+        ? createHospitalMailer({
+            pool: oracle,
+            from: process.env.PORTAL_EMAIL_FROM || "tasy@aebmg.org.br",
+          })
+        : undefined,
+    newBudgetRecipient: process.env.PORTAL_NEW_BUDGET_EMAIL_TO,
     validateTasyLink: createTasyLinkValidator(oracle),
   });
   app.addHook("onClose", async () => {

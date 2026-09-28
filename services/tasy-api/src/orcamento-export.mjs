@@ -174,14 +174,19 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
         `INSERT INTO TASY.orcamento_paciente
         (nr_sequencia_orcamento,cd_estabelecimento,cd_pessoa_fisica,dt_orcamento,
          cd_convenio,cd_categoria,ie_status_orcamento,dt_atualizacao,nm_usuario,
-         dt_atualizacao_nrec,nm_usuario_nrec,ds_observacao)
-        VALUES (:id,:estab,:pessoa,SYSDATE,:convenio,:categoria,5,SYSDATE,:usuario,SYSDATE,:usuario,:obs)`,
+         dt_atualizacao_nrec,nm_usuario_nrec,ds_observacao,
+         cd_condicao_pagamento,ie_calculo_valor,vl_deposito)
+        VALUES (:id,:estab,:pessoa,SYSDATE,:convenio,:categoria,5,SYSDATE,:usuario,SYSDATE,:usuario,:obs,
+          :condicaoPagamento,:calculoValor,:deposito)`,
         {
           id,
           estab: principal.tasyEstablishment,
           pessoa: selection.cdPessoaFisica,
           convenio: selection.cdConvenio,
           categoria: selection.cdCategoria,
+          condicaoPagamento: 1,
+          calculoValor: "B",
+          deposito: 0,
           usuario: principal.tasyUsername,
           obs: `Portal ${snapshot.numero || snapshot.id}. Aguardando cotacao. Valores do portal nao constituem precificacao Tasy.`,
         },

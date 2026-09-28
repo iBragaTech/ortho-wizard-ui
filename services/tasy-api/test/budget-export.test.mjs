@@ -66,6 +66,10 @@ test("Oracle draft inserts audit, header and items in one transaction, drops ses
   assert.equal((await send(snapshot, principal)).nrOrcamento, "789");
   assert.equal(calls.filter((x) => x === "commit").length, 1);
   assert.ok(calls.some((x) => x.sql?.includes("INSERT INTO TASY.orcamento_historico")));
+  const header = calls.find((x) => x.sql?.startsWith("INSERT INTO TASY.orcamento_paciente\n"));
+  assert.equal(header.binds.condicaoPagamento, 1);
+  assert.equal(header.binds.calculoValor, "B");
+  assert.equal(header.binds.deposito, 0);
   assert.deepEqual(calls.at(-1), { close: { drop: true } });
 });
 test("Oracle export binds the selected quantity", async () => {

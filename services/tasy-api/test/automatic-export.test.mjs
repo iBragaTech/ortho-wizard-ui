@@ -64,6 +64,10 @@ test("HTTP creation exports automatically, preserves one local request on retry 
     db,
     logger: false,
     portalOrigin: "http://localhost:5173",
+    emailSender: async () => {
+      throw new Error("Simulated SMTP outage");
+    },
+    newBudgetRecipient: "notifications@example.test",
     principals: { [doctor.id]: principal, [admin.id]: { ...principal, tasyUsername: "admin" } },
     tasyExecute: async ({ name }) =>
       name === "pessoas-fisicas.consultar"
@@ -108,6 +112,15 @@ test("HTTP creation exports automatically, preserves one local request on retry 
   assert.equal((await create()).json().data, requestKey);
   assert.equal(exports.length, 1);
   assert.equal((await db.query("SELECT count(*)::int AS n FROM portal.requests")).rows[0].n, 1);
+  const notifications = await app.inject({
+    method: "POST",
+    url: "/v1/portal/getRequestEmails",
+    headers,
+    payload: { id: requestKey },
+  });
+  assert.equal(notifications.statusCode, 200, notifications.body);
+  assert.equal(notifications.json().data.messages.length, 1);
+  assert.equal(notifications.json().data.messages[0].recipient, "notifications@example.test");
   const run = createPortalOperations(db, { auditIdentity: () => "admin" });
   await run("approveRequest", { id: requestKey, revisao: 1 }, admin);
   assert.equal(

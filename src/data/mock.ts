@@ -24,6 +24,7 @@ export interface Patient {
 export interface ConsultationRequest {
   tasyGerenciado?: boolean;
   tasyRetorno?: {
+    hash?: string;
     id?: string;
     statusCode?: number;
     statusLabel?: string;

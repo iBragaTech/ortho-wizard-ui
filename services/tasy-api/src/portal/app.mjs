@@ -7,6 +7,7 @@ import { createQuoteCalculator } from "./pricing.mjs";
 import { createExportService } from "./export.mjs";
 import { randomUUID } from "node:crypto";
 import { createReturnSync } from "./tasy-return.mjs";
+import { createEmailService } from "./emails.mjs";
 
 export async function createPortalApp({
   db,
@@ -18,6 +19,8 @@ export async function createPortalApp({
   validateTasyLink,
   budgetReader,
   approvalRule,
+  emailSender,
+  newBudgetRecipient,
 }) {
   await importLegacyLinks(db, principals);
   const resolvePrincipal = createLinkResolver(db, validateTasyLink);
@@ -54,8 +57,18 @@ export async function createPortalApp({
   const returnSync = budgetReader
     ? createReturnSync({ db, read: budgetReader, approvalRule })
     : null;
+  const emails = emailSender
+    ? createEmailService({
+        db,
+        send: emailSender,
+        newRecipient: newBudgetRecipient,
+        portalOrigin,
+        refreshQuote: returnSync?.refresh,
+      })
+    : null;
   const run = createPortalOperations(db, {
     enqueueExport: budgetExporter ? exports.enqueue : undefined,
+    enqueueNewEmail: emails?.enqueueNew,
     calculateQuote: tasyExecute
       ? createQuoteCalculator({ execute: tasyExecute, principals, resolvePrincipal })
       : undefined,
@@ -125,6 +138,20 @@ export async function createPortalApp({
   const signed = async (request) => {
     request.portalUser = await auth.authenticate(request.headers.authorization);
   };
+  if (emails) {
+    let timer;
+    const drain = () => emails.drain().catch(() => app.log.warn("Fila de e-mails pendente."));
+    app.addHook("onReady", async () => {
+      await emails.recover();
+      void drain();
+      timer = setInterval(() => void drain(), 15000);
+      timer.unref();
+    });
+    app.addHook("preClose", async () => {
+      clearInterval(timer);
+      await emails.wait();
+    });
+  }
   app.post(
     "/v1/auth/login",
     { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
@@ -139,6 +166,25 @@ export async function createPortalApp({
     return { data: null, requestId: request.id };
   });
   app.post("/v1/portal/:operation", { onRequest: signed }, async (request) => {
+    const op = request.params.operation;
+    if (["getRequestEmails", "sendPatientQuote", "retryRequestEmail"].includes(op)) {
+      if (!emails) {
+        if (op === "getRequestEmails")
+          return { data: { enabled: false, messages: [] }, requestId: request.id };
+        throw new ApiError(503, "EMAIL_DISABLED", "Envio de e-mails não configurado.");
+      }
+      if (op === "getRequestEmails")
+        return {
+          data: { enabled: true, messages: await emails.status(request.body, request.portalUser) },
+          requestId: request.id,
+        };
+      const data =
+        op === "sendPatientQuote"
+          ? await emails.queuePatient(request.body, request.portalUser)
+          : await emails.retry(request.body, request.portalUser);
+      void emails.drain().catch(() => app.log.warn("Fila de e-mails pendente."));
+      return { data, requestId: request.id };
+    }
     const data = await run(request.params.operation, request.body, request.portalUser);
     if (request.params.operation === "createRequest" && budgetExporter) {
       try {
@@ -156,6 +202,8 @@ export async function createPortalApp({
         );
       }
     }
+    if (op === "createRequest" && emails)
+      void emails.drain().catch(() => app.log.warn("Fila de e-mails pendente."));
     return { data, requestId: request.id };
   });
   app.get("/v1/requests/:id/tasy", { onRequest: signed }, async (request) => {

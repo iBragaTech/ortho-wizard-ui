@@ -150,6 +150,7 @@ export function createPortalOperations(
     syncPatientPhone,
     syncPatientEmail,
     enqueueExport,
+    enqueueNewEmail,
     tasyManaged = false,
   } = {},
 ) {
@@ -488,6 +489,7 @@ export function createPortalOperations(
         );
         if (value.medico) await event(tx, id, user, "Honorários preenchidos");
         if (enqueueExport) await enqueueExport(tx, id, user);
+        if (enqueueNewEmail) await enqueueNewEmail(tx, id, user);
         return id;
       });
     },

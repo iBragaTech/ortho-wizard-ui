@@ -6,6 +6,7 @@ export type RequestStatus =
   | "aguardando_medico"
   | "aguardando_comercial"
   | "concluido"
+  | "inativo"
   | "aguardando_cotacao"
   | "em_aprovacao"
   | "aguardando_pagamento"
@@ -134,6 +135,7 @@ export const statusLabels: Record<RequestStatus, string> = {
   aguardando_medico: "Aguardando médico",
   aguardando_comercial: "Aguardando Comercial",
   concluido: "Concluído",
+  inativo: "Inativo",
   aguardando_cotacao: "Aguardando cotação",
   em_aprovacao: "Em aprovação",
   aguardando_pagamento: "Aguardando comprovante de pagamento",

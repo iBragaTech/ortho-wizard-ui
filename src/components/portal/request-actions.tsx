@@ -28,7 +28,7 @@ export function RequestActions({
 }) {
   const { user } = useSession();
   const cache = useQueryClient();
-  const [action, setAction] = useState<"edit" | "deactivate" | "delete" | null>(null);
+  const [action, setAction] = useState<"edit" | "deactivate" | null>(null);
   const [phone, setPhone] = useState("");
   const [tasyPhone, setTasyPhone] = useState("");
   const [notes, setNotes] = useState("");
@@ -80,7 +80,7 @@ export function RequestActions({
           anterior: previous,
         });
       else
-        await portalCall(action === "delete" ? "deleteRequest" : "deactivateRequest", {
+        await portalCall("deactivateRequest", {
           id: request.id,
           motivo: reason,
         });
@@ -89,9 +89,7 @@ export function RequestActions({
           ? editPhoneOnly
             ? "Telefone atualizado no portal e no Tasy."
             : "Orçamento atualizado."
-          : action === "delete"
-            ? "Orçamento excluído."
-            : "Orçamento inativado.",
+          : "Orçamento inativado.",
       );
       setAction(null);
       await cache.invalidateQueries({ queryKey: ["requests"] });
@@ -107,9 +105,7 @@ export function RequestActions({
       ? editPhoneOnly
         ? "Editar telefone"
         : "Editar orçamento"
-      : action === "delete"
-        ? "Excluir orçamento"
-        : "Inativar orçamento";
+      : "Inativar orçamento";
   return (
     <>
       <div className="inline-flex flex-wrap gap-1">
@@ -117,11 +113,6 @@ export function RequestActions({
         {!phoneOnly && (
           <Button size="sm" variant="outline" onClick={() => open("deactivate")}>
             Inativar
-          </Button>
-        )}
-        {!phoneOnly && user.perfil === "Administrador" && (
-          <Button size="sm" variant="destructive" onClick={() => open("delete")}>
-            Excluir
           </Button>
         )}
       </div>
@@ -141,9 +132,7 @@ export function RequestActions({
                 ? editPhoneOnly
                   ? "Informe o telefone com DDD. Ao salvar, o contato também será atualizado no Tasy."
                   : "Edite o telefone de contato e as observações deste orçamento. O telefone também será atualizado no Tasy."
-                : action === "delete"
-                  ? "O orçamento será removido da lista. Seu histórico será preservado para auditoria."
-                  : "O orçamento sairá da lista de ativos e ficará bloqueado para alterações."}
+                : "O orçamento sairá da lista de ativos e ficará bloqueado para alterações."}
             </DialogDescription>
           </DialogHeader>
           {action === "edit" ? (
@@ -187,7 +176,7 @@ export function RequestActions({
               Cancelar
             </Button>
             <Button
-              variant={action === "delete" ? "destructive" : "default"}
+              variant="default"
               disabled={busy || (action !== "edit" && reason.trim().length < 3)}
               onClick={() => void save()}
             >

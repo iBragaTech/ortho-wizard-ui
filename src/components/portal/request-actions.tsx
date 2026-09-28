@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth/session";
 import { repository } from "@/lib/data/repository";
+import { portalCall } from "@/lib/data/local-api";
 import { getTasyClient } from "@/lib/data/tasy-supabase";
 import { telefonePessoaTasy } from "@/lib/data/tasy";
 import type { ConsultationRequest } from "@/data/mock";

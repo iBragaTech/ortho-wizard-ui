@@ -335,7 +335,7 @@ const supabaseRepository = {
   async deactivateRequest(requestId: string, motivo: string): Promise<void> {
     const { error } = await supabase
       .from("consultation_requests")
-      .update({ status: "cancelado_estabelecimento" })
+      .update({ status: "inativo" })
       .eq("id", requestId);
     if (error) throw new Error(error.message);
     await supabase.from("request_events").insert({

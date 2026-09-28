@@ -130,7 +130,7 @@ export function RequestActions({
                 ? editPhoneOnly
                   ? "Informe o telefone com DDD. Ao salvar, o contato também será atualizado no Tasy."
                   : "Edite o telefone de contato e as observações deste orçamento. O telefone também será atualizado no Tasy."
-                : "O orçamento sairá da lista de ativos e ficará bloqueado para alterações."}
+                : "O orçamento ficará marcado como Inativo e bloqueado para alterações. O histórico permanece no sistema."}
             </DialogDescription>
           </DialogHeader>
           {action === "edit" ? (

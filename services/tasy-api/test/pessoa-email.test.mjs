@@ -1,12 +1,38 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { emailOperation } from "../src/pessoa-email.mjs";
+import { pessoaFisicaOperations } from "../src/pessoa-fisica.mjs";
 import { createExecutor } from "../src/executor.mjs";
 import { createPortalOperations } from "../src/portal/operations.mjs";
 import { openDatabase, migrate } from "../src/portal/database.mjs";
 import { createUser } from "../src/portal/auth.mjs";
 
 const name = "pessoas-fisicas.atualizar-email";
+test("patient lookup by code and CPF includes only the unique residential email", async () => {
+  const ops = pessoaFisicaOperations({ directDmlEnabled: false });
+  for (const operation of ["pessoas-fisicas.consultar", "pessoas-fisicas.buscar-cpf"]) {
+    for (const dsEmail of ["paciente@example.test", null]) {
+      const expected = { cdPessoaFisica: "123", dsEmail };
+      let sql;
+      const result = await ops[operation].execute({
+        connection: {
+          execute: async (statement) => {
+            sql = statement;
+            return { rows: [expected] };
+          },
+        },
+        input: operation.endsWith("buscar-cpf")
+          ? { nrCpf: "52998224725" }
+          : { cdPessoaFisica: "123" },
+        principal: { pessoaFisicaIds: ["123"] },
+      });
+      assert.deepEqual(result, expected);
+      assert.match(sql, /c\.ie_tipo_complemento=1/);
+      assert.match(sql, /CASE WHEN COUNT\(\*\)=1/);
+      assert.match(sql, /c\.cd_pessoa_fisica=pessoa_fisica\.cd_pessoa_fisica/);
+    }
+  }
+});
 const input = { cdPessoaFisica: "123", nrCpf: "52998224725", email: "paciente@example.test" };
 function fixture({
   rows = [{ sequencia: 1, email: "old@example.test" }],

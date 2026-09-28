@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth/session";
-import { localAuthEnabled, portalCall } from "@/lib/data/local-api";
+import { repository } from "@/lib/data/repository";
+import { portalCall } from "@/lib/data/local-api";
 import { getTasyClient } from "@/lib/data/tasy-supabase";
 import { telefonePessoaTasy } from "@/lib/data/tasy";
 import type { ConsultationRequest } from "@/data/mock";
@@ -28,14 +29,14 @@ export function RequestActions({
 }) {
   const { user } = useSession();
   const cache = useQueryClient();
-  const [action, setAction] = useState<"edit" | "deactivate" | "delete" | null>(null);
+  const [action, setAction] = useState<"edit" | "deactivate" | null>(null);
   const [phone, setPhone] = useState("");
   const [tasyPhone, setTasyPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [reason, setReason] = useState("");
   const [previous, setPrevious] = useState({ telefone: "", observacoes: "" });
   const [busy, setBusy] = useState(false);
-  if (!localAuthEnabled || !user) return null;
+  if (!user) return null;
   if (request.tasyGerenciado && !phoneOnly) return null;
   if (phoneOnly) return null;
   const editPhoneOnly = phoneOnly || user.perfil === "Médico";
@@ -80,18 +81,13 @@ export function RequestActions({
           anterior: previous,
         });
       else
-        await portalCall(action === "delete" ? "deleteRequest" : "deactivateRequest", {
-          id: request.id,
-          motivo: reason,
-        });
+        await repository.deactivateRequest(request.id, reason);
       toast.success(
         action === "edit"
           ? editPhoneOnly
             ? "Telefone atualizado no portal e no Tasy."
             : "Orçamento atualizado."
-          : action === "delete"
-            ? "Orçamento excluído."
-            : "Orçamento inativado.",
+          : "Orçamento inativado.",
       );
       setAction(null);
       await cache.invalidateQueries({ queryKey: ["requests"] });
@@ -107,9 +103,7 @@ export function RequestActions({
       ? editPhoneOnly
         ? "Editar telefone"
         : "Editar orçamento"
-      : action === "delete"
-        ? "Excluir orçamento"
-        : "Inativar orçamento";
+      : "Inativar orçamento";
   return (
     <>
       <div className="inline-flex flex-wrap gap-1">
@@ -117,11 +111,6 @@ export function RequestActions({
         {!phoneOnly && (
           <Button size="sm" variant="outline" onClick={() => open("deactivate")}>
             Inativar
-          </Button>
-        )}
-        {!phoneOnly && user.perfil === "Administrador" && (
-          <Button size="sm" variant="destructive" onClick={() => open("delete")}>
-            Excluir
           </Button>
         )}
       </div>
@@ -141,9 +130,7 @@ export function RequestActions({
                 ? editPhoneOnly
                   ? "Informe o telefone com DDD. Ao salvar, o contato também será atualizado no Tasy."
                   : "Edite o telefone de contato e as observações deste orçamento. O telefone também será atualizado no Tasy."
-                : action === "delete"
-                  ? "O orçamento será removido da lista. Seu histórico será preservado para auditoria."
-                  : "O orçamento sairá da lista de ativos e ficará bloqueado para alterações."}
+                : "O orçamento ficará marcado como Inativo e bloqueado para alterações. O histórico permanece no sistema."}
             </DialogDescription>
           </DialogHeader>
           {action === "edit" ? (
@@ -187,7 +174,7 @@ export function RequestActions({
               Cancelar
             </Button>
             <Button
-              variant={action === "delete" ? "destructive" : "default"}
+              variant="default"
               disabled={busy || (action !== "edit" && reason.trim().length < 3)}
               onClick={() => void save()}
             >

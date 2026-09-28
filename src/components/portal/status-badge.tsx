@@ -7,6 +7,7 @@ const styles: Record<RequestStatus, string> = {
   aguardando_medico: "bg-warning-soft text-warning-foreground ring-warning/30",
   aguardando_comercial: "bg-primary-soft text-accent-foreground ring-primary/25",
   concluido: "bg-success-soft text-success ring-success/25",
+  inativo: "bg-muted text-muted-foreground ring-border",
   aguardando_cotacao: "bg-primary-soft text-accent-foreground ring-primary/20",
   em_aprovacao: "bg-warning-soft text-warning-foreground ring-warning/30",
   aguardando_pagamento: "bg-warning-soft text-warning-foreground ring-warning/30",

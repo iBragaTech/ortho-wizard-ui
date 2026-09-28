@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSession } from "@/lib/auth/session";
-import { localAuthEnabled, portalCall } from "@/lib/data/local-api";
+import { repository } from "@/lib/data/repository";
 import { getTasyClient } from "@/lib/data/tasy-supabase";
 import { telefonePessoaTasy } from "@/lib/data/tasy";
 import type { ConsultationRequest } from "@/data/mock";
@@ -35,7 +35,7 @@ export function RequestActions({
   const [reason, setReason] = useState("");
   const [previous, setPrevious] = useState({ telefone: "", observacoes: "" });
   const [busy, setBusy] = useState(false);
-  if (!localAuthEnabled || !user) return null;
+  if (!user) return null;
   if (request.tasyGerenciado && !phoneOnly) return null;
   if (phoneOnly) return null;
   const editPhoneOnly = phoneOnly || user.perfil === "Médico";
@@ -80,10 +80,7 @@ export function RequestActions({
           anterior: previous,
         });
       else
-        await portalCall("deactivateRequest", {
-          id: request.id,
-          motivo: reason,
-        });
+        await repository.deactivateRequest(request.id, reason);
       toast.success(
         action === "edit"
           ? editPhoneOnly

@@ -218,7 +218,16 @@ export function createEmailService({
                 ? "QUOTE_CHANGED"
                 : state === "unknown"
                   ? "DELIVERY_UNKNOWN"
-                  : "EMAIL_FAILED";
+                  : [
+                        "SMTP_CONFIGURATION",
+                        "SMTP_CERTIFICATE",
+                        "SMTP_AUTHENTICATION",
+                        "SMTP_CONNECTION",
+                        "SMTP_REJECTED",
+                        "SMTP_DELIVERY",
+                      ].includes(error.code)
+                    ? error.code
+                    : "EMAIL_FAILED";
             await db.query("UPDATE portal.email_outbox SET state=$2,error_code=$3 WHERE id=$1", [
               row.id,
               state,

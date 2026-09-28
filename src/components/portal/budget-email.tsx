@@ -125,6 +125,17 @@ export function BudgetEmail({ request }: { request: ConsultationRequest }) {
           {entry.error_code === "QUOTE_CHANGED" && (
             <p>O orçamento mudou. Atualize a página e solicite um novo envio.</p>
           )}
+          {entry.error_code?.startsWith("SMTP_") && (
+            <p role="alert">
+              {entry.error_code === "SMTP_CERTIFICATE"
+                ? "Não foi possível validar o certificado do servidor de e-mail. Contate o administrador."
+                : entry.error_code === "SMTP_AUTHENTICATION"
+                  ? "O servidor de e-mail recusou a autenticação. Contate o administrador."
+                  : entry.error_code === "SMTP_CONFIGURATION"
+                    ? "A configuração de e-mail está indisponível. Contate o administrador."
+                    : "Não foi possível concluir o envio pelo servidor de e-mail. Tente novamente ou contate o administrador."}
+            </p>
+          )}
           {entry.state === "failed" &&
             entry.error_code !== "QUOTE_CHANGED" &&
             (entry.kind === "new_request" ? user?.perfil === "Administrador" : canSend) && (

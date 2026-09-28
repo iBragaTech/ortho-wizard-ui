@@ -11,6 +11,7 @@ export class MailFailure extends Error {
 export function createHospitalMailer({
   pool,
   from = "tasy@aebmg.org.br",
+  tlsServername,
   createTransport = nodemailer.createTransport,
 }) {
   return async (message) => {
@@ -48,7 +49,7 @@ export function createHospitalMailer({
         secure: port === 465,
         requireTLS: true,
         auth: { user: credentials.user.trim(), pass: credentials.pass },
-        tls: { rejectUnauthorized: true },
+        tls: { rejectUnauthorized: true, ...(tlsServername ? { servername: tlsServername } : {}) },
         connectionTimeout: 15000,
         greetingTimeout: 15000,
         socketTimeout: 30000,
@@ -67,9 +68,23 @@ export function createHospitalMailer({
     }
     try {
       await transport.verify();
-    } catch {
+    } catch (error) {
       transport.close();
-      throw new MailFailure("SMTP_CONNECTION");
+      const certificateError =
+        [
+          "ERR_TLS_CERT_ALTNAME_INVALID",
+          "CERT_HAS_EXPIRED",
+          "DEPTH_ZERO_SELF_SIGNED_CERT",
+          "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+          "SELF_SIGNED_CERT_IN_CHAIN",
+        ].includes(error.code) || /certificate|cert's altnames/i.test(error.message || "");
+      throw new MailFailure(
+        error.code === "EAUTH"
+          ? "SMTP_AUTHENTICATION"
+          : certificateError
+            ? "SMTP_CERTIFICATE"
+            : "SMTP_CONNECTION",
+      );
     }
     try {
       const result = await transport.sendMail({

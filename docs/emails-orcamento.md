@@ -11,10 +11,13 @@ Em `services/tasy-api/.env.portal`:
 ```dotenv
 PORTAL_EMAIL_ENABLED=true
 PORTAL_EMAIL_FROM=tasy@aebmg.org.br
+PORTAL_EMAIL_TLS_SERVERNAME=webmail.aebmg.org.br
 PORTAL_NEW_BUDGET_EMAIL_TO=amanda.rafaela@he.org.br
 ```
 
 O SMTP é obtido da conexão Oracle configurada para a API, em `TASY.AEBMG_SRV_INFO`, `TIPO_SERV=1`, selecionando exclusivamente a conta cujo `DS_MAIL_ENV` descriptografado corresponde ao remetente. Os campos são descriptografados pela função `AEBMG_DECRYPTING_DATA`, conforme o Python fornecido. Não são copiadas senhas para o frontend ou logs. Usa TLS implícito na porta 465 e STARTTLS obrigatório nas demais portas, com validação do certificado.
+
+Na rede atual, `smtp.aebmg.org.br` e `webmail.aebmg.org.br` resolvem para o mesmo servidor, mas o certificado identifica `webmail.aebmg.org.br`. Por isso `PORTAL_EMAIL_TLS_SERVERNAME` define esse nome para SNI e validação de identidade, mantendo `rejectUnauthorized=true`. Não desative a validação TLS. A conexão e a autenticação foram verificadas sem enviar mensagens. Falhas novas preservam um código seguro de configuração, certificado, autenticação ou conexão no painel.
 
 Instale as dependências com `npm ci` na pasta da API. Reinicie a API no terminal com `npm run portal:start` para carregar a configuração, o código e a migração 8. A migração cria apenas `portal.email_outbox` na base local do portal. Esta funcionalidade não cria objetos no Oracle/Tasy.
 

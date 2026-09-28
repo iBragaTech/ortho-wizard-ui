@@ -98,6 +98,7 @@ try {
         ? createHospitalMailer({
             pool: oracle,
             from: process.env.PORTAL_EMAIL_FROM || "tasy@aebmg.org.br",
+            tlsServername: process.env.PORTAL_EMAIL_TLS_SERVERNAME?.trim(),
           })
         : undefined,
     newBudgetRecipient: process.env.PORTAL_NEW_BUDGET_EMAIL_TO,

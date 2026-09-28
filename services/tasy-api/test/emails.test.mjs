@@ -172,11 +172,12 @@ test("SMTP uses selected Oracle account, TLS and sanitized failure states", asyn
   };
   const send = createHospitalMailer({
     pool,
+    tlsServername: "webmail.example.test",
     createTransport: (opts) => {
       config = opts;
       return {
         verify: async () => {
-          if (failVerify) throw Error("secret");
+          if (failVerify) throw failVerify === true ? Error("secret") : failVerify;
         },
         sendMail: async () => {
           if (failSend) throw failSend;
@@ -191,12 +192,22 @@ test("SMTP uses selected Oracle account, TLS and sanitized failure states", asyn
   await send({ to: "test@example.test" });
   assert.equal(config.requireTLS, true);
   assert.equal(config.tls.rejectUnauthorized, true);
+  assert.equal(config.tls.servername, "webmail.example.test");
   assert.equal(config.disableUrlAccess, true);
   assert.equal(closed, 1);
   failVerify = true;
   await assert.rejects(
     send({}),
     (e) => e.code === "SMTP_CONNECTION" && !e.uncertain && !e.message.includes("secret"),
+  );
+  failVerify = Object.assign(Error("Hostname/IP does not match certificate's altnames"), {
+    code: "ESOCKET",
+  });
+  await assert.rejects(send({}), (e) => e.code === "SMTP_CERTIFICATE" && !e.uncertain);
+  failVerify = Object.assign(Error("secret authentication error"), { code: "EAUTH" });
+  await assert.rejects(
+    send({}),
+    (e) => e.code === "SMTP_AUTHENTICATION" && !e.message.includes("secret"),
   );
   failVerify = false;
   failSend = Error("lost DATA confirmation");

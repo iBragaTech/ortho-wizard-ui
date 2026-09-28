@@ -58,8 +58,6 @@ const empty = {
   anatomo: "",
   // Campos do Médico
   honorario: "",
-  diaria: "",
-  cti: "",
   obsMedico: "",
 };
 
@@ -258,8 +256,8 @@ export function NewRequestDialog({
           ? {
               medico: {
                 honorariosMedicos: toNumber(form.honorario),
-                diaria: localAuthEnabled ? null : toNumber(form.diaria),
-                cti: localAuthEnabled ? null : toNumber(form.cti),
+                diaria: null,
+                cti: null,
                 opme: opmeTexto,
                 anatomoPatologico: form.anatomo,
                 reservaSangue: sangue.join("; "),
@@ -510,28 +508,6 @@ export function NewRequestDialog({
                       placeholder="0,00"
                       value={form.honorario}
                       onChange={(e) => set("honorario")(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="diaria">Diária (R$)</Label>
-                    <Input
-                      id="diaria"
-                      disabled={localAuthEnabled}
-                      inputMode="decimal"
-                      placeholder="0,00"
-                      value={form.diaria}
-                      onChange={(e) => set("diaria")(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="cti">CTI (R$)</Label>
-                    <Input
-                      id="cti"
-                      disabled={localAuthEnabled}
-                      inputMode="decimal"
-                      placeholder="0,00"
-                      value={form.cti}
-                      onChange={(e) => set("cti")(e.target.value)}
                     />
                   </div>
                 </>

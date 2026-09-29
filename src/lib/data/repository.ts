@@ -330,6 +330,22 @@ const supabaseRepository = {
     });
   },
 
+  // Inativa o orçamento: sai da lista de ativos e fica bloqueado para alterações.
+  // Não há exclusão — o registro é mantido no histórico.
+  async deactivateRequest(requestId: string, motivo: string): Promise<void> {
+    const { error } = await supabase
+      .from("consultation_requests")
+      .update({ status: "inativo" })
+      .eq("id", requestId);
+    if (error) throw new Error(error.message);
+    await supabase.from("request_events").insert({
+      request_id: requestId,
+      titulo: "Orçamento inativado",
+      descricao: motivo,
+      ordem: 9,
+    });
+  },
+
   async saveHospitalValue(requestId: string, valor: number | null, obs: string): Promise<void> {
     const { error } = await supabase
       .from("consultation_requests")

@@ -139,7 +139,7 @@ export async function buildBudgetMail({ kind, snapshot, recipient, id, portalOri
     });
   return {
     to: recipient,
-    subject: `${title} • ${internal ? ""}${numero}`,
+    subject: `${title} • ${numero}`,
     messageId: `<portal-${id}@aebmg.org.br>`,
     html,
     text: `${title}\n\n${intro}\n\n${entries.map(([k, v]) => `${k}: ${v || "Não informado"}`).join("\n")}${link ? `\n\nConsultar: ${link}` : "\n\nOrçamento em PDF anexo."}`,

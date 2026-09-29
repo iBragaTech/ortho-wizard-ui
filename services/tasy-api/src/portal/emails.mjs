@@ -164,7 +164,11 @@ export function createEmailService({
       (running ??= (async () => {
         const pending = (
           await db.query(
-            "SELECT id FROM portal.email_outbox WHERE state='queued' ORDER BY created_at LIMIT 20",
+            `SELECT m.id,e.tasy_id FROM portal.email_outbox m
+             LEFT JOIN portal.tasy_exports e ON e.request_id=m.request_id
+             WHERE m.state='queued' AND (m.kind <> 'new_request' OR
+               (e.state='confirmed' AND e.tasy_id ~ '^[0-9]+$'))
+             ORDER BY m.created_at LIMIT 20`,
           )
         ).rows;
         for (const candidate of pending) {
@@ -177,6 +181,13 @@ export function createEmailService({
           if (!row) continue;
           let delivered = false;
           try {
+            if (row.kind === "new_request") {
+              row.snapshot = { ...row.snapshot, tasyId: candidate.tasy_id };
+              await db.query("UPDATE portal.email_outbox SET snapshot=$2::jsonb WHERE id=$1", [
+                row.id,
+                JSON.stringify(row.snapshot),
+              ]);
+            }
             if (row.kind === "patient_quote") {
               if (refreshQuote) await refreshQuote(row.request_id);
               const current = (

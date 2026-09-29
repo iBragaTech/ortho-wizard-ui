@@ -77,9 +77,26 @@ test("durable email queue: ownership, deduplication, override, freshness and unc
     await service.enqueueNew(tx, id, doctor);
   });
   assert.equal((await service.status({ id }, doctor)).length, 1);
+  await service.drain();
+  assert.equal(sent.length, 0);
+  assert.equal((await service.status({ id }, doctor))[0].state, "queued");
+  await db.query(
+    `INSERT INTO portal.tasy_exports(request_id,actor_id,tasy_username,snapshot,state,tasy_id)
+    VALUES ($1,$2,'doctor','{}','unknown','98765')`,
+    [id, doctor.id],
+  );
+  await service.drain();
+  assert.equal(sent.length, 0);
+  assert.equal((await service.status({ id }, doctor))[0].state, "queued");
+  await db.query("UPDATE portal.tasy_exports SET state='confirmed' WHERE request_id=$1", [id]);
   failure = new MailFailure("SMTP_CONNECTION");
   await service.drain();
   assert.equal((await service.status({ id }, doctor))[0].state, "failed");
+  assert.equal(
+    (await db.query("SELECT snapshot FROM portal.email_outbox WHERE request_id=$1", [id])).rows[0]
+      .snapshot.tasyId,
+    "98765",
+  );
   assert.equal((await db.query("SELECT count(*)::int AS n FROM portal.requests")).rows[0].n, 1);
   await assert.rejects(
     service.queuePatient({ id, email: "override@example.test", hash: "version1" }, other),
@@ -223,7 +240,18 @@ test("branded mail escapes patient values and attaches a generated PDF only for 
     id: randomUUID(),
     portalOrigin: "http://localhost:5173",
   };
-  const notification = await buildBudgetMail({ ...args, kind: "new_request" });
+  await assert.rejects(
+    buildBudgetMail({ ...args, kind: "new_request" }),
+    /Tasy ainda não confirmado/,
+  );
+  const notification = await buildBudgetMail({
+    ...args,
+    snapshot: { ...args.snapshot, tasyId: "98765" },
+    kind: "new_request",
+  });
+  assert.match(notification.subject, /Tasy 98765/);
+  assert.match(notification.text, /Orçamento Tasy: 98765/);
+  assert.ok(!notification.html.includes("TEST-1"));
   assert.ok(notification.html.includes("&lt;script&gt;"));
   assert.ok(!notification.html.includes("<script>"));
   assert.ok(notification.html.includes("#004876"));

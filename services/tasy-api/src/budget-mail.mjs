@@ -94,9 +94,12 @@ export async function buildBudgetMail({ kind, snapshot, recipient, id, portalOri
   const logo = await readFile(logoUrl);
   const { data, numero } = snapshot;
   const internal = kind === "new_request";
+  if (internal && !/^\d+$/.test(String(snapshot.tasyId ?? "")))
+    throw new Error("Número do orçamento Tasy ainda não confirmado.");
+  const displayNumber = internal ? snapshot.tasyId : numero;
   const entries = internal
     ? [
-        ["Orçamento", numero],
+        ["Orçamento Tasy", displayNumber],
         ["Paciente", data.paciente.nome],
         ["CPF", data.paciente.cpf],
         ["Nascimento", data.paciente.nascimento],
@@ -136,7 +139,7 @@ export async function buildBudgetMail({ kind, snapshot, recipient, id, portalOri
     });
   return {
     to: recipient,
-    subject: `${title} • ${numero}`,
+    subject: `${title} • ${internal ? "Tasy " : ""}${displayNumber}`,
     messageId: `<portal-${id}@aebmg.org.br>`,
     html,
     text: `${title}\n\n${intro}\n\n${entries.map(([k, v]) => `${k}: ${v || "Não informado"}`).join("\n")}${link ? `\n\nConsultar: ${link}` : "\n\nOrçamento em PDF anexo."}`,

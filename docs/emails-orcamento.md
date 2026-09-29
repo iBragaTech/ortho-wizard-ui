@@ -1,5 +1,7 @@
 # E-mails do orçamento
 
+A notificação de Custos usa **Orçamento Tasy** no corpo e o número Tasy no assunto. Esse número é `ORCAMENTO_PACIENTE.NR_SEQUENCIA_ORCAMENTO`, retornado pela integração e salvo em `portal.tasy_exports.tasy_id`. A mensagem permanece na fila até a exportação estar confirmada e possuir número; uma exportação pendente ou sem confirmação não dispara a notificação. Mensagens já enviadas não são reenviadas com a mudança. O link continua abrindo o orçamento correspondente no portal.
+
 Ao criar um orçamento, a API grava uma notificação na fila local, na mesma transação da solicitação. O destinatário é `PORTAL_NEW_BUDGET_EMAIL_TO`, inicialmente `amanda.rafaela@he.org.br`. A mensagem contém nome, CPF, nascimento, telefone, e-mail, médico e identificação do orçamento. Não há envio retroativo dos orçamentos anteriores à ativação.
 
 Em **Em aprovação**, o médico responsável ou administrador pode clicar em **Enviar orçamento ao paciente**. A caixa já mostra o e-mail registrado no orçamento e permite alterá-lo somente para esse envio. O PDF anexo usa os itens e o total retornados pelo Tasy; não recalcula preços nem soma novamente os honorários informativos. Antes de enfileirar e de enviar, a API consulta novamente o Tasy. Se a versão ou situação mudar, o envio é bloqueado e deve ser solicitado de novo com os dados atualizados.

@@ -16,10 +16,10 @@ export const tempoMedicoOperation = {
       throw new ApiError(403, "INVALID_TASY_LINK", "Usuário Tasy ativo não encontrado.");
     const cdMedico = users.rows[0].cdMedico;
     if (!cdMedico) return { minutos: null, motivo: "sem_medico" };
-    // Portal rule: sum the internal-procedure averages for this doctor/procedure.
+    // Portal rule: arithmetic mean of the available internal-procedure averages.
     // Equal averages from different records must each contribute; no origin filter.
     const result = await connection.execute(
-      `SELECT SUM(qt_media_medico) AS "minutos" FROM TASY.tempo_proced_medico
+      `SELECT AVG(qt_media_medico) AS "minutos" FROM TASY.tempo_proced_medico
        WHERE cd_medico=:cdMedico AND cd_procedimento=:cdProcedimento
          AND qt_media_medico>0`,
       { cdMedico, cdProcedimento: input.cdProcedimento },

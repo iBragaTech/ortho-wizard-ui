@@ -99,7 +99,7 @@ export async function buildBudgetMail({ kind, snapshot, recipient, id, portalOri
   const displayNumber = internal ? snapshot.tasyId : numero;
   const entries = internal
     ? [
-        ["Orçamento Tasy", displayNumber],
+        ["Orçamento", displayNumber],
         ["Paciente", data.paciente.nome],
         ["CPF", data.paciente.cpf],
         ["Nascimento", data.paciente.nascimento],
@@ -139,7 +139,7 @@ export async function buildBudgetMail({ kind, snapshot, recipient, id, portalOri
     });
   return {
     to: recipient,
-    subject: `${title} • ${internal ? "Tasy " : ""}${displayNumber}`,
+    subject: `${title} • ${internal ? ""}${numero}`,
     messageId: `<portal-${id}@aebmg.org.br>`,
     html,
     text: `${title}\n\n${intro}\n\n${entries.map(([k, v]) => `${k}: ${v || "Não informado"}`).join("\n")}${link ? `\n\nConsultar: ${link}` : "\n\nOrçamento em PDF anexo."}`,

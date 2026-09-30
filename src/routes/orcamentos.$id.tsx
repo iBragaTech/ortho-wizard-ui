@@ -148,9 +148,21 @@ function RequestDetail() {
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Observações
                 </p>
-                <p className="mt-1 whitespace-pre-line text-sm text-foreground">
-                  {request.observacoes || "Sem observações registradas."}
-                </p>
+                <div className="mt-1 whitespace-pre-line text-sm text-foreground">
+                  {request.observacoes
+                    ? request.observacoes.split("\n").map((line, index) => {
+                        const colon = line.indexOf(":");
+                        if (colon <= 0) return <span key={index}>{line + "\n"}</span>;
+                        return (
+                          <span key={index}>
+                            <strong>{line.slice(0, colon)}:</strong>
+                            {line.slice(colon + 1)}
+                            {"\n"}
+                          </span>
+                        );
+                      })
+                    : "Sem observações registradas."}
+                </div>
               </div>
             </CardContent>
           </Card>

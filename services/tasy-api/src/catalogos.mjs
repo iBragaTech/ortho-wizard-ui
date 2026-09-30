@@ -76,7 +76,7 @@ export const catalogoOperations = {
         JOIN TASY.grupo_material d ON d.cd_grupo_material = c.cd_grupo_material
         WHERE a.ie_situacao = 'A' AND b.ie_situacao = 'A'
           AND c.ie_situacao = 'A' AND d.ie_situacao = 'A'
-          AND d.cd_grupo_material IN (1,4) AND a.ds_material IS NOT NULL
+          AND d.cd_grupo_material IN (1,4,58) AND a.ds_material IS NOT NULL
           AND (:busca IS NULL OR INSTR(UPPER(a.ds_material), UPPER(:busca)) > 0
             OR TRIM(TO_CHAR(a.cd_material)) LIKE TRIM(:busca) || '%')
         ORDER BY a.ds_material, a.cd_material OFFSET :offset ROWS FETCH NEXT 101 ROWS ONLY`,

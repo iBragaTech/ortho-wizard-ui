@@ -107,7 +107,7 @@ export function createLinkResolver(db, validate) {
     )
       operations.push("orcamentos.enviar");
     if (
-      ["Médico", "Administrador", "Comercial"].includes(user.perfil) &&
+      ["Médico", "Administrador", "Comercial", "Custos"].includes(user.perfil) &&
       operations.includes("pessoas-fisicas.consultar") &&
       !operations.includes("pessoas-fisicas.atualizar-telefone")
     )

@@ -130,6 +130,16 @@ export function NewRequestDialog({
     }
 
     if (
+      !isMedico &&
+      [form.acomodacao ? form.diariaEnf : "", temCti ? form.diariaCti : ""].some(
+        (value) => value !== "" && (!Number.isInteger(Number(value)) || Number(value) < 1),
+      )
+    ) {
+      toast.error("Informe a quantidade de diárias como número inteiro maior que zero.");
+      return;
+    }
+
+    if (
       localAuthEnabled &&
       (!catalogContext.cdConvenio ||
         !catalogContext.cdCategoria ||
@@ -191,7 +201,7 @@ export function NewRequestDialog({
           adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,
           form.acomodacao &&
             `Acomodação: ${form.acomodacao === "enfermaria" ? "Enfermaria" : "Apartamento"}`,
-          form.diariaEnf && `Diária Enf/Ap: ${form.diariaEnf}`,
+          form.acomodacao && form.diariaEnf && `Diária Enf/Ap: ${form.diariaEnf}`,
           temCti && form.diariaCti && `Diária CTI: ${form.diariaCti}`,
           opmeTexto && `OPME: ${opmeTexto}`,
           materiaisTexto && `Materiais: ${materiaisTexto}`,
@@ -431,12 +441,10 @@ export function NewRequestDialog({
                   maxLength={40}
                   placeholder="(00) 00000-0000"
                   value={form.telefone}
-                  disabled={
-                    !(patientFieldsEditable || (localAuthEnabled && isMedico && patientCode))
-                  }
+                  disabled={!(patientFieldsEditable || (localAuthEnabled && patientCode))}
                   onChange={(e) => set("telefone")(e.target.value)}
                 />
-                {localAuthEnabled && isMedico && patientCode && (
+                {localAuthEnabled && patientCode && (
                   <p className="text-xs text-muted-foreground">
                     A alteração será salva no Tasy ao enviar a solicitação. Informe o DDD e o
                     número.
@@ -536,7 +544,10 @@ export function NewRequestDialog({
                     <Label htmlFor="diaria-enf">Diária Enf / Ap</Label>
                     <Input
                       id="diaria-enf"
-                      disabled={localAuthEnabled}
+                      disabled={!form.acomodacao}
+                      type="number"
+                      min={1}
+                      step={1}
                       placeholder="Quantidade de diárias"
                       value={form.diariaEnf}
                       onChange={(e) => set("diariaEnf")(e.target.value)}
@@ -567,7 +578,9 @@ export function NewRequestDialog({
                       <Label htmlFor="diaria-cti">Diária CTI</Label>
                       <Input
                         id="diaria-cti"
-                        disabled={localAuthEnabled}
+                        type="number"
+                        min={1}
+                        step={1}
                         placeholder="Quantidade de diárias"
                         value={form.diariaCti}
                         onChange={(e) => set("diariaCti")(e.target.value)}

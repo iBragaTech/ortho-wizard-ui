@@ -38,7 +38,7 @@ export function RequestActions({
   const [busy, setBusy] = useState(false);
   if (!user) return null;
   if (request.tasyGerenciado && !phoneOnly) return null;
-  if (phoneOnly) return null;
+  if (phoneOnly && !request.tasy?.cdPessoaFisica) return null;
   const editPhoneOnly = phoneOnly || user.perfil === "Médico";
   async function open(next: typeof action) {
     setPhone(request.paciente.telefone);
@@ -80,8 +80,7 @@ export function RequestActions({
           observacoes: notes,
           anterior: previous,
         });
-      else
-        await repository.deactivateRequest(request.id, reason);
+      else await repository.deactivateRequest(request.id, reason);
       toast.success(
         action === "edit"
           ? editPhoneOnly
@@ -107,7 +106,11 @@ export function RequestActions({
   return (
     <>
       <div className="inline-flex flex-wrap gap-1">
-        {/* Orçamento salvo não pode mais ser editado. */}
+        {phoneOnly && (
+          <Button size="sm" variant="outline" onClick={() => open("edit")}>
+            Editar telefone
+          </Button>
+        )}
         {!phoneOnly && (
           <Button size="sm" variant="outline" onClick={() => open("deactivate")}>
             Inativar

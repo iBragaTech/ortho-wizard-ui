@@ -190,7 +190,7 @@ export function createPortalOperations(
       return result.rows[0].id;
     },
     updatePatientPhone: async (input, user) => {
-      allowed(user, ["Médico", "Administrador", "Comercial"]);
+      allowed(user, ["Médico", "Administrador", "Comercial", "Custos"]);
       const value = parse(
         z
           .object({

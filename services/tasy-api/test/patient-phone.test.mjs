@@ -187,6 +187,35 @@ test("portal phone edit checks ownership, preserves all other fields and does no
   assert.ok(resolved.operations.includes(name));
   assert.equal(resolved.canUpdatePessoaFisica, false);
 
+  for (const perfil of ["Administrador", "Comercial", "Custos"]) {
+    const actor = (
+      await db.query(
+        "INSERT INTO portal.users(nome,email,perfil,password_hash) VALUES ($1,$2,$1,'unused') RETURNING id,perfil",
+        [perfil, `${perfil.toLowerCase()}@test.com`],
+      )
+    ).rows[0];
+    await db.transaction((tx) =>
+      storeLink(
+        tx,
+        actor.id,
+        {
+          ...principal,
+          tasyUsername: perfil.toLowerCase(),
+          enabled: true,
+          operations: ["pessoas-fisicas.consultar"],
+        },
+        doctor.id,
+      ),
+    );
+    assert.ok((await createLinkResolver(db)(actor)).operations.includes(name));
+    await run("updatePatientPhone", { ...body, anterior: input.telefone }, actor);
+    assert.equal(calls.at(-1).user.id, actor.id);
+    assert.deepEqual(
+      (await db.query("SELECT data FROM portal.requests WHERE id=$1", [id])).rows[0].data,
+      { ...data, paciente: { ...data.paciente, telefone: input.telefone } },
+    );
+  }
+
   const newRequest = {
     nome: "Patient",
     cpf: input.nrCpf,

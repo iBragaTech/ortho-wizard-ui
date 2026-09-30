@@ -106,7 +106,7 @@ export async function buildBudgetMail({ kind, snapshot, recipient, id, portalOri
         ["Telefone", data.paciente.telefone],
         ["E-mail", data.paciente.email],
         ["Médico", data.medico],
-        ["Especialidade", data.especialidade],
+        ["Procedimento", data.especialidade],
       ]
     : [
         ["Orçamento", numero],

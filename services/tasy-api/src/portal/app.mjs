@@ -167,9 +167,10 @@ export async function createPortalApp({
     await auth.logout(request.portalUser);
     return { data: null, requestId: request.id };
   });
-  app.post("/v1/portal/:operation", { onRequest: signed }, async (request) => {
+  app.post("/v1/portal/:operation", { onRequest: signed }, async (request, reply) => {
     const op = request.params.operation;
     if (op === "getPatientQuotePdf") {
+      reply.header("Cache-Control", "no-store");
       const data = await patientPdf(request.body, request.portalUser);
       return { data, requestId: request.id };
     }

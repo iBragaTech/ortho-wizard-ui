@@ -150,7 +150,26 @@ function RequestDetail() {
                   Observações
                 </p>
                 <p className="mt-1 whitespace-pre-line text-sm text-foreground">
-                  {request.observacoes || "Sem observações registradas."}
+                  {request.observacoes
+                    ? request.observacoes.split(/\r?\n/).map((line, index) => {
+                        const separator = line.indexOf(":");
+                        return (
+                          <span key={index}>
+                            {index > 0 && "\n"}
+                            {separator > 0 ? (
+                              <>
+                                <strong className="font-semibold">
+                                  {line.slice(0, separator + 1)}
+                                </strong>{" "}
+                                {line.slice(separator + 1).trimStart()}
+                              </>
+                            ) : (
+                              line
+                            )}
+                          </span>
+                        );
+                      })
+                    : "Sem observações registradas."}
                 </p>
               </div>
             </CardContent>

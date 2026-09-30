@@ -8,6 +8,7 @@ import { createExportService } from "./export.mjs";
 import { randomUUID } from "node:crypto";
 import { createReturnSync } from "./tasy-return.mjs";
 import { createEmailService } from "./emails.mjs";
+import { createPatientPdf } from "./quote-pdf.mjs";
 
 export async function createPortalApp({
   db,
@@ -57,6 +58,7 @@ export async function createPortalApp({
   const returnSync = budgetReader
     ? createReturnSync({ db, read: budgetReader, approvalRule })
     : null;
+  const patientPdf = createPatientPdf({ db, refreshQuote: returnSync?.refresh });
   const emails = emailSender
     ? createEmailService({
         db,
@@ -167,6 +169,10 @@ export async function createPortalApp({
   });
   app.post("/v1/portal/:operation", { onRequest: signed }, async (request) => {
     const op = request.params.operation;
+    if (op === "getPatientQuotePdf") {
+      const data = await patientPdf(request.body, request.portalUser);
+      return { data, requestId: request.id };
+    }
     if (["getRequestEmails", "sendPatientQuote", "retryRequestEmail"].includes(op)) {
       if (!emails) {
         if (op === "getRequestEmails")

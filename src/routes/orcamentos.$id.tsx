@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/portal/page-header";
 import { PatientInfoCard, InfoField } from "@/components/portal/patient-info-card";
 import { TasyBudgetExport } from "@/components/portal/tasy-budget-export";
 import { BudgetEmail } from "@/components/portal/budget-email";
+import { BudgetWhatsApp } from "@/components/portal/budget-whatsapp";
 import { RequestActions } from "@/components/portal/request-actions";
 import { FinancialSummary } from "@/components/portal/financial-summary";
 import { Timeline } from "@/components/portal/timeline";
@@ -355,6 +356,7 @@ function RequestDetail() {
         <div className="space-y-6">
           <TasyBudgetExport id={id} managed={request.tasyGerenciado} />
           <BudgetEmail request={request} />
+          <BudgetWhatsApp key={request.id} request={request} />
           <FinancialSummary
             honorarios={medicalFeesTotal(request)}
             hospitalar={request.valorHospitalar}

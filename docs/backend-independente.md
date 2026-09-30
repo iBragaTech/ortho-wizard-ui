@@ -59,6 +59,24 @@ O novo esquema `portal` é criado por `src/portal/schema.sql`. Ele mantém usuá
 
 ## Tasy
 
+### Modelos favoritos do médico
+
+Em **Novo orçamento**, médicos podem usar **Meus modelos favoritos**. Após selecionar
+a categoria do convênio e montar os itens, **Salvar como modelo** (estrela) grava um
+nome, o procedimento principal, os adicionais, materiais e OPME com suas quantidades.
+O modelo não inclui dados do paciente, observações clínicas ou preços.
+
+Para reutilizar, selecione o paciente e a mesma categoria do convênio, escolha o
+favorito e clique em **Carregar modelo**. Isso substitui os procedimentos, materiais
+e OPME do formulário; os itens podem ser revisados antes de enviar. Os preços seguem
+a consulta normal ao Tasy. Salvar um modelo não cria nem envia um orçamento.
+
+Os modelos persistem em `portal.budget_templates` (migração 9), vinculados ao usuário
+autenticado. As operações `listBudgetTemplates`, `saveBudgetTemplate` e
+`deleteBudgetTemplate` são exclusivas do perfil Médico e sempre restringem o acesso
+ao proprietário. Nomes são únicos por médico, sem distinção entre maiúsculas e
+minúsculas. A exclusão de um favorito não altera orçamentos existentes.
+
 ### Inclusão automática de solicitações
 
 Com `TASY_BUDGET_EXPORT_ENABLED=true` e gravações habilitadas, a criação inclui

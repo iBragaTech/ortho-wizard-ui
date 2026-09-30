@@ -1,4 +1,5 @@
 import { custosOperations, requireCustos, isCustos, visibleRequest } from "./custos.mjs";
+import { budgetTemplateOperations } from "./budget-templates.mjs";
 import { linkFields, principalForLink, storeLink } from "./tasy-users.mjs";
 import { z } from "zod";
 import { ApiError } from "../errors.mjs";
@@ -155,6 +156,7 @@ export function createPortalOperations(
   } = {},
 ) {
   const handlers = {
+    ...budgetTemplateOperations(db),
     ...custosOperations({ db, getAccessible, event, calculateQuote, auditIdentity }),
     listSurgicalAppointments: async (_input, user) => {
       allowed(user, ["Administrador", "Médico"]);

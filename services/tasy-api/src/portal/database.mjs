@@ -146,9 +146,19 @@ export async function migrate(db) {
         'cancelado_paciente','cancelado_estabelecimento'));`);
       await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (7)");
     }
-    if (!(await tx.query("SELECT version FROM portal.schema_migrations WHERE version=8")).rows.length) {
+    if (
+      !(await tx.query("SELECT version FROM portal.schema_migrations WHERE version=8")).rows.length
+    ) {
       await tx.exec(await readFile(new URL("./email-schema.sql", import.meta.url), "utf8"));
       await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (8)");
+    }
+    if (
+      !(await tx.query("SELECT version FROM portal.schema_migrations WHERE version=9")).rows.length
+    ) {
+      await tx.exec(
+        await readFile(new URL("./budget-templates-schema.sql", import.meta.url), "utf8"),
+      );
+      await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (9)");
     }
   });
 }

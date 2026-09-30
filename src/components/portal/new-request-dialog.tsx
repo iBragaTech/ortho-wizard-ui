@@ -1,4 +1,5 @@
 import { useSession } from "@/lib/auth/session";
+import { BudgetTemplatePicker } from "./budget-template-picker";
 import { RequiredMark } from "./item-quantity";
 import { localAuthEnabled } from "@/lib/data/local-api";
 import { useState, type ReactNode } from "react";
@@ -473,6 +474,20 @@ export function NewRequestDialog({
                     setCatalogContext({ cdConvenio, cdCategoria });
                     setProcedimento([]);
                     setAdicionais([]);
+                  }}
+                />
+              )}
+              {open && localAuthEnabled && user?.perfil === "Médico" && (
+                <BudgetTemplatePicker
+                  key={user.id}
+                  userId={user.id}
+                  value={{ ...catalogContext, procedimento, adicionais, materiais, opme }}
+                  onLoad={(model) => {
+                    setProcedimento(model.procedimento);
+                    setAdicionais(model.adicionais);
+                    setMateriais(model.materiais);
+                    setOpme(model.opme);
+                    blockTime.reset();
                   }}
                 />
               )}

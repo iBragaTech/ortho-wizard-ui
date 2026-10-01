@@ -38,7 +38,7 @@ export const Route = createFileRoute("/")({
 
 const legacyFlow = [
   { label: "Solicitação", icon: ClipboardList, desc: "Registro inicial" },
-  { label: "Médico", icon: Stethoscope, desc: "Honorários médicos" },
+  { label: "Médico", icon: Stethoscope, desc: "Solicitação do orçamento" },
   { label: "Comercial", icon: Briefcase, desc: "Valores hospitalares" },
   { label: "Orçamento", icon: FileText, desc: "Valor total ao paciente" },
 ];
@@ -100,7 +100,7 @@ function Dashboard() {
           value={metrics.aguardandoMedico}
           icon={Stethoscope}
           tone="warning"
-          hint={managed ? "PDF disponível ao médico" : "Honorários pendentes"}
+          hint={managed ? "PDF disponível ao médico" : "Acompanhamento da solicitação"}
         />
         <MetricCard
           label={managed ? "Comprovante pendente" : "Aguardando Comercial"}

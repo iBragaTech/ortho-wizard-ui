@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { RequestActions } from "./request-actions";
-import { DoctorFeeDialog } from "./doctor-fee-dialog";
 import { ArrowRight } from "lucide-react";
 import {
   Table,
@@ -36,7 +35,6 @@ export function RequestTable({
         {requests.map((r) => (
           <div key={r.id} className="space-y-2">
             <RequestCard request={r} />
-            {isMedico && <DoctorFeeDialog request={r} />}
             {manage && <RequestActions request={r} />}
           </div>
         ))}
@@ -76,7 +74,6 @@ export function RequestTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="inline-flex flex-wrap items-center justify-end gap-1">
-                      {isMedico && <DoctorFeeDialog request={r} />}
                       {manage && !isMedico && <RequestActions request={r} />}
                       <Button asChild size="sm" variant="ghost">
                         <Link to="/orcamentos/$id" params={{ id: r.id }}>

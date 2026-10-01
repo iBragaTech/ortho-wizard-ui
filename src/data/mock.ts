@@ -581,8 +581,7 @@ export const metrics = {
 export function totalOf(r: ConsultationRequest): number | null {
   if (r.tasyGerenciado) return r.tasyRetorno?.total ?? null;
   if (r.precificacao && !r.precificacao.referencia.completo) return null;
-  if (r.honorariosMedicos === null && r.valorHospitalar === null) return null;
-  return (r.honorariosMedicos ?? 0) + (r.valorHospitalar ?? 0);
+  return r.valorHospitalar;
 }
 
 export function medicalFeesTotal(r: ConsultationRequest): number | null {

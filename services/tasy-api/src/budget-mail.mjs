@@ -57,12 +57,7 @@ export async function buildBudgetPdf(snapshot, suppliedLogo) {
     doc
       .font("Helvetica")
       .fontSize(9)
-      .text(
-        `Quantidade: ${i.quantidade}${i.tipo === "procedimento" ? `  |  Médico (informativo): ${money(i.medico ?? 0)}` : ""}`,
-        40,
-        top + descriptionHeight + 6,
-        { width: 515 },
-      );
+      .text(`Quantidade: ${i.quantidade}`, 40, top + descriptionHeight + 6, { width: 515 });
     doc.y = Math.max(doc.y, top + height);
     doc.fontSize(10);
   }

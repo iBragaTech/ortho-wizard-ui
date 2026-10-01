@@ -1,5 +1,5 @@
 import type { ConsultationRequest } from "@/data/mock";
-import { formatCurrency, medicalFeesTotal } from "@/data/mock";
+
 import type { InstitutionSettings } from "@/lib/data/repository";
 import logoHorizontal from "@/assets/logo-horizontal.png";
 import { canPrintQuote, quoteStatusLabel } from "./tasy-workflow";
@@ -119,20 +119,8 @@ function buildItems(request: ConsultationRequest): LineItem[] {
         desconto: 0,
       });
     }
-    const feesDiff =
-      Math.round(((request.honorariosMedicos ?? 0) - (ref.honorarios ?? 0)) * 100) / 100;
     const hospitalDiff =
       Math.round(((request.valorHospitalar ?? 0) - (ref.hospitalar ?? 0)) * 100) / 100;
-    if (feesDiff)
-      items.push({
-        codigo: "—",
-        descricao: "Honorários Médicos",
-        qtde: 1,
-        medico: feesDiff,
-        anestesista: 0,
-        hospital: 0,
-        desconto: 0,
-      });
     if (hospitalDiff)
       items.push({
         codigo: "—",
@@ -227,16 +215,12 @@ export function buildQuoteHtml(
       : "—";
   const materials = allItems.filter((item) => item.tipo === "material");
   const items = allItems.filter((item) => item.tipo !== "material");
-  const somaMedico = items.reduce((a, i) => a + i.medico, 0);
-  const somaAnest = items.reduce((a, i) => a + i.anestesista, 0);
   const somaHosp = items.reduce((a, i) => a + i.hospital, 0);
   const somaDesc = items.reduce((a, i) => a + i.desconto, 0);
-  const totalProc =
-    (request.tasyGerenciado ? somaHosp : somaMedico + somaAnest + somaHosp) - somaDesc;
+  const totalProc = somaHosp - somaDesc;
   const totalMaterial =
     materials.reduce((sum, item) => sum + Math.round(item.hospital * 100), 0) / 100;
   const totalGeral = Math.round((totalProc + totalMaterial) * 100) / 100;
-  const honorarios = medicalFeesTotal(request);
 
   const linhas = items
     .map(
@@ -244,11 +228,9 @@ export function buildQuoteHtml(
     <td class="c">${esc(i.codigo)}</td>
     <td>${esc(i.descricao)}</td>
     <td class="c">${i.qtde}</td>
-    <td class="r">${num(i.medico)}</td>
-    <td class="r">${num(i.anestesista)}</td>
     <td class="r">${num(i.hospital)}</td>
     <td class="r">${num(i.desconto)}</td>
-    <td class="r">${num((request.tasyGerenciado ? i.hospital : i.medico + i.anestesista + i.hospital) - i.desconto)}</td>
+    <td class="r">${num(i.hospital - i.desconto)}</td>
   </tr>`,
     )
     .join("\n");
@@ -256,7 +238,7 @@ export function buildQuoteHtml(
   const materialRows = materials
     .map(
       (item) =>
-        `<tr><td class="c">${esc(item.codigo)}</td><td colspan="3">${esc(item.descricao)}</td><td class="c">${item.qtde}</td><td class="r">${num(item.hospital / item.qtde)}</td><td class="r">${num(item.desconto)}</td><td class="r">${num(item.hospital - item.desconto)}</td></tr>`,
+        `<tr><td class="c">${esc(item.codigo)}</td><td>${esc(item.descricao)}</td><td class="c">${item.qtde}</td><td class="r">${num(item.hospital / item.qtde)}</td><td class="r">${num(item.desconto)}</td><td class="r">${num(item.hospital - item.desconto)}</td></tr>`,
     )
     .join("\n");
   // Older budgets may retain descriptions only, without a price per material.
@@ -363,7 +345,7 @@ export function buildQuoteHtml(
   <thead>
     <tr>
       <th>Código</th><th style="text-align:left">Procedimento</th><th>Qtde</th>
-      <th>Médico${request.tasyGerenciado ? " (informativo)" : ""}</th><th>Anestesista${request.tasyGerenciado ? " (informativo)" : ""}</th><th>${request.tasyGerenciado ? "Valor procedimento Tasy" : "Hospital"}</th><th>Descontos</th><th>Total</th>
+      <th>${request.tasyGerenciado ? "Valor procedimento Tasy" : "Hospital"}</th><th>Descontos</th><th>Total</th>
     </tr>
   </thead>
   <tbody>
@@ -372,21 +354,20 @@ ${linhas}
   <tbody class="subtotal">
     <tr>
       <td></td><td class="lbl">Total Procedimento</td><td></td>
-      <td class="r">${num(somaMedico)}</td><td class="r">${num(somaAnest)}</td>
       <td class="r">${num(somaHosp)}</td><td class="r">${num(somaDesc)}</td><td class="r">${num(totalProc)}</td>
     </tr>
   </tbody>
-  ${materials.length ? `<tbody><tr><th colspan="4" style="text-align:left">Materiais e OPME</th><th>Qtde</th><th>Vl. unitário</th><th>Desconto</th><th>Total</th></tr>${materialRows}<tr><td colspan="7" class="lbl">Total Materiais e OPME</td><td class="r">${num(totalMaterial)}</td></tr></tbody>` : legacyMaterials ? `<tbody><tr><th colspan="8" style="text-align:left">Materiais e OPME</th></tr><tr><td colspan="8">${esc(legacyMaterials)}<br/>Valores por item não discriminados neste registro. O total do orçamento permanece o valor registrado.</td></tr></tbody>` : ""}
+  ${materials.length ? `<tbody><tr><th colspan="2" style="text-align:left">Materiais e OPME</th><th>Qtde</th><th>Vl. unitário</th><th>Desconto</th><th>Total</th></tr>${materialRows}<tr><td colspan="5" class="lbl">Total Materiais e OPME</td><td class="r">${num(totalMaterial)}</td></tr></tbody>` : legacyMaterials ? `<tbody><tr><th colspan="6" style="text-align:left">Materiais e OPME</th></tr><tr><td colspan="6">${esc(legacyMaterials)}<br/>Valores por item não discriminados neste registro. O total do orçamento permanece o valor registrado.</td></tr></tbody>` : ""}
   <tbody class="grand-total">
     <tr>
-      <td></td><td class="lbl">Total Geral</td><td colspan="4"></td>
+      <td></td><td class="lbl">Total Geral</td><td colspan="2"></td>
       <td class="r">${num(somaDesc)}</td><td class="r">${num(totalGeral)}</td>
     </tr>
   </tbody>
 </table>
 
 <div class="notes">
-  ${request.tasyGerenciado ? "<p>O total reproduz o orçamento do Tasy. Os campos médico e anestesista são apresentados separadamente como informação, sem soma ou subtração adicional ao total.</p>" : ""}
+  <p>Honorários médicos são cobrados separadamente pelo médico, diretamente ao paciente.</p>
   ${
     detalhes.length
       ? `<h3>DADOS DO PROCEDIMENTO:</h3><table class="detalhes">${detalhes
@@ -409,8 +390,6 @@ ${linhas}
   <p>5. FORMAS DE PAGAMENTO / PARCELAMENTO:<br />
   • Até R$ 600,00 - Crédito 2x sem juros;<br />
   • Até R$ 1.000,00 - Crédito 3x sem juros.</p>
-  <p>Honorários médicos informados: ${esc(honorarios === null ? "—" : formatCurrency(honorarios))} ·
-  Valores hospitalares: ${esc(request.valorHospitalar === null ? "—" : formatCurrency(request.valorHospitalar))}</p>
   <div class="sign"><div>Paciente</div></div>
 </div>
 

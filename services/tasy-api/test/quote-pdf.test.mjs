@@ -38,6 +38,38 @@ test("patient PDF checks ownership and refreshed values without sending a messag
     },
   };
   const id = randomUUID();
+  const feeData = {
+    ...data,
+    honorariosMedicos: 9876.54,
+    honorariosSolicitados: 9876.54,
+    tasyRetorno: {
+      ...data.tasyRetorno,
+      itens: [
+        ...data.tasyRetorno.itens,
+        {
+          codigo: "2",
+          descricao: "Procedimento teste",
+          tipo: "procedimento",
+          quantidade: 1,
+          total: 0,
+          medico: 9876.54,
+          anestesista: 1234.56,
+          contabilizado: true,
+        },
+      ],
+    },
+  };
+  const feeHtml = await buildPatientQuoteHtml({
+    id,
+    numero: "PDF-1",
+    status: "em_aprovacao",
+    data: feeData,
+  });
+  assert.ok(!feeHtml.includes("9.876,54"));
+  assert.ok(!feeHtml.includes("1.234,56"));
+  assert.ok(!feeHtml.includes("Médico (informativo)"));
+  assert.ok(feeHtml.includes("100,00"));
+  assert.ok(feeHtml.includes("Honorários médicos são cobrados separadamente"));
   const html = await buildPatientQuoteHtml({
     id,
     numero: "PDF-1",
@@ -55,7 +87,8 @@ test("patient PDF checks ownership and refreshed values without sending a messag
     "FORMAS DE PAGAMENTO / PARCELAMENTO:",
     'class="sign"',
     'src="data:image/png;base64,',
-  ]) assert.ok(html.includes(text), `Missing patient document section: ${text}`);
+  ])
+    assert.ok(html.includes(text), `Missing patient document section: ${text}`);
   await db.query(
     "INSERT INTO portal.requests(id,numero,created_by,status,data) VALUES($1,'PDF-1',$2,'em_aprovacao',$3)",
     [id, doctor.id, JSON.stringify(data)],

@@ -9,12 +9,7 @@ export function FinancialSummary({
   hospitalar: number | null;
   tasyTotal?: number | null | undefined;
 }) {
-  const total =
-    tasyTotal !== undefined
-      ? tasyTotal
-      : honorarios === null || hospitalar === null
-        ? null
-        : (honorarios ?? 0) + (hospitalar ?? 0);
+  const total = tasyTotal !== undefined ? tasyTotal : hospitalar;
 
   return (
     <div className="overflow-hidden rounded-xl border border-primary/20 bg-primary-soft/60 shadow-card">
@@ -23,14 +18,6 @@ export function FinancialSummary({
         <p className="text-xs text-muted-foreground">Valores registrados no orçamento</p>
       </div>
       <dl className="divide-y divide-primary/10 px-5">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 py-3">
-          <dt className="text-sm text-muted-foreground">
-            {tasyTotal !== undefined
-              ? "Valor médico registrado (informativo)"
-              : "Honorários médicos"}
-          </dt>
-          <dd className="text-sm font-medium text-foreground">{formatCurrency(honorarios)}</dd>
-        </div>
         <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 py-3">
           <dt className="text-sm text-muted-foreground">
             {tasyTotal !== undefined ? "Orçamento no Tasy" : "Valor hospitalar"}

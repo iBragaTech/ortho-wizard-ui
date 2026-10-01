@@ -524,7 +524,7 @@ export function NewRequestDialog({
               {isMedico ? (
                 <>
                   <div className="grid gap-2">
-                    <Label htmlFor="honorario">Honorário solicitado (R$)</Label>
+                    <Label htmlFor="honorario">Honorário médico (R$) — opcional</Label>
                     <Input
                       id="honorario"
                       inputMode="decimal"
@@ -532,6 +532,10 @@ export function NewRequestDialog({
                       value={form.honorario}
                       onChange={(e) => set("honorario")(e.target.value)}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Cobrado diretamente pelo médico ao paciente. Não aparece no orçamento
+                      hospitalar.
+                    </p>
                   </div>
                 </>
               ) : (

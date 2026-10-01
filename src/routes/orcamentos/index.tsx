@@ -1,6 +1,14 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, FileSearch, FileText, History, Plus, Stethoscope, Wallet } from "lucide-react";
+import {
+  CheckCircle2,
+  FileSearch,
+  FileText,
+  History,
+  Plus,
+  Stethoscope,
+  Wallet,
+} from "lucide-react";
 import { AppShell } from "@/components/portal/app-shell";
 import { PageHeader } from "@/components/portal/page-header";
 import { RequestTable } from "@/components/portal/request-table";
@@ -49,8 +57,10 @@ function OrcamentosPage() {
   const concluidos = requests.filter((r) => r.status === "concluido");
   const soma = concluidos.reduce((acc, r) => acc + (totalOf(r) ?? 0), 0);
   const media = concluidos.length ? soma / concluidos.length : 0;
-  const aguardandoHonorarios = requests.filter((r) => r.honorariosMedicos === null);
-  const honorariosPreenchidos = requests.filter((r) => r.honorariosMedicos !== null);
+  const emCotacao = requests.filter((r) =>
+    ["pendente", "em_analise", "aguardando_cotacao"].includes(r.status),
+  );
+  const emAprovacao = requests.filter((r) => r.status === "em_aprovacao");
 
   const filtered = useMemo(
     () =>
@@ -77,7 +87,7 @@ function OrcamentosPage() {
         title={isMedico ? "Meus orçamentos" : "Orçamentos"}
         description={
           isMedico
-            ? "Crie orçamentos, preencha honorários pendentes e acompanhe seu histórico."
+            ? "Crie orçamentos e acompanhe a cotação, a aprovação e seu histórico."
             : "Todos os orçamentos registrados no portal, do pedido inicial ao valor consolidado."
         }
         actions={
@@ -96,15 +106,15 @@ function OrcamentosPage() {
         {isMedico ? (
           <>
             <MetricCard
-              label="Aguardando seus honorários"
-              value={aguardandoHonorarios.length}
+              label="Em cotação"
+              value={emCotacao.length}
               icon={Stethoscope}
               tone="warning"
-              hint={`${aguardandoHonorarios.length} solicitações aguardando preenchimento`}
+              hint="Aguardando revisão dos valores hospitalares"
             />
             <MetricCard
-              label="Honorários preenchidos"
-              value={honorariosPreenchidos.length}
+              label="Em aprovação"
+              value={emAprovacao.length}
               icon={CheckCircle2}
               tone="success"
             />

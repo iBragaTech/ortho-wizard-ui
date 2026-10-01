@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { type ConsultationRequest, formatCurrency } from "@/data/mock";
+import { type ConsultationRequest } from "@/data/mock";
 import { portalCall } from "@/lib/data/local-api";
 import { TasyProcedureSelect, type TasyProcedureItem } from "./tasy-procedure-select";
 import { TasyMaterialSelect, type TasyMaterialItem } from "./tasy-material-select";
@@ -65,9 +65,6 @@ export function CostsReview({ request }: { request: ConsultationRequest }) {
   return (
     <section className="space-y-4 rounded-lg border p-4">
       <h3 className="font-semibold">Revisão de Custos</h3>
-      {request.honorariosSolicitados != null && (
-        <p>Honorário solicitado pelo médico: {formatCurrency(request.honorariosSolicitados)}</p>
-      )}
       <Button variant="outline" disabled={busy} onClick={() => setEditing(!editing)}>
         Revisar procedimentos, materiais e OPME
       </Button>

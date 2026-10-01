@@ -182,14 +182,6 @@ function RequestDetail() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <InfoField
-                  label="Honorário solicitado pelo médico"
-                  value={
-                    request.honorariosSolicitados == null
-                      ? "Não registrado nesta solicitação"
-                      : formatCurrency(request.honorariosSolicitados)
-                  }
-                />
-                <InfoField
                   label="Equipe / anestesista"
                   value={request.equipeMultidisciplinar || "Não informado"}
                 />
@@ -223,27 +215,11 @@ function RequestDetail() {
                     aria-level={2}
                     className="flex items-center gap-2 text-base"
                   >
-                    <Stethoscope className="h-4 w-4 text-accent-foreground" /> Honorários médicos
+                    <Stethoscope className="h-4 w-4 text-accent-foreground" /> Dados médicos
                   </CardTitle>
-                  <StatusBadge
-                    status={request.honorariosMedicos === null ? "aguardando_medico" : "concluido"}
-                    className="w-fit"
-                  />
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="grid gap-2">
-                      <Label htmlFor="honorarios">Honorário</Label>
-                      <Input
-                        id="honorarios"
-                        placeholder="R$ 0,00"
-                        defaultValue={
-                          request.honorariosMedicos !== null
-                            ? formatCurrency(request.honorariosMedicos)
-                            : ""
-                        }
-                      />
-                    </div>
                     <div className="grid gap-2">
                       <Label htmlFor="diaria">Diária</Label>
                       <Input

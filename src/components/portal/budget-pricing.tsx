@@ -66,11 +66,6 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
         <CardContent className="pt-6">
           Solicitação enviada para Custos. Os valores e a impressão serão liberados após a
           aprovação.
-          {request.honorariosSolicitados != null && (
-            <p className="mt-2">
-              Honorário solicitado: {formatCurrency(request.honorariosSolicitados)}
-            </p>
-          )}
         </CardContent>
       </Card>
     );

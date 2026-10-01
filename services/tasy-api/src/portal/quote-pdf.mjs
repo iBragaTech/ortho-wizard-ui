@@ -2,9 +2,9 @@ import { z } from "zod";
 import { parse } from "./auth.mjs";
 import { ApiError } from "../errors.mjs";
 import { quoteReady } from "./emails.mjs";
-import { buildBudgetPdf } from "../budget-mail.mjs";
+import { buildPatientQuotePdf } from "../patient-quote-document.mjs";
 
-export function createPatientPdf({ db, refreshQuote, buildPdf = buildBudgetPdf }) {
+export function createPatientPdf({ db, refreshQuote, buildPdf = buildPatientQuotePdf }) {
   return async (input, user) => {
     if (!["Médico", "Administrador"].includes(user.perfil))
       throw new ApiError(403, "FORBIDDEN", "Envio ao paciente disponível ao médico responsável.");

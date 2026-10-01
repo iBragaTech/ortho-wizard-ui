@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { openDatabase, migrate } from "../src/portal/database.mjs";
 import { createPatientPdf } from "../src/portal/quote-pdf.mjs";
+import { buildPatientQuoteHtml } from "../src/patient-quote-document.mjs";
 
 test("patient PDF checks ownership and refreshed values without sending a message", async (t) => {
   const db = await openDatabase({ PORTAL_DB_MODE: "pglite", PORTAL_DATA_DIR: ":memory:" });
@@ -14,6 +15,9 @@ test("patient PDF checks ownership and refreshed values without sending a messag
     [doctor.id],
   );
   const data = {
+    tasyGerenciado: true,
+    honorariosMedicos: null,
+    valorHospitalar: null,
     paciente: { nome: "Paciente fictício" },
     medico: "Médico fictício",
     tasyRetorno: {
@@ -34,6 +38,24 @@ test("patient PDF checks ownership and refreshed values without sending a messag
     },
   };
   const id = randomUUID();
+  const html = await buildPatientQuoteHtml({
+    id,
+    numero: "PDF-1",
+    status: "em_aprovacao",
+    data,
+    institution: { nome: "Hospital de teste", cnpj: "00.000.000/0001-00" },
+  });
+  for (const text of [
+    "Orçamento para Atendimento",
+    "Paciente fictício",
+    "Hospital de teste",
+    "SERVIÇO HOSPITALAR:",
+    "DADOS PARA PAGAMENTO:",
+    "00.000.000/0001-00",
+    "FORMAS DE PAGAMENTO / PARCELAMENTO:",
+    'class="sign"',
+    'src="data:image/png;base64,',
+  ]) assert.ok(html.includes(text), `Missing patient document section: ${text}`);
   await db.query(
     "INSERT INTO portal.requests(id,numero,created_by,status,data) VALUES($1,'PDF-1',$2,'em_aprovacao',$3)",
     [id, doctor.id, JSON.stringify(data)],

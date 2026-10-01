@@ -82,7 +82,7 @@ export function BudgetWhatsApp({ request }: { request: ConsultationRequest }) {
     <section className="space-y-3 rounded-xl border bg-card p-4">
       <h2 className="font-semibold">Envio por WhatsApp</h2>
       <p className="text-sm text-muted-foreground">
-        Abra a conversa com a mensagem preenchida e envie o PDF do orçamento ao paciente.
+        Envie o mesmo PDF de “Gerar arquivo do paciente”, com a mensagem preenchida no WhatsApp.
       </p>
       <Button
         size="sm"

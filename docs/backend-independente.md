@@ -59,6 +59,19 @@ O novo esquema `portal` é criado por `src/portal/schema.sql`. Ele mantém usuá
 
 ## Tasy
 
+### PDF do WhatsApp
+
+O WhatsApp usa o mesmo modelo de `src/lib/quote-document.ts` do botão **Gerar
+arquivo do paciente**. A API renderiza esse HTML em PDF A4, incluindo logo,
+tabelas e orientações, sem acessar recursos externos. O PDF simplificado de
+e-mail permanece separado.
+
+Na instalação ou atualização do backend, execute `npm ci` e
+`npx playwright install chromium` em `services/tasy-api`, com a conta que executa
+a API. Mantenha a pasta `src` da raiz junto ao serviço: ela contém o modelo e o
+logo compartilhados. Reinicie a API após alterar o modelo. O PDF só é gerado
+após verificar o acesso do usuário e a versão atual dos valores no Tasy.
+
 ### Modelos favoritos do médico
 
 Em **Novo orçamento**, médicos podem usar **Meus modelos favoritos**. Após selecionar

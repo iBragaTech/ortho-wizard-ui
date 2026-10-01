@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import PDFDocument from "pdfkit";
+import { buildPatientQuotePdf } from "./patient-quote-document.mjs";
 
 const logoUrl = new URL("../../../src/assets/logo-horizontal.png", import.meta.url);
 const blue = "#004876",
@@ -16,74 +16,6 @@ function frame(title, content) {
 }
 const details = (entries) =>
   `<table role="presentation" width="100%" style="border-collapse:collapse;font-size:14px">${entries.map(([label, value]) => `<tr><td style="padding:10px 0;border-bottom:1px solid #e5ebef;color:#5e6d78;vertical-align:top;width:35%">${esc(label)}</td><td style="padding:10px 0;border-bottom:1px solid #e5ebef;overflow-wrap:anywhere">${esc(value || "Não informado")}</td></tr>`).join("")}</table>`;
-
-export async function buildBudgetPdf(snapshot, suppliedLogo) {
-  const logo = suppliedLogo ?? (await readFile(logoUrl));
-  const doc = new PDFDocument({
-    size: "A4",
-    margins: { top: 40, bottom: 45, left: 40, right: 40 },
-    info: { Title: `Orçamento ${snapshot.numero}` },
-  });
-  const chunks = [];
-  const done = new Promise((resolve, reject) => {
-    doc.on("data", (chunk) => chunks.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
-    doc.on("error", reject);
-  });
-  const { data } = snapshot;
-  doc.image(logo, 40, 30, { width: 240 });
-  doc.y = 145;
-  doc.rect(40, doc.y, 515, 4).fill(yellow);
-  doc.moveDown();
-  doc.fillColor(blue).font("Helvetica-Bold").fontSize(20).text(`Orçamento ${snapshot.numero}`);
-  doc.font("Helvetica").fontSize(10).fillColor("#263746");
-  doc
-    .moveDown()
-    .text(`Paciente: ${data.paciente.nome}`)
-    .text(`Médico: ${data.medico}`)
-    .text("Status: Em aprovação")
-    .text(`Validade no Tasy: ${data.tasyRetorno.validUntil || "Não informada"}`);
-  doc.moveDown();
-  const items = data.tasyRetorno.itens.filter((i) => i.contabilizado);
-  for (const i of items) {
-    const description = `${i.codigo} — ${i.descricao || i.tipo}`;
-    doc.font("Helvetica-Bold").fontSize(10);
-    const descriptionHeight = doc.heightOfString(description, { width: 360 });
-    const height = descriptionHeight + 35;
-    if (doc.y + height > 770) doc.addPage();
-    const top = doc.y;
-    doc.font("Helvetica-Bold").text(description, 40, top, { width: 360 });
-    doc.text(money(i.total), 420, top, { width: 135, align: "right" });
-    doc
-      .font("Helvetica")
-      .fontSize(9)
-      .text(`Quantidade: ${i.quantidade}`, 40, top + descriptionHeight + 6, { width: 515 });
-    doc.y = Math.max(doc.y, top + height);
-    doc.fontSize(10);
-  }
-  const gross = items.reduce((sum, i) => sum + i.total, 0);
-  const adjustment = Math.round((data.tasyRetorno.total - gross) * 100) / 100;
-  if (doc.y > 680) doc.addPage();
-  if (adjustment) doc.text(`Descontos e ajustes do Tasy: ${money(adjustment)}`);
-  doc
-    .moveDown()
-    .font("Helvetica-Bold")
-    .fontSize(16)
-    .fillColor(blue)
-    .text(`Total do orçamento: ${money(data.tasyRetorno.total)}`);
-  doc
-    .moveDown()
-    .font("Helvetica")
-    .fontSize(9)
-    .fillColor("#536575")
-    .text(
-      "Para orientações sobre pagamento, entre em contato com o hospital. Este documento não é um comprovante de pagamento.",
-    );
-  if (snapshot.institution?.telefone)
-    doc.moveDown().text(`Contato do hospital: ${snapshot.institution.telefone}`);
-  doc.end();
-  return done;
-}
 
 export async function buildBudgetMail({ kind, snapshot, recipient, id, portalOrigin }) {
   const logo = await readFile(logoUrl);
@@ -129,7 +61,10 @@ export async function buildBudgetMail({ kind, snapshot, recipient, id, portalOri
   if (!internal)
     attachments.push({
       filename: `Orcamento-${String(numero).replace(/[^a-zA-Z0-9-]/g, "")}.pdf`,
-      content: await buildBudgetPdf(snapshot, logo),
+      content: await buildPatientQuotePdf({
+        ...snapshot,
+        status: snapshot.status ?? "em_aprovacao",
+      }),
       contentType: "application/pdf",
     });
   return {

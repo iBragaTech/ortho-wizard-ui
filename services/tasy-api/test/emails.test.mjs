@@ -7,6 +7,9 @@ import { createHospitalMailer, MailFailure } from "../src/mail-transport.mjs";
 import { buildBudgetMail } from "../src/budget-mail.mjs";
 
 const data = () => ({
+  tasyGerenciado: true,
+  honorariosMedicos: null,
+  valorHospitalar: null,
   paciente: {
     nome: "Paciente fictício <script>",
     cpf: "000.000.000-00",
@@ -249,8 +252,8 @@ test("branded mail escapes patient values and attaches a generated PDF only for 
     snapshot: { ...args.snapshot, tasyId: "98765" },
     kind: "new_request",
   });
-  assert.match(notification.subject, /Tasy 98765/);
-  assert.match(notification.text, /Orçamento Tasy: 98765/);
+  assert.match(notification.subject, /Novo orçamento pendente • TEST-1/);
+  assert.match(notification.text, /Orçamento: 98765/);
   assert.ok(!notification.html.includes("TEST-1"));
   assert.ok(notification.html.includes("&lt;script&gt;"));
   assert.ok(!notification.html.includes("<script>"));

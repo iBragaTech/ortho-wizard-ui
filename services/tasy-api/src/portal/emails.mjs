@@ -110,7 +110,14 @@ export function createEmailService({
             user.id,
             value.email,
             key,
-            JSON.stringify({ id: row.id, numero: row.numero, data: row.data, institution }),
+            JSON.stringify({
+              id: row.id,
+              numero: row.numero,
+              status: row.status,
+              created_at: row.created_at,
+              data: row.data,
+              institution,
+            }),
           ],
         );
         if (inserted.rows.length)
@@ -199,6 +206,18 @@ export function createEmailService({
                 current.data.tasyRetorno.hash !== row.snapshot.data.tasyRetorno.hash
               )
                 throw new ApiError(409, "QUOTE_CHANGED", "Orçamento alterado antes do envio.");
+              row.snapshot = {
+                ...row.snapshot,
+                status: current.status,
+                created_at: current.created_at,
+                data: {
+                  ...row.snapshot.data,
+                  tasyRetorno: {
+                    ...row.snapshot.data.tasyRetorno,
+                    consultadoEm: current.data.tasyRetorno.consultadoEm,
+                  },
+                },
+              };
             }
             const mail = await buildMail({
               kind: row.kind,

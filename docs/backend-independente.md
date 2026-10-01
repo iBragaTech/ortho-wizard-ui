@@ -59,12 +59,11 @@ O novo esquema `portal` é criado por `src/portal/schema.sql`. Ele mantém usuá
 
 ## Tasy
 
-### PDF do WhatsApp
+### PDF do WhatsApp e do e-mail
 
-O WhatsApp usa o mesmo modelo de `src/lib/quote-document.ts` do botão **Gerar
+O WhatsApp e o anexo de e-mail usam o mesmo modelo de `src/lib/quote-document.ts` do botão **Gerar
 arquivo do paciente**. A API renderiza esse HTML em PDF A4, incluindo logo,
-tabelas e orientações, sem acessar recursos externos. O PDF simplificado de
-e-mail permanece separado.
+tabelas e orientações, sem acessar recursos externos.
 
 Na instalação ou atualização do backend, execute `npm ci` e
 `npx playwright install chromium` em `services/tasy-api`, com a conta que executa

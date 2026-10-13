@@ -115,10 +115,11 @@ try {
   process.once("SIGINT", shutdown);
   process.once("SIGTERM", shutdown);
   await app.listen({ host: process.env.HOST || "127.0.0.1", port });
-} catch {
+} catch (error) {
   console.error(
     "Não foi possível iniciar o backend independente. Verifique a configuração e se outra instância está usando a base local.",
   );
+  console.error("Detalhe do erro:", error instanceof Error ? error.message : error);
   if (app) await app.close().catch(() => {});
   else {
     if (oracle) await oracle.close(0).catch(() => {});

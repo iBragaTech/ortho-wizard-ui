@@ -40,13 +40,13 @@ export function TasyBudgetExport({
   }
   return (
     <section className="my-4 rounded-md border p-4 space-y-2">
-      <h2 className="font-semibold">Registro no Tasy</h2>
+      {/* <h2 className="font-semibold">Registro no Tasy</h2> 
       <p className="text-sm">
         A solicitação é enviada automaticamente ao Tasy ao ser criada, com os procedimentos,
         materiais e quantidades informados, como aguardando cotação.
-      </p>
+      </p>*/}
       {status.data?.state === "confirmed" ? (
-        <p>Registrado no Tasy: {status.data.tasy_id}.</p>
+        <p className="font-semibold"> Número do Orçamento no Tasy: {status.data.tasy_id}</p>
       ) : (
         <>
           <p className="text-sm">
@@ -82,7 +82,7 @@ export function TasyBudgetExport({
       {(error || status.error) && <p role="alert">{error || status.error?.message}</p>}
       <p className="text-xs text-muted-foreground">
         {managed
-          ? "Valores e andamento são atualizados a partir do Tasy."
+          ? "Valores e status são atualizados a partir do Tasy."
           : "O registro inicial permanece aguardando cotação no Tasy. A aprovação e as revisões posteriores são realizadas no portal."}
       </p>
     </section>

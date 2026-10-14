@@ -62,7 +62,7 @@ export function TasyPatientSearch({
 
   return (
     <div className="grid gap-2 rounded-md border p-3">
-      <Label htmlFor="tasy-patient-query">Buscar paciente no Tasy</Label>
+      <Label htmlFor="tasy-patient-query">Buscar o paciente</Label>
       <div className="flex flex-wrap gap-2">
         <select
           aria-label="Buscar por"
@@ -73,9 +73,9 @@ export function TasyPatientSearch({
             setByCode(event.target.value === "codigo");
             setQuery("");
           }}
-        >
+        > 
           <option value="cpf">CPF</option>
-          <option value="codigo">Código Tasy</option>
+          {/* <option value="codigo">Código Tasy</option> */}
         </select>
         <Input
           id="tasy-patient-query"

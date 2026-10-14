@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -86,13 +87,14 @@ export function NewRequestDialog({
   const [procedimento, setProcedimento] = useState<TasyProcedureItem[]>([]);
   const [adicionais, setAdicionais] = useState<TasyProcedureItem[]>([]);
   const [catalogContext, setCatalogContext] = useState({ cdConvenio: "", cdCategoria: "" });
-  const [temCti, setTemCti] = useState(false);
+  const [ctiOpcao, setCtiOpcao] = useState<"possui" | "reserva" | "nao">("nao");
   const [sangue, setSangue] = useState<string[]>([]);
   const [multidisciplinar, setMultidisciplinar] = useState<string[]>([]);
   const create = useCreateRequest();
   const { user } = useSession();
   const origem = user?.perfil === "Médico" ? "medico" : origemProp;
   const isMedico = origem === "medico";
+  const diariaCtiAtiva = ctiOpcao !== "nao";
   const patientFieldsEditable = patientNotFound;
   const blockTime = useDoctorBlockTime({
     open,
@@ -131,8 +133,7 @@ export function NewRequestDialog({
     }
 
     if (
-      !isMedico &&
-      [form.acomodacao ? form.diariaEnf : "", temCti ? form.diariaCti : ""].some(
+      [!isMedico && form.acomodacao ? form.diariaEnf : "", diariaCtiAtiva ? form.diariaCti : ""].some(
         (value) => value !== "" && (!Number.isInteger(Number(value)) || Number(value) < 1),
       )
     ) {
@@ -191,6 +192,8 @@ export function NewRequestDialog({
           categoriaTexto,
           principalTexto && `Procedimento principal: ${principalTexto}`,
           adicionaisTexto && `Procedimentos adicionais: ${adicionaisTexto}`,
+          `CTI: ${ctiOpcao === "possui" ? "Possui CTI" : ctiOpcao === "reserva" ? "Reserva" : "Não"}`,
+          diariaCtiAtiva && form.diariaCti && `Diária CTI: ${form.diariaCti}`,
         ]
           .filter(Boolean)
           .join("\n")
@@ -203,7 +206,8 @@ export function NewRequestDialog({
           form.acomodacao &&
             `Acomodação: ${form.acomodacao === "enfermaria" ? "Enfermaria" : "Apartamento"}`,
           form.acomodacao && form.diariaEnf && `Diária Enf/Ap: ${form.diariaEnf}`,
-          temCti && form.diariaCti && `Diária CTI: ${form.diariaCti}`,
+          `CTI: ${ctiOpcao === "possui" ? "Possui CTI" : ctiOpcao === "reserva" ? "Reserva" : "Não"}`,
+          diariaCtiAtiva && form.diariaCti && `Diária CTI: ${form.diariaCti}`,
           opmeTexto && `OPME: ${opmeTexto}`,
           materiaisTexto && `Materiais: ${materiaisTexto}`,
           form.anatomo && `Anátomo Patológico: ${form.anatomo}`,
@@ -299,7 +303,7 @@ export function NewRequestDialog({
       blockTime.reset();
       setPatientCode("");
       setPatientNotFound(false);
-      setTemCti(false);
+      setCtiOpcao("nao");
       setOpme([]);
       setMateriais([]);
       setProcedimento([]);
@@ -524,7 +528,8 @@ export function NewRequestDialog({
               {isMedico ? (
                 <>
                   <div className="grid gap-2">
-                    <Label htmlFor="honorario">Honorário médico (R$) — opcional</Label>
+                    <Label htmlFor="honorario">Honorário médico (R$) - (opcional)</Label>
+                    
                     <Input
                       id="honorario"
                       inputMode="decimal"
@@ -533,7 +538,7 @@ export function NewRequestDialog({
                       onChange={(e) => set("honorario")(e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Cobrado diretamente pelo médico ao paciente. Não aparece no orçamento
+                      Cobrado diretamente pelo médico ao paciente. Não aparece no cálculo para orçamento
                       hospitalar.
                     </p>
                   </div>
@@ -576,39 +581,49 @@ export function NewRequestDialog({
               )}
             </div>
 
-            {!isMedico && (
-              <div className="grid gap-4">
-                <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  CTI
-                </h4>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <label className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={temCti}
-                      onCheckedChange={(c) => {
-                        setTemCti(Boolean(c));
-                        if (!c) set("diariaCti")("");
-                      }}
+            <div className="grid gap-4">
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                CTI
+              </h4>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <RadioGroup
+                  aria-label="CTI"
+                  className="flex flex-wrap items-center gap-6"
+                  value={ctiOpcao}
+                  onValueChange={(value: "possui" | "reserva" | "nao") => {
+                    setCtiOpcao(value);
+                    if (value === "nao") set("diariaCti")("");
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem id="cti-possui" value="possui" />
+                    <Label htmlFor="cti-possui" className="font-normal">Possui CTI</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem id="cti-reserva" value="reserva" />
+                    <Label htmlFor="cti-reserva" className="font-normal">Reserva</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem id="cti-nao" value="nao" />
+                    <Label htmlFor="cti-nao" className="font-normal">Não</Label>
+                  </div>
+                </RadioGroup>
+                {diariaCtiAtiva && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="diaria-cti">Diária CTI</Label>
+                    <Input
+                      id="diaria-cti"
+                      type="number"
+                      min={1}
+                      step={1}
+                      placeholder="Quantidade de diárias"
+                      value={form.diariaCti}
+                      onChange={(e) => set("diariaCti")(e.target.value)}
                     />
-                    Possui CTI
-                  </label>
-                  {temCti && (
-                    <div className="grid gap-2">
-                      <Label htmlFor="diaria-cti">Diária CTI</Label>
-                      <Input
-                        id="diaria-cti"
-                        type="number"
-                        min={1}
-                        step={1}
-                        placeholder="Quantidade de diárias"
-                        value={form.diariaCti}
-                        onChange={(e) => set("diariaCti")(e.target.value)}
-                      />
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2 sm:col-span-2">

@@ -1,3 +1,4 @@
+import { hideProcedureOrigin } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { RequestActions } from "./request-actions";
 import { ArrowRight } from "lucide-react";
@@ -64,7 +65,7 @@ export function RequestTable({
                   ) : null}
                   <TableCell className="font-medium text-foreground">{r.paciente.nome}</TableCell>
                   <TableCell className="text-muted-foreground">{r.medico}</TableCell>
-                  <TableCell className="text-muted-foreground">{r.especialidade}</TableCell>
+                  <TableCell className="text-muted-foreground">{hideProcedureOrigin(r.especialidade)}</TableCell>
                   <TableCell className="text-muted-foreground">{r.data}</TableCell>
                   <TableCell>
                     <StatusBadge status={r.status} label={quoteStatusLabel(r)} />

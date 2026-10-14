@@ -109,9 +109,6 @@ export function TasyProcedureSelect({
                   />
                   <span className="text-sm">
                     {item.codigo} - {item.nome}
-                    <span className="block text-xs text-muted-foreground">
-                      Origem {item.origem}
-                    </span>
                   </span>
                 </label>
               ))}

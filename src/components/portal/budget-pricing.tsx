@@ -173,8 +173,7 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
                 }}
               >
                 <p>
-                  Confirmar {zeroItem.tipo} {zeroItem.codigo}
-                  {zeroItem.origem ? ` · origem ${zeroItem.origem}` : ""} por{" "}
+                  Confirmar {zeroItem.tipo} {zeroItem.codigo} por{" "}
                   <strong>R$ 0,00</strong> neste orçamento. O item não acrescentará valor ao total.
                 </p>
                 <Label htmlFor="zero-reason">Justificativa obrigatória</Label>
@@ -314,8 +313,7 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
                 {pricing.confirmacoesZero.map((c, index) => (
                   <div key={index} className="rounded border p-3 text-sm">
                     <p>
-                      {c.item.tipo} {c.item.codigo}
-                      {c.item.origem ? ` · origem ${c.item.origem}` : ""} · R$ 0,00
+                      {c.item.tipo} {c.item.codigo} · R$ 0,00
                     </p>
                     <p>
                       {c.nomeUsuario}

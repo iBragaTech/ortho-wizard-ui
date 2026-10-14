@@ -1,3 +1,4 @@
+import { hideProcedureOrigin } from "@/lib/utils";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Briefcase, ChevronDown, Download, FileText, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
@@ -88,7 +89,7 @@ function RequestDetail() {
 
       <PageHeader
         title={request.numero ?? "Orçamento"}
-        description={`${request.paciente.nome} · ${request.especialidade}`}
+        description={`${request.paciente.nome} · ${hideProcedureOrigin(request.especialidade)}`}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge
@@ -140,9 +141,9 @@ function RequestDetail() {
             </CardHeader>
             <CardContent className="space-y-5">
               <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                <InfoField label="Especialidade" value={request.especialidade} />
+                <InfoField label="Especialidade" value={hideProcedureOrigin(request.especialidade)} />
                 <InfoField label="Médico" value={`${request.medico} · ${request.crm}`} />
-                <InfoField label="Tipo de consulta" value={request.tipoConsulta} />
+                <InfoField label="Tipo de consulta" value={hideProcedureOrigin(request.tipoConsulta)} />
                 <InfoField label="Data desejada" value={request.dataDesejada} />
               </dl>
               <div>
@@ -151,7 +152,7 @@ function RequestDetail() {
                 </p>
                 <p className="mt-1 whitespace-pre-line text-sm text-foreground">
                   {request.observacoes
-                    ? request.observacoes.split(/\r?\n/).map((line, index) => {
+                    ? hideProcedureOrigin(request.observacoes).split(/\r?\n/).map((line, index) => {
                         const separator = line.indexOf(":");
                         return (
                           <span key={index}>

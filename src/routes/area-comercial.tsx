@@ -1,3 +1,4 @@
+import { hideProcedureOrigin } from "@/lib/utils";
 import { SolicitationWorkspace } from "@/components/portal/solicitation-workspace";
 import { localAuthEnabled } from "@/lib/data/local-api";
 import { useEffect, useState } from "react";
@@ -140,7 +141,7 @@ function LegacyAreaComercial() {
                     <p className="truncate text-sm font-medium text-foreground">
                       {r.paciente.nome}
                     </p>
-                    <p className="truncate text-xs text-muted-foreground">{r.especialidade}</p>
+                    <p className="truncate text-xs text-muted-foreground">{hideProcedureOrigin(r.especialidade)}</p>
                   </div>
                   <StatusBadge status={r.status} />
                 </div>
@@ -159,8 +160,8 @@ function LegacyAreaComercial() {
                 <InfoField label="Paciente" value={selected.paciente.nome} />
                 <InfoField label="CPF" value={selected.paciente.cpf} />
                 <InfoField label="Médico" value={selected.medico} />
-                <InfoField label="Especialidade" value={selected.especialidade} />
-                <InfoField label="Tipo de consulta" value={selected.tipoConsulta} />
+                <InfoField label="Especialidade" value={hideProcedureOrigin(selected.especialidade)} />
+                <InfoField label="Tipo de consulta" value={hideProcedureOrigin(selected.tipoConsulta)} />
                 <InfoField label="Data desejada" value={selected.dataDesejada} />
                 <InfoField
                   label="Total médico"

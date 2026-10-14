@@ -1,3 +1,4 @@
+import { hideProcedureOrigin } from "@/lib/utils";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -42,7 +43,7 @@ export function RequestActions({
   const editPhoneOnly = phoneOnly || user.perfil === "Médico";
   async function open(next: typeof action) {
     setPhone(request.paciente.telefone);
-    setNotes(request.observacoes);
+    setNotes(hideProcedureOrigin(request.observacoes));
     setPrevious({ telefone: request.paciente.telefone, observacoes: request.observacoes });
     setReason("");
     setAction(next);
@@ -77,7 +78,8 @@ export function RequestActions({
         await portalCall("editRequest", {
           id: request.id,
           telefone: phone,
-          observacoes: notes,
+          observacoes:
+            notes === hideProcedureOrigin(previous.observacoes) ? previous.observacoes : notes,
           anterior: previous,
         });
       else await repository.deactivateRequest(request.id, reason);

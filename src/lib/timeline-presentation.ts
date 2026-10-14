@@ -1,3 +1,4 @@
+import { hideProcedureOrigin } from "@/lib/utils";
 import type { TimelineEvent } from "@/data/mock";
 
 type Fields = Record<string, unknown>;
@@ -51,7 +52,7 @@ export function presentTimelineEvent(event: TimelineEvent): TimelineEvent {
         ...event,
         titulo: "Item confirmado sem cobrança",
         descricao: lines(
-          `${label}${text(item["codigo"]) ? ` ${text(item["codigo"])}` : ""}${text(item["origem"]) ? ` (origem ${text(item["origem"])})` : ""} confirmado por R$ 0,00 neste orçamento.`,
+          `${label}${text(item["codigo"]) ? ` ${text(item["codigo"])}` : ""} confirmado por R$ 0,00 neste orçamento.`,
           by,
           reason,
         ),
@@ -105,7 +106,7 @@ export function presentTimelineEvent(event: TimelineEvent): TimelineEvent {
     default:
       return {
         ...event,
-        descricao: structured ? "Ação registrada no histórico do orçamento." : raw,
+        descricao: structured ? "Ação registrada no histórico do orçamento." : hideProcedureOrigin(raw),
       };
   }
 }

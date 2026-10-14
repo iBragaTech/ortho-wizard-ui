@@ -1,3 +1,4 @@
+import { hideProcedureOrigin } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, CalendarDays, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +21,7 @@ export function RequestCard({ request }: { request: ConsultationRequest }) {
         <p className="flex min-w-0 items-center gap-2">
           <Stethoscope className="h-4 w-4 shrink-0" />
           <span className="truncate">
-            {request.medico} · {request.especialidade}
+            {request.medico} · {hideProcedureOrigin(request.especialidade)}
           </span>
         </p>
         <p className="flex items-center gap-2">

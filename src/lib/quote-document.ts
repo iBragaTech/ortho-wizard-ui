@@ -1,3 +1,4 @@
+import { hideProcedureOrigin } from "@/lib/utils";
 import type { ConsultationRequest } from "@/data/mock";
 
 import type { InstitutionSettings } from "@/lib/data/repository";
@@ -5,7 +6,7 @@ import logoHorizontal from "@/assets/logo-horizontal.png";
 import { canPrintQuote, quoteStatusLabel } from "./tasy-workflow";
 
 function esc(value: string): string {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return hideProcedureOrigin(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function num(value: number | null | undefined): string {
@@ -111,7 +112,7 @@ function buildItems(request: ConsultationRequest): LineItem[] {
           item.referencia.nome ||
           descriptions.get(`${item.codigo}:${item.origem ?? ""}`) ||
           descriptions.get(`${item.codigo}:`) ||
-          `${item.tipo === "material" ? "Material" : "Procedimento"}${item.origem ? ` (origem ${item.origem})` : ""}`,
+          `${item.tipo === "material" ? "Material" : "Procedimento"}`,
         qtde: qty,
         medico: fees,
         anestesista: 0,

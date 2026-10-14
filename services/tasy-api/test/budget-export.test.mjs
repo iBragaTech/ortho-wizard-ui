@@ -24,7 +24,7 @@ const snapshot = {
   actorId: "00000000-0000-4000-8000-000000000002",
   data: { tasy: selection, paciente: { cpf: "52998224725" } },
 };
-function mock({ duplicate = false, commitError = false, catalogValid = true, persistedFee } = {}) {
+function mock({ duplicate = false, commitError = false, catalogValid = true, persistedFee, logError = false, logRows = 1 } = {}) {
   const calls = [];
   let storedHash;
   let primaryFee;
@@ -32,6 +32,10 @@ function mock({ duplicate = false, commitError = false, catalogValid = true, per
   const c = {
     execute: async (sql, binds) => {
       calls.push({ sql, binds });
+      if (sql.includes('INSERT INTO TASY."AEBMG_PAINEL_ORÇAMENTO_LOG"')) {
+        if (logError) throw { errorNum: 942 };
+        return { rowsAffected: logRows };
+      }
       if (sql.includes("get_nm_usuario"))
         return { rows: [{ usuario: "test", estab: 2, perfil: 1848, triggers: "S" }] };
       if (sql.startsWith("INSERT INTO TASY.AEBMG_PORTAL_ORCAMENTO_ENVIO")) {
@@ -86,6 +90,33 @@ test("Oracle export binds the selected quantity", async () => {
   );
   const insert = calls.find((c) => c.sql?.includes("INSERT INTO TASY.orcamento_paciente_proc"));
   assert.equal(insert.binds.quantidade, 2);
+});
+
+test("initial Oracle log preserves the creation payload and precedes commit", async () => {
+  const { send, calls } = mock();
+  await send(snapshot, principal);
+  const entries = calls.filter((x) => x.sql?.includes('INSERT INTO TASY."AEBMG_PAINEL_ORÇAMENTO_LOG"'));
+  assert.equal(entries.length, 1);
+  const entry = entries[0];
+  assert.deepEqual(JSON.parse(entry.binds.snapshot.val), snapshot);
+  assert.equal(entry.binds.id, "789");
+  assert.equal(entry.binds.usuario, principal.tasyUsername);
+  assert.ok(calls.indexOf(entry) < calls.indexOf("commit"));
+  assert.match(entry.sql, /JSON_OBJECT\(h\.\* RETURNING CLOB\)/);
+  assert.match(entry.sql, /JSON_OBJECT\(p\.\* RETURNING CLOB\)/);
+  assert.match(entry.sql, /JSON_OBJECT\(m\.\* RETURNING CLOB\)/);
+  const retry = mock({ duplicate: true });
+  await retry.send(snapshot, principal);
+  assert.ok(!retry.calls.some((x) => x.sql?.includes('INSERT INTO TASY."AEBMG_PAINEL_ORÇAMENTO_LOG"')));
+});
+
+test("failure to save the initial log rolls back the entire export", async () => {
+  for (const options of [{ logError: true }, { logRows: 0 }]) {
+    const { send, calls } = mock(options);
+    await assert.rejects(send(snapshot, principal));
+    assert.ok(calls.includes("rollback"));
+    assert.ok(!calls.includes("commit"));
+  }
 });
 test("Oracle committed key is recovered without duplicate inserts; commit loss is explicit", async () => {
   const retry = mock({ duplicate: true });

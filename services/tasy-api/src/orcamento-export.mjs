@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import oracledb from "oracledb";
 import { ApiError } from "./errors.mjs";
 import { tasySelection } from "./orcamento-schema.mjs";
 import { catalogoOperations } from "./catalogos.mjs";
@@ -256,6 +257,30 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
         "UPDATE TASY.AEBMG_PORTAL_ORCAMENTO_ENVIO SET NR_ORCAMENTO=:orc WHERE ID_PORTAL=:id",
         { orc: id, id: snapshot.id },
       );
+      // Preserve both the creation payload and the rows actually saved by Tasy
+      // triggers, before the transaction becomes visible to other users.
+      await c.execute(
+        `INSERT INTO TASY."AEBMG_PAINEL_ORÇAMENTO_LOG"
+         (NR_ORCAMENTO,ID_PORTAL,ID_USUARIO_PORTAL,NM_USUARIO,CD_ESTABELECIMENTO,
+          CD_PERFIL,HASH_CONTEUDO,SNAPSHOT_PORTAL,CABECALHO_TASY,PROCEDIMENTOS_TASY,MATERIAIS_TASY)
+         SELECT h.nr_sequencia_orcamento,:portal,:actor,:usuario,:estab,:perfil,:hash,:snapshot,
+           JSON_OBJECT(h.* RETURNING CLOB),
+           COALESCE((SELECT JSON_ARRAYAGG(JSON_OBJECT(p.* RETURNING CLOB)
+             ORDER BY p.nr_sequencia RETURNING CLOB)
+             FROM TASY.orcamento_paciente_proc p WHERE p.nr_sequencia_orcamento=h.nr_sequencia_orcamento), TO_CLOB('[]')),
+           COALESCE((SELECT JSON_ARRAYAGG(JSON_OBJECT(m.* RETURNING CLOB)
+             ORDER BY m.nr_sequencia RETURNING CLOB)
+             FROM TASY.orcamento_paciente_mat m WHERE m.nr_sequencia_orcamento=h.nr_sequencia_orcamento), TO_CLOB('[]'))
+         FROM TASY.orcamento_paciente h WHERE h.nr_sequencia_orcamento=:id`,
+        {
+          id, portal: snapshot.id, actor: snapshot.actorId, usuario: principal.tasyUsername,
+          estab: principal.tasyEstablishment, perfil: principal.tasyProfile, hash,
+          snapshot: { val: canonicalJson(snapshot), type: oracledb.CLOB },
+        },
+      ).then((result) => {
+        if (result.rowsAffected !== 1)
+          throw new ApiError(503, "INITIAL_LOG_NOT_SAVED", "O registro inicial do orçamento não foi gravado. O envio foi desfeito.");
+      });
       committing = true;
       await c.commit();
       return { nrOrcamento: id, recuperado: false };

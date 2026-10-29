@@ -436,6 +436,31 @@ const supabaseRepository = {
       nome: row.nome as string,
       email: row.email as string,
       perfil: (labels[row.perfil] ?? "Comercial") as PortalUser["perfil"],
+      telefone: (row.telefone as string | null) ?? "",
+    };
+  },
+
+  // Atualiza nome, e-mail e telefone do próprio usuário logado.
+  async updateMyProfile(input: {
+    id: string;
+    nome: string;
+    email: string;
+    telefone: string;
+  }): Promise<{ id: string; nome: string; email: string; telefone: string }> {
+    const { data, error } = await (supabase as any).rpc("atualizar_meu_perfil", {
+      p_id: input.id,
+      p_nome: input.nome,
+      p_email: input.email,
+      p_telefone: input.telefone,
+    });
+    if (error) throw new Error(error.message);
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) throw new Error("Usuário não encontrado ou inativo.");
+    return {
+      id: row.id as string,
+      nome: row.nome as string,
+      email: row.email as string,
+      telefone: (row.telefone as string | null) ?? "",
     };
   },
 

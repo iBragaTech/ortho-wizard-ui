@@ -21,12 +21,14 @@ export type SessionUser = {
   nome: string;
   email: string;
   perfil: Perfil;
+  telefone?: string;
 };
 
 type SessionContextValue = {
   user: SessionUser | null;
   ready: boolean;
   signIn: (user: SessionUser) => void;
+  updateUser: (patch: Partial<SessionUser>) => void;
   signOut: () => Promise<void>;
 };
 
@@ -119,6 +121,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [queryClient],
   );
 
+  const updateUser = useCallback((patch: Partial<SessionUser>) => {
+    setUser((current) => {
+      if (!current) return current;
+      const next = { ...current, ...patch };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* storage indisponível */
+      }
+      return next;
+    });
+  }, []);
+
   const signOut = useCallback(async () => {
     if (localAuthEnabled) await localAuth.signOut();
     if (supabaseAuthEnabled) {
@@ -134,7 +149,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, [queryClient]);
 
-  const value = useMemo(() => ({ user, ready, signIn, signOut }), [user, ready, signIn, signOut]);
+  const value = useMemo(
+    () => ({ user, ready, signIn, updateUser, signOut }),
+    [user, ready, signIn, updateUser, signOut],
+  );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

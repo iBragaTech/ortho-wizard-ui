@@ -1,10 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Mail, ShieldCheck, UserRound } from "lucide-react";
+import { useState } from "react";
+import { Mail, Phone, Save, ShieldCheck, UserRound } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/portal/app-shell";
 import { PageHeader } from "@/components/portal/page-header";
 import { UserAvatar } from "@/components/portal/user-avatar";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useSession, type Perfil } from "@/lib/auth/session";
+import { useUpdateMyProfile } from "@/lib/data/hooks";
 
 export const Route = createFileRoute("/perfil")({
   head: () => ({
@@ -44,8 +50,36 @@ const perfilDescricao: Record<Perfil, string[]> = {
 };
 
 function PerfilPage() {
-  const { user } = useSession();
+  const { user, updateUser } = useSession();
+  const update = useUpdateMyProfile();
+  const [nome, setNome] = useState(user?.nome ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [telefone, setTelefone] = useState(user?.telefone ?? "");
+
   if (!user) return null;
+
+  const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const podeSalvar =
+    nome.trim().length >= 3 &&
+    emailValido &&
+    !update.isPending &&
+    (nome.trim() !== user.nome || email.trim() !== user.email || telefone.trim() !== (user.telefone ?? ""));
+
+  async function handleSave() {
+    if (!user) return;
+    try {
+      const saved = await update.mutateAsync({
+        id: user.id,
+        nome: nome.trim(),
+        email: email.trim(),
+        telefone: telefone.trim(),
+      });
+      updateUser({ nome: saved.nome, email: saved.email, telefone: saved.telefone });
+      toast.success("Perfil atualizado com sucesso.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível salvar o perfil.");
+    }
+  }
 
   return (
     <AppShell>
@@ -64,23 +98,52 @@ function PerfilPage() {
                 <p className="truncate text-sm text-muted-foreground">{user.perfil}</p>
               </div>
             </div>
-            <dl className="space-y-3 text-sm">
-              <div className="flex items-center gap-2">
-                <UserRound className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <dt className="w-20 shrink-0 text-muted-foreground">Nome</dt>
-                <dd className="min-w-0 truncate font-medium text-foreground">{user.nome}</dd>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="perfil-nome" className="inline-flex items-center gap-1.5">
+                  <UserRound className="h-3.5 w-3.5 text-muted-foreground" /> Nome completo
+                </Label>
+                <Input
+                  id="perfil-nome"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  autoComplete="name"
+                />
               </div>
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <dt className="w-20 shrink-0 text-muted-foreground">E-mail</dt>
-                <dd className="min-w-0 truncate font-medium text-foreground">{user.email}</dd>
+              <div className="space-y-1.5">
+                <Label htmlFor="perfil-email" className="inline-flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground" /> E-mail
+                </Label>
+                <Input
+                  id="perfil-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                />
+                {email.trim() !== "" && !emailValido ? (
+                  <p className="text-xs text-destructive">Informe um e-mail válido.</p>
+                ) : null}
               </div>
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <dt className="w-20 shrink-0 text-muted-foreground">Perfil</dt>
-                <dd className="min-w-0 truncate font-medium text-foreground">{user.perfil}</dd>
+              <div className="space-y-1.5">
+                <Label htmlFor="perfil-telefone" className="inline-flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground" /> Telefone
+                </Label>
+                <Input
+                  id="perfil-telefone"
+                  value={telefone}
+                  onChange={(e) => setTelefone(e.target.value)}
+                  placeholder="(31) 99999-0000"
+                  autoComplete="tel"
+                />
               </div>
-            </dl>
+            </div>
+
+            <Button onClick={() => void handleSave()} disabled={!podeSalvar} className="w-full sm:w-auto">
+              <Save className="h-4 w-4" />
+              {update.isPending ? "Salvando..." : "Salvar alterações"}
+            </Button>
           </CardContent>
         </Card>
 
@@ -98,7 +161,8 @@ function PerfilPage() {
               ))}
             </ul>
             <p className="mt-4 text-xs text-muted-foreground">
-              Para alterar seus dados ou senha, procure um usuário com perfil Administrador.
+              Para alterar seu perfil de acesso ou senha, procure um usuário com perfil
+              Administrador.
             </p>
           </CardContent>
         </Card>

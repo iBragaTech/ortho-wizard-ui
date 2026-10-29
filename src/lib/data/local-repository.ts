@@ -38,6 +38,11 @@ export const localRepository = {
     consultarTodosPacientes?: boolean;
     cadastrarPacientes?: boolean;
   }) => portalCall<void>("createUser", input),
+  updateMyProfile: (input: { id: string; nome: string; email: string; telefone: string }) =>
+    portalCall<{ id: string; nome: string; email: string; telefone: string }>(
+      "updateMyProfile",
+      input,
+    ),
   getSettings: () => portalCall<InstitutionSettings>("getSettings"),
   saveSettings: (input: InstitutionSettings) => portalCall<void>("saveSettings", input),
   listSurgicalAppointments: () =>

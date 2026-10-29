@@ -120,6 +120,15 @@ export function useCreateUser() {
   });
 }
 
+export function useUpdateMyProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: string; nome: string; email: string; telefone: string }) =>
+      repository.updateMyProfile(input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["portal_users"] }),
+  });
+}
+
 export function useSaveSettings() {
   const qc = useQueryClient();
   return useMutation({

@@ -49,6 +49,7 @@ const nav = [
 
 const titles: Record<string, string> = {
   "/": "Dashboard",
+  "/perfil": "Meu perfil",
   "/orcamentos": "Orçamentos",
   "/agendamentos-cirurgicos": "Solicitações Cirúrgicas",
   "/area-comercial": "Área Comercial",
@@ -285,7 +286,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <p className="text-xs font-normal text-muted-foreground">{user.perfil}</p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>Meu perfil</DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/perfil">Meu perfil</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/configuracoes">Configurações</Link>
                   </DropdownMenuItem>

@@ -150,6 +150,7 @@ export const PERFIS: Perfil[] = ["Administrador", "Comercial", "Médico", "Custo
 // Quais perfis podem acessar cada área do portal.
 export const ACESSO: Record<string, Perfil[]> = {
   "/": PERFIS,
+  "/perfil": PERFIS,
   "/orcamentos": PERFIS,
   "/agendamentos-cirurgicos": ["Administrador", "Médico"],
   "/area-comercial": ["Administrador", "Comercial"],

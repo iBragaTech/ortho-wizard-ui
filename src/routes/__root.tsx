@@ -6,6 +6,7 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
@@ -45,13 +46,14 @@ function isStaleChunkError(error: Error) {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
+  const err = error as Error;
   const router = useRouter();
   useEffect(() => {
     // Após um novo deploy, o navegador pode manter arquivos antigos em cache.
     // Nesse caso recarregamos a página uma única vez para buscar a versão nova.
-    if (isStaleChunkError(error) && typeof window !== "undefined") {
+    if (isStaleChunkError(err) && typeof window !== "undefined") {
       const key = "portal.reloaded-stale-chunk";
       if (!sessionStorage.getItem(key)) {
         sessionStorage.setItem(key, "1");
@@ -59,8 +61,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         return;
       }
     }
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
+    reportLovableError(err, { boundary: "tanstack_root_error_component" });
+  }, [err]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

@@ -21,12 +21,14 @@ export type SessionUser = {
   nome: string;
   email: string;
   perfil: Perfil;
+  telefone?: string;
 };
 
 type SessionContextValue = {
   user: SessionUser | null;
   ready: boolean;
   signIn: (user: SessionUser) => void;
+  updateUser: (patch: Partial<SessionUser>) => void;
   signOut: () => Promise<void>;
 };
 

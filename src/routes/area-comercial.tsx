@@ -164,10 +164,6 @@ function LegacyAreaComercial() {
                 <InfoField label="Tipo de consulta" value={hideProcedureOrigin(selected.tipoConsulta)} />
                 <InfoField label="Data desejada" value={selected.dataDesejada} />
                 <InfoField
-                  label="Total médico"
-                  value={formatCurrency(medicalFeesTotal(selected))}
-                />
-                <InfoField
                   label="Status do médico"
                   value={medicoPreenchido ? "Preenchido" : "Aguardando médico"}
                 />
@@ -179,10 +175,6 @@ function LegacyAreaComercial() {
                     Detalhamento médico
                   </p>
                   <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <InfoField
-                      label="Honorário"
-                      value={formatCurrency(selected.honorariosMedicos)}
-                    />
                     <InfoField label="Diária" value={formatCurrency(selected.diaria)} />
                     <InfoField label="CTI" value={formatCurrency(selected.cti)} />
                     <InfoField

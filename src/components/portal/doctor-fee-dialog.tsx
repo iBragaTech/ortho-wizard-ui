@@ -43,7 +43,6 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
   });
 
   const initial = {
-    honorario: fromNumber(request.honorariosMedicos),
     diaria: fromNumber(request.diaria),
     cti: fromNumber(request.cti),
     fisioterapia: request.fisioterapia !== null ? String(request.fisioterapia) : "",
@@ -72,7 +71,7 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
       await save.mutateAsync({
         id: request.id,
         input: {
-          honorariosMedicos: toNumber(form.honorario),
+          honorariosMedicos: request.honorariosMedicos,
           diaria: toNumber(form.diaria),
           cti: toNumber(form.cti),
           opme: form.opme,
@@ -119,15 +118,6 @@ export function DoctorFeeDialog({ request }: { request: ConsultationRequest }) {
               Valores médicos
             </h3>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
-                <Label htmlFor="honorario">Honorário</Label>
-                <Input
-                  id="honorario"
-                  placeholder="0,00"
-                  value={form.honorario}
-                  onChange={(e) => set("honorario")(e.target.value)}
-                />
-              </div>
               <div className="grid gap-2">
                 <Label htmlFor="diaria">Diária</Label>
                 <Input

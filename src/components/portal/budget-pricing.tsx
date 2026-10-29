@@ -30,7 +30,6 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
   const pricing = request.precificacao;
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [fees, setFees] = useState("");
   const [hospital, setHospital] = useState("");
   const [reason, setReason] = useState("");
   const [zeroItem, setZeroItem] = useState<{
@@ -220,23 +219,11 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
                   <strong>{formatCurrency(pricing.referencia.total)}</strong>
                 </p>
                 <p className="text-sm">
-                  Honorários atuais: {formatCurrency(request.honorariosMedicos)} · Hospitalar atual:{" "}
-                  {formatCurrency(request.valorHospitalar)}
-                </p>
-                <p className="text-sm font-semibold">
-                  Total do orçamento com os honorários atuais:{" "}
-                  {formatCurrency(
-                    request.honorariosMedicos == null || request.valorHospitalar == null
-                      ? null
-                      : (Math.round(request.honorariosMedicos * 100) +
-                          Math.round(request.valorHospitalar * 100)) /
-                          100,
-                  )}
+                  Valor hospitalar atual: {formatCurrency(request.valorHospitalar)}
                 </p>
                 {!canReview ? null : !editing ? (
                   <Button
                     onClick={() => {
-                      setFees(String(request.honorariosMedicos ?? ""));
                       setHospital(String(request.valorHospitalar ?? ""));
                       setEditing(true);
                     }}
@@ -251,24 +238,12 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
                       void save("adjustPrices", {
                         id: request.id,
                         revisao: pricing.revisao,
-                        honorarios: Number(fees),
+                        honorarios: request.honorariosMedicos ?? 0,
                         hospitalar: Number(hospital),
                         motivo: reason,
                       });
                     }}
                   >
-                    <div>
-                      <Label htmlFor="adjust-fees">Honorários médicos (R$)</Label>
-                      <Input
-                        id="adjust-fees"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        required
-                        value={fees}
-                        onChange={(e) => setFees(e.target.value)}
-                      />
-                    </div>
                     <div>
                       <Label htmlFor="adjust-hospital">Valor hospitalar (R$)</Label>
                       <Input
@@ -335,10 +310,6 @@ export function BudgetPricing({ request }: { request: ConsultationRequest }) {
                   <div key={i} className="rounded border p-3 text-sm">
                     <p>
                       {a.nomeUsuario} · {new Date(a.dataHora).toLocaleString("pt-BR")}
-                    </p>
-                    <p>
-                      Honorários: {formatCurrency(a.anterior.honorarios)} →{" "}
-                      {formatCurrency(a.novo.honorarios)}
                     </p>
                     <p>
                       Hospitalar: {formatCurrency(a.anterior.hospitalar)} →{" "}

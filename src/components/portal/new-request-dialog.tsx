@@ -270,7 +270,7 @@ export function NewRequestDialog({
         ...(isMedico
           ? {
               medico: {
-                honorariosMedicos: toNumber(form.honorario),
+                honorariosMedicos: 0,
                 diaria: null,
                 cti: null,
                 opme: opmeTexto,
@@ -525,25 +525,7 @@ export function NewRequestDialog({
               {isMedico ? "Dados médicos" : "Dados do procedimento"}
             </h3>
             <div className="grid gap-4 sm:grid-cols-2">
-              {isMedico ? (
-                <>
-                  <div className="grid gap-2">
-                    <Label htmlFor="honorario">Honorário médico (R$) - (opcional)</Label>
-                    
-                    <Input
-                      id="honorario"
-                      inputMode="decimal"
-                      placeholder="0,00"
-                      value={form.honorario}
-                      onChange={(e) => set("honorario")(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Cobrado diretamente pelo médico ao paciente. Não aparece no cálculo para orçamento
-                      hospitalar.
-                    </p>
-                  </div>
-                </>
-              ) : (
+              {!isMedico && (
                 <>
                   <div className="grid gap-2">
                     <Label>Tipo de acomodação</Label>

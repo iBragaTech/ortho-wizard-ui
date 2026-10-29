@@ -63,11 +63,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col bg-sidebar">
       <div className="px-5 py-5">
-        <img
-          src={logoHorizontal}
-          alt="Hospital Evangélico de Belo Horizonte"
-          className="h-11 w-auto object-contain object-left"
-        />
+        <Link to="/" onClick={onNavigate} aria-label="Ir para o Dashboard" className="inline-block">
+          <img
+            src={logoHorizontal}
+            alt="Hospital Evangélico de Belo Horizonte"
+            className="h-11 w-auto object-contain object-left"
+          />
+        </Link>
         <p className="mt-3 truncate text-xs font-medium text-muted-foreground">
           Portal de Orçamentos · Consultas particulares
         </p>

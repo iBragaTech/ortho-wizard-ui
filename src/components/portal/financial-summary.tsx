@@ -1,11 +1,9 @@
 import { formatCurrency } from "@/data/mock";
 
 export function FinancialSummary({
-  honorarios,
   hospitalar,
   tasyTotal,
 }: {
-  honorarios: number | null;
   hospitalar: number | null;
   tasyTotal?: number | null | undefined;
 }) {

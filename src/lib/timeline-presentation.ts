@@ -65,7 +65,6 @@ export function presentTimelineEvent(event: TimelineEvent): TimelineEvent {
         ...event,
         titulo: "Valores do orçamento alterados",
         descricao: lines(
-          `Honorários: ${money(previous["honorarios"])} → ${money(next["honorarios"])}.`,
           `Hospitalar: ${money(previous["hospitalar"])} → ${money(next["hospitalar"])}.`,
           by,
           reason,

@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { formatCurrency, medicalFeesTotal } from "@/data/mock";
+import { formatCurrency } from "@/data/mock";
 import { useRequest, useTimeline, useSettings } from "@/lib/data/hooks";
 import { openQuoteDocument, downloadQuoteFile } from "@/lib/quote-document";
 import { canPrintQuote, quoteStatusLabel } from "@/lib/tasy-workflow";
@@ -354,7 +354,6 @@ function RequestDetail() {
           <BudgetEmail request={request} />
           <BudgetWhatsApp key={request.id} request={request} />
           <FinancialSummary
-            honorarios={medicalFeesTotal(request)}
             hospitalar={request.valorHospitalar}
             tasyTotal={request.tasyGerenciado ? (request.tasyRetorno?.total ?? null) : undefined}
           />

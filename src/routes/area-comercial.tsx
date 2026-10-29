@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { formatCurrency, medicalFeesTotal } from "@/data/mock";
+import { formatCurrency } from "@/data/mock";
 import { useRequests, useSaveHospitalValue } from "@/lib/data/hooks";
 
 export const Route = createFileRoute("/area-comercial")({
@@ -245,7 +245,6 @@ function LegacyAreaComercial() {
           </Card>
 
           <FinancialSummary
-            honorarios={medicalFeesTotal(selected)}
             hospitalar={selected.valorHospitalar}
           />
         </div>

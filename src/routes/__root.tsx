@@ -46,13 +46,14 @@ function isStaleChunkError(error: Error) {
   );
 }
 
-function ErrorComponent({ error, reset }: ErrorComponentProps<Error>) {
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
+  const err = error as Error;
   const router = useRouter();
   useEffect(() => {
     // Após um novo deploy, o navegador pode manter arquivos antigos em cache.
     // Nesse caso recarregamos a página uma única vez para buscar a versão nova.
-    if (isStaleChunkError(error) && typeof window !== "undefined") {
+    if (isStaleChunkError(err) && typeof window !== "undefined") {
       const key = "portal.reloaded-stale-chunk";
       if (!sessionStorage.getItem(key)) {
         sessionStorage.setItem(key, "1");

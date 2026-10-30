@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Star } from "lucide-react";
 import { toast } from "sonner";
@@ -44,7 +44,16 @@ export function BudgetTemplatePicker({
   const current = templates.data?.find((item) => item.id === selected);
   const compatible = (item: Template) =>
     item.dados.cdConvenio === value.cdConvenio && item.dados.cdCategoria === value.cdCategoria;
+  const compatibleTemplates = (templates.data ?? []).filter(compatible);
+  const categorySelected = !!value.cdCategoria;
   const canSave = !!value.cdConvenio && !!value.cdCategoria && value.procedimento.length === 1;
+
+  useEffect(() => {
+    if (current && !compatible(current)) {
+      setSelected("");
+      setConfirmDelete(false);
+    }
+  }, [current, value.cdConvenio, value.cdCategoria]);
 
   async function save() {
     setBusy(true);
@@ -126,23 +135,24 @@ export function BudgetTemplatePicker({
             id="budget-template"
             className="min-w-0 flex-1 rounded-md border bg-background p-2 text-sm"
             value={selected}
-            disabled={templates.isPending || busy}
+            disabled={!categorySelected || templates.isPending || busy}
             onChange={(event) => {
               setSelected(event.target.value);
               setConfirmDelete(false);
             }}
           >
             <option value="">
-              {templates.isPending
+              {!categorySelected
+                ? "Informe a categoria do convênio"
+                : templates.isPending
                 ? "Carregando modelos…"
-                : templates.data?.length
+                : compatibleTemplates.length
                   ? "Selecione um modelo"
-                  : "Nenhum modelo salvo"}
+                  : "Nenhum modelo salvo para esta categoria"}
             </option>
-            {templates.data?.map((item) => (
+            {compatibleTemplates.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.nome}
-                {compatible(item) ? "" : ` — categoria ${item.dados.cdCategoria}`}
               </option>
             ))}
           </select>

@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ClipboardList,
   FileText,
+  Plus,
   Search,
   Stethoscope,
   Timer,
@@ -12,6 +13,7 @@ import {
 import { AppShell } from "@/components/portal/app-shell";
 import { PageHeader } from "@/components/portal/page-header";
 import { MetricCard } from "@/components/portal/metric-card";
+import { NewRequestDialog } from "@/components/portal/new-request-dialog";
 import { RequestTable } from "@/components/portal/request-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,11 +76,20 @@ function Dashboard() {
         title="Dashboard"
         description="Visão geral dos orçamentos de consultas particulares."
         actions={
-          <Button asChild>
-            <Link to="/orcamentos">
-              Ver orçamentos <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <NewRequestDialog
+              trigger={
+                <Button variant="outline">
+                  <Plus className="h-4 w-4" /> Novo orçamento
+                </Button>
+              }
+            />
+            <Button asChild>
+              <Link to="/orcamentos">
+                Ver orçamentos <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
         }
       />
 

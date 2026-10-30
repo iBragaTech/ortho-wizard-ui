@@ -49,6 +49,7 @@ const nav = [
 
 const titles: Record<string, string> = {
   "/": "Dashboard",
+  "/perfil": "Meu perfil",
   "/orcamentos": "Orçamentos",
   "/agendamentos-cirurgicos": "Solicitações Cirúrgicas",
   "/area-comercial": "Área Comercial",
@@ -63,11 +64,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col bg-sidebar">
       <div className="px-5 py-5">
-        <img
-          src={logoHorizontal}
-          alt="Hospital Evangélico de Belo Horizonte"
-          className="h-11 w-auto object-contain object-left"
-        />
+        <Link to="/" onClick={onNavigate} aria-label="Ir para o Dashboard" className="inline-block">
+          <img
+            src={logoHorizontal}
+            alt="Hospital Evangélico de Belo Horizonte"
+            className="h-11 w-auto object-contain object-left"
+          />
+        </Link>
         <p className="mt-3 truncate text-xs font-medium text-muted-foreground">
           Portal de Orçamentos · Consultas particulares
         </p>
@@ -283,7 +286,9 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <p className="text-xs font-normal text-muted-foreground">{user.perfil}</p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>Meu perfil</DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/perfil">Meu perfil</Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/configuracoes">Configurações</Link>
                   </DropdownMenuItem>

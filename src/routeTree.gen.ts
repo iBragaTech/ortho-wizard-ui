@@ -17,6 +17,7 @@ import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MedicosRouteImport } from './routes/medicos'
 import { Route as OrcamentosRouteImport } from './routes/orcamentos'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as UsuariosRouteImport } from './routes/usuarios'
 import { Route as OrcamentosIndexRouteImport } from './routes/orcamentos/index'
 import { Route as OrcamentosIdRouteImport } from './routes/orcamentos.$id'
@@ -61,6 +62,11 @@ const OrcamentosRoute = OrcamentosRouteImport.update({
   path: '/orcamentos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UsuariosRoute = UsuariosRouteImport.update({
   id: '/usuarios',
   path: '/usuarios',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/medicos': typeof MedicosRoute
   '/orcamentos': typeof OrcamentosRouteWithChildren
+  '/perfil': typeof PerfilRoute
   '/usuarios': typeof UsuariosRoute
   '/orcamentos/$id': typeof OrcamentosIdRoute
   '/orcamentos/': typeof OrcamentosIndexRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/configuracoes': typeof ConfiguracoesRoute
   '/login': typeof LoginRoute
   '/medicos': typeof MedicosRoute
+  '/perfil': typeof PerfilRoute
   '/usuarios': typeof UsuariosRoute
   '/orcamentos/$id': typeof OrcamentosIdRoute
   '/orcamentos': typeof OrcamentosIndexRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/medicos': typeof MedicosRoute
   '/orcamentos': typeof OrcamentosRouteWithChildren
+  '/perfil': typeof PerfilRoute
   '/usuarios': typeof UsuariosRoute
   '/orcamentos/$id': typeof OrcamentosIdRoute
   '/orcamentos/': typeof OrcamentosIndexRoute
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/medicos'
     | '/orcamentos'
+    | '/perfil'
     | '/usuarios'
     | '/orcamentos/$id'
     | '/orcamentos/'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/configuracoes'
     | '/login'
     | '/medicos'
+    | '/perfil'
     | '/usuarios'
     | '/orcamentos/$id'
     | '/orcamentos'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/medicos'
     | '/orcamentos'
+    | '/perfil'
     | '/usuarios'
     | '/orcamentos/$id'
     | '/orcamentos/'
@@ -166,6 +178,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MedicosRoute: typeof MedicosRoute
   OrcamentosRoute: typeof OrcamentosRouteWithChildren
+  PerfilRoute: typeof PerfilRoute
   UsuariosRoute: typeof UsuariosRoute
 }
 
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrcamentosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/usuarios': {
       id: '/usuarios'
       path: '/usuarios'
@@ -274,6 +294,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MedicosRoute: MedicosRoute,
   OrcamentosRoute: OrcamentosRouteWithChildren,
+  PerfilRoute: PerfilRoute,
   UsuariosRoute: UsuariosRoute,
 }
 export const routeTree = rootRouteImport

@@ -43,7 +43,7 @@ export function TasyInsuranceSelect({
   return (
     <div className="grid gap-3 sm:col-span-2">
       <Label htmlFor="convenio-tasy">
-        Convênio do Tasy
+        Convênio
         <RequiredMark />
       </Label>
       {convenio.error ? (
@@ -57,7 +57,7 @@ export function TasyInsuranceSelect({
         <>
           <select
             id="convenio-tasy"
-            aria-label="Convênio do Tasy"
+            aria-label="Convênio"
             className="w-full rounded-md border bg-background p-2"
             value={particularCode}
             disabled

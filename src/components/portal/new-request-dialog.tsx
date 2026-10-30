@@ -611,7 +611,7 @@ export function NewRequestDialog({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2 sm:col-span-2">
-                <Label>Materiais do Tasy</Label>
+                <Label>Materiais</Label>
                 <TasyMaterialSelect {...catalogContext} value={materiais} onChange={setMateriais} />
               </div>
 

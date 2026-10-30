@@ -456,7 +456,7 @@ export function NewRequestDialog({
                   </p>
                 )}
               </div>
-              <div className="grid gap-2">
+              <div className="grid gap-2 sm:col-span-2 sm:w-1/2 sm:justify-self-center">
                 <Label htmlFor="email">
                   E-mail
                   <RequiredMark />
@@ -521,9 +521,11 @@ export function NewRequestDialog({
           </section>
 
           <section className="grid gap-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              {isMedico ? "Dados médicos" : "Dados do procedimento"}
-            </h3>
+            {!isMedico && (
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Dados do procedimento
+              </h3>
+            )}
             <div className="grid gap-4 sm:grid-cols-2">
               {!isMedico && (
                 <>

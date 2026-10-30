@@ -14,6 +14,12 @@ function saveToken(token: string | null) {
 export function localApiUrl() {
   const value = import.meta.env["VITE_PORTAL_API_URL"];
   if (!value) throw new Error("Endereço da API do portal não configurado.");
+  if (value.startsWith("/")) {
+    if (!/^\/(?!\/)[A-Za-z0-9/_-]+$/.test(value)) {
+      throw new Error("Endereço local da API inválido.");
+    }
+    return value.replace(/\/+$/, "");
+  }
   const url = new URL(value);
   const allowPrivateHttp = import.meta.env["VITE_PORTAL_ALLOW_PRIVATE_HTTP"] === "true";
   const privateHostname =

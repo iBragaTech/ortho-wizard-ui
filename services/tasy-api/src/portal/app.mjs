@@ -55,19 +55,25 @@ export async function createPortalApp({
       }),
   });
   const exports = createExportService({ db, send: budgetExporter, principals, resolvePrincipal });
-  const returnSync = budgetReader
-    ? createReturnSync({ db, read: budgetReader, approvalRule })
-    : null;
-  const patientPdf = createPatientPdf({ db, refreshQuote: returnSync?.refresh });
+  let returnSync = null;
   const emails = emailSender
     ? createEmailService({
         db,
         send: emailSender,
         newRecipient: newBudgetRecipient,
         portalOrigin,
-        refreshQuote: returnSync?.refresh,
+        refreshQuote: (id) => returnSync?.refresh(id),
       })
     : null;
+  returnSync = budgetReader
+    ? createReturnSync({
+        db,
+        read: budgetReader,
+        approvalRule,
+        enqueueDoctorReady: emails?.enqueueDoctorReady,
+      })
+    : null;
+  const patientPdf = createPatientPdf({ db, refreshQuote: returnSync?.refresh });
   const run = createPortalOperations(db, {
     enqueueExport: budgetExporter ? exports.enqueue : undefined,
     enqueueNewEmail: emails?.enqueueNew,

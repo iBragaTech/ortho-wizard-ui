@@ -21,6 +21,8 @@ export async function buildBudgetMail({ kind, snapshot, recipient, id, portalOri
   const logo = await readFile(logoUrl);
   const { data, numero } = snapshot;
   const internal = kind === "new_request";
+  const doctorNotice = kind === "doctor_quote_ready";
+  const patientQuote = kind === "patient_quote";
   if (internal && !/^\d+$/.test(String(snapshot.tasyId ?? "")))
     throw new Error("Número do orçamento Tasy ainda não confirmado.");
   const displayNumber = internal ? snapshot.tasyId : numero;
@@ -35,17 +37,31 @@ export async function buildBudgetMail({ kind, snapshot, recipient, id, portalOri
         ["Médico", data.medico],
         ["Procedimento", data.especialidade],
       ]
-    : [
+    : doctorNotice
+      ? [
+          ["Orçamento", numero],
+          ["Paciente", data.paciente.nome],
+          ["Situação", "Em aprovação"],
+        ]
+      : [
         ["Orçamento", numero],
         ["Paciente", data.paciente.nome],
         ["Situação", "Em aprovação"],
         ["Valor do orçamento", money(data.tasyRetorno.total)],
       ];
-  const title = internal ? "Novo orçamento pendente" : "Seu orçamento está disponível";
+  const title = internal
+    ? "Novo orçamento pendente"
+    : doctorNotice
+      ? "Valores do orçamento disponíveis"
+      : "Seu orçamento está disponível";
   const intro = internal
     ? "Uma nova solicitação foi criada pelo portal e aguarda avaliação de Custos no Tasy."
-    : "Olá! Encaminhamos seu orçamento em anexo para avaliação. Para orientações sobre pagamento, entre em contato com o hospital.";
-  const link = internal ? `${portalOrigin}/orcamentos/${encodeURIComponent(snapshot.id)}` : null;
+    : doctorNotice
+      ? `Olá${snapshot.doctorName ? `, ${esc(snapshot.doctorName)}` : ""}! Os valores do orçamento já estão disponíveis no portal para você informar ao paciente.`
+      : "Olá! Encaminhamos seu orçamento em anexo para avaliação. Para orientações sobre pagamento, entre em contato com o hospital.";
+  const link = internal || doctorNotice
+    ? `${portalOrigin}/orcamentos/${encodeURIComponent(snapshot.id)}`
+    : null;
   const html = frame(
     title,
     `<p style="line-height:1.7;font-size:15px">${intro}</p>${details(entries)}${link ? `<p style="margin:26px 0 8px"><a href="${esc(link)}" style="display:inline-block;background:${blue};color:white;padding:13px 20px;border-radius:6px;text-decoration:none;font-weight:bold">Consultar orçamento no portal</a></p><p style="font-size:12px;color:#5e6d78">Acesso restrito à equipe autorizada.</p>` : `<p style="font-size:13px;color:#5e6d78;margin-top:24px">O PDF anexo apresenta os itens e os valores do orçamento. O pagamento ainda depende da confirmação da Tesouraria.</p>`}`,
@@ -58,7 +74,7 @@ export async function buildBudgetMail({ kind, snapshot, recipient, id, portalOri
       contentType: "image/png",
     },
   ];
-  if (!internal)
+  if (patientQuote)
     attachments.push({
       filename: `Orcamento-${String(numero).replace(/[^a-zA-Z0-9-]/g, "")}.pdf`,
       content: await buildPatientQuotePdf({

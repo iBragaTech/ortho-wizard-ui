@@ -160,5 +160,13 @@ export async function migrate(db) {
       );
       await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (9)");
     }
+    if (
+      !(await tx.query("SELECT version FROM portal.schema_migrations WHERE version=10")).rows.length
+    ) {
+      await tx.exec(
+        "ALTER TABLE portal.email_outbox DROP CONSTRAINT email_outbox_kind_check; ALTER TABLE portal.email_outbox ADD CONSTRAINT email_outbox_kind_check CHECK (kind IN ('new_request','patient_quote','doctor_quote_ready'));",
+      );
+      await tx.query("INSERT INTO portal.schema_migrations(version) VALUES (10)");
+    }
   });
 }

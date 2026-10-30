@@ -17,7 +17,7 @@ export function returnStatus(snapshot, approvalRule) {
   );
 }
 
-export function createReturnSync({ db, read, approvalRule }) {
+export function createReturnSync({ db, read, approvalRule, enqueueDoctorReady }) {
   // The rule must be explicitly configured; enabling sync never silently chooses approval policy.
   returnStatus({ statusCode: 5, receipt: false }, approvalRule);
   let running;
@@ -88,6 +88,13 @@ export function createReturnSync({ db, read, approvalRule }) {
             "UPDATE portal.requests SET data=$2::jsonb,status=$3,updated_at=now() WHERE id=$1",
             [row.request_id, JSON.stringify(data), status],
           );
+          const previousReturn = current.data.tasyRetorno;
+          const doctorQuoteReady =
+            status === "em_aprovacao" &&
+            complete &&
+            (!previousReturn?.completo || previousReturn.hash !== hash || current.status !== status);
+          if (doctorQuoteReady && enqueueDoctorReady)
+            await enqueueDoctorReady(tx, row.request_id);
           if (current.data.tasyRetorno?.hash !== hash)
             await tx.query(
               "INSERT INTO portal.events(request_id,actor_id,titulo,descricao) VALUES ($1,$2,$3,$4)",

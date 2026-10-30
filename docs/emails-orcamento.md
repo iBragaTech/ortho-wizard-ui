@@ -4,6 +4,8 @@ A notificação de Custos usa **Orçamento Tasy** no corpo e o número Tasy no a
 
 Ao criar um orçamento, a API grava uma notificação na fila local, na mesma transação da solicitação. O destinatário é `PORTAL_NEW_BUDGET_EMAIL_TO`, inicialmente `amanda.rafaela@he.org.br`. A mensagem contém nome, CPF, nascimento, telefone, e-mail, médico e identificação do orçamento. Não há envio retroativo dos orçamentos anteriores à ativação.
 
+Quando a sincronização do Tasy coloca em **Em aprovação** uma solicitação criada por um médico e confirma que os valores estão disponíveis, a API envia ao e-mail cadastrado no perfil do médico um aviso com o paciente, o número do orçamento e um link para consultá-lo no portal. O aviso não inclui os valores; ele informa que já estão disponíveis para o médico orientar o paciente. A mesma versão do orçamento não gera avisos duplicados. Se os valores forem atualizados, um novo aviso poderá ser enviado.
+
 Em **Em aprovação**, o médico responsável ou administrador pode clicar em **Enviar orçamento ao paciente**. A caixa já mostra o e-mail registrado no orçamento e permite alterá-lo somente para esse envio. O PDF anexo usa os itens e o total retornados pelo Tasy; não recalcula preços nem soma novamente os honorários informativos. Antes de enfileirar e de enviar, a API consulta novamente o Tasy. Se a versão ou situação mudar, o envio é bloqueado e deve ser solicitado de novo com os dados atualizados.
 
 ## Configuração e ativação
@@ -21,7 +23,7 @@ O SMTP é obtido da conexão Oracle configurada para a API, em `TASY.AEBMG_SRV_I
 
 Na rede atual, `smtp.aebmg.org.br` e `webmail.aebmg.org.br` resolvem para o mesmo servidor, mas o certificado identifica `webmail.aebmg.org.br`. Por isso `PORTAL_EMAIL_TLS_SERVERNAME` define esse nome para SNI e validação de identidade, mantendo `rejectUnauthorized=true`. Não desative a validação TLS. A conexão e a autenticação foram verificadas sem enviar mensagens. Falhas novas preservam um código seguro de configuração, certificado, autenticação ou conexão no painel.
 
-Instale as dependências com `npm ci` na pasta da API. Reinicie a API no terminal com `npm run portal:start` para carregar a configuração, o código e a migração 8. A migração cria apenas `portal.email_outbox` na base local do portal. Esta funcionalidade não cria objetos no Oracle/Tasy.
+Instale as dependências com `npm ci` na pasta da API. Reinicie a API no terminal com `npm run portal:start` para carregar o código e as migrações pendentes. A migração 8 criou `portal.email_outbox`; a migração 10 inclui o novo tipo de aviso ao médico. Esta funcionalidade não cria objetos no Oracle/Tasy.
 
 ## Acompanhamento
 

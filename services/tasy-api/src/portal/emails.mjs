@@ -68,6 +68,33 @@ export function createEmailService({
         [id, user.id, recipient, `new:${id}`, JSON.stringify(row)],
       );
     },
+    enqueueDoctorReady: async (tx, id) => {
+      const row = (
+        await tx.query(
+          `SELECT r.id,r.numero,r.created_at,r.data,r.created_by,u.nome AS "doctorName",
+            u.email,u.perfil FROM portal.requests r JOIN portal.users u ON u.id=r.created_by
+          WHERE r.id=$1`,
+          [id],
+        )
+      ).rows[0];
+      if (!row || row.perfil !== "Médico") return;
+      const parsedRecipient = email.safeParse(row.email);
+      const hash = row.data?.tasyRetorno?.hash;
+      if (!parsedRecipient.success || !hash) return;
+      const snapshot = {
+        id: row.id,
+        numero: row.numero,
+        status: "em_aprovacao",
+        created_at: row.created_at,
+        doctorName: row.doctorName,
+        data: row.data,
+      };
+      await tx.query(
+        `INSERT INTO portal.email_outbox(request_id,actor_id,kind,recipient,dedupe_key,snapshot)
+        VALUES ($1,$2,'doctor_quote_ready',$3,$4,$5::jsonb) ON CONFLICT(dedupe_key) DO NOTHING`,
+        [id, row.created_by, parsedRecipient.data, `doctor-ready:${id}:${hash}`, JSON.stringify(snapshot)],
+      );
+    },
     status: async (input, user) => {
       const { id } = parse(idSchema, input);
       await access(id, user);
@@ -219,6 +246,28 @@ export function createEmailService({
                 },
               };
             }
+            if (row.kind === "doctor_quote_ready") {
+              const current = (
+                await db.query("SELECT * FROM portal.requests WHERE id=$1", [row.request_id])
+              ).rows[0];
+              if (
+                !current ||
+                current.status !== "em_aprovacao" ||
+                current.data.tasyRetorno?.completo !== true ||
+                current.data.tasyRetorno?.hash !== row.snapshot.data.tasyRetorno?.hash
+              )
+                throw new ApiError(
+                  409,
+                  "QUOTE_CHANGED",
+                  "O orçamento mudou antes do aviso ao médico.",
+                );
+              row.snapshot = {
+                ...row.snapshot,
+                status: current.status,
+                created_at: current.created_at,
+                data: current.data,
+              };
+            }
             const mail = await buildMail({
               kind: row.kind,
               snapshot: row.snapshot,
@@ -238,7 +287,7 @@ export function createEmailService({
                 row.request_id,
                 row.actor_id,
                 "E-mail aceito pelo servidor",
-                `${row.kind === "new_request" ? "Notificação de novo orçamento" : "Orçamento em PDF"} enviado para ${row.recipient}.`,
+                `${row.kind === "new_request" ? "Notificação de novo orçamento" : row.kind === "doctor_quote_ready" ? "Aviso de orçamento disponível ao médico" : "Orçamento em PDF"} enviado para ${row.recipient}.`,
               );
             });
           } catch (error) {

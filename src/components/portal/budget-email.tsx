@@ -20,7 +20,7 @@ import {
 
 type Entry = {
   id: string;
-  kind: "new_request" | "patient_quote";
+  kind: "new_request" | "patient_quote" | "doctor_quote_ready";
   recipient: string;
   state: "queued" | "sending" | "sent" | "failed" | "unknown";
   error_code: string | null;
@@ -118,12 +118,20 @@ export function BudgetEmail({ request }: { request: ConsultationRequest }) {
       {status.data?.messages.map((entry) => (
         <div key={entry.id} className="border-t pt-3 text-sm space-y-1">
           <p className="font-medium">
-            {entry.kind === "new_request" ? "Notificação de novo orçamento" : "Orçamento em PDF"}
+            {entry.kind === "new_request"
+              ? "Notificação de novo orçamento"
+              : entry.kind === "doctor_quote_ready"
+                ? "Valores do orçamento disponíveis"
+                : "Orçamento em PDF"}
           </p>
           <p className="break-all">{entry.recipient}</p>
           <p role="status">{labels[entry.state]}</p>
           {entry.error_code === "QUOTE_CHANGED" && (
-            <p>O orçamento mudou. Atualize a página e solicite um novo envio.</p>
+            <p>
+              {entry.kind === "doctor_quote_ready"
+                ? "O orçamento mudou depois que este aviso foi preparado. Um novo aviso será gerado quando os valores atualizados estiverem disponíveis."
+                : "O orçamento mudou. Atualize a página e solicite um novo envio."}
+            </p>
           )}
           {entry.error_code?.startsWith("SMTP_") && (
             <p role="alert">

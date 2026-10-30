@@ -2,7 +2,7 @@ CREATE TABLE portal.email_outbox (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   request_id uuid NOT NULL REFERENCES portal.requests(id),
   actor_id uuid NOT NULL REFERENCES portal.users(id),
-  kind text NOT NULL CHECK (kind IN ('new_request','patient_quote')),
+  kind text NOT NULL CHECK (kind IN ('new_request','patient_quote','doctor_quote_ready')),
   recipient text NOT NULL,
   dedupe_key text NOT NULL UNIQUE,
   snapshot jsonb NOT NULL,

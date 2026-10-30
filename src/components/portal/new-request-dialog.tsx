@@ -403,6 +403,7 @@ export function NewRequestDialog({
                 <Input
                   id="nome"
                   placeholder="Nome completo do paciente"
+                  className="disabled:bg-muted-foreground/15 disabled:text-foreground disabled:opacity-100"
                   value={form.nome}
                   disabled={!patientFieldsEditable}
                   onChange={(e) => set("nome")(e.target.value)}
@@ -416,6 +417,7 @@ export function NewRequestDialog({
                 <Input
                   id="nascimento"
                   type="date"
+                  className="disabled:bg-muted-foreground/15 disabled:text-foreground disabled:opacity-100"
                   value={form.nascimento}
                   disabled={!patientFieldsEditable}
                   onChange={(e) => set("nascimento")(e.target.value)}
@@ -429,6 +431,7 @@ export function NewRequestDialog({
                 <Input
                   id="cpf"
                   placeholder="000.000.000-00"
+                  className="disabled:bg-muted-foreground/15 disabled:text-foreground disabled:opacity-100"
                   value={form.cpf}
                   disabled={!patientFieldsEditable}
                   onChange={(e) => {
@@ -438,7 +441,7 @@ export function NewRequestDialog({
                   }}
                 />
               </div>
-              <div className="grid gap-2">
+              <div className="grid grid-rows-[20px_auto_auto] gap-2">
                 <Label htmlFor="telefone">Telefone</Label>
                 <Input
                   id="telefone"
@@ -456,7 +459,7 @@ export function NewRequestDialog({
                   </p>
                 )}
               </div>
-              <div className="grid gap-2">
+              <div className="grid grid-rows-[20px_auto_auto] gap-2">
                 <Label htmlFor="email">
                   E-mail
                   <RequiredMark />

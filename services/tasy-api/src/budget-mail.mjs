@@ -9,6 +9,8 @@ const esc = (value) =>
     /[&<>"']/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
   );
+const hideProcedureOrigin = (value) =>
+  String(value ?? "").replace(/[^\S\r\n]*\(origem(?:\s+[^)]*)?\)/gi, "");
 const money = (value) =>
   Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 function frame(title, content) {
@@ -35,7 +37,7 @@ export async function buildBudgetMail({ kind, snapshot, recipient, id, portalOri
         ["Telefone", data.paciente.telefone],
         ["E-mail", data.paciente.email],
         ["Médico", data.medico],
-        ["Procedimento", data.especialidade],
+        ["Procedimento", hideProcedureOrigin(data.especialidade)],
       ]
     : doctorNotice
       ? [

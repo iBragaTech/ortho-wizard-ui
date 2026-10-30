@@ -31,6 +31,7 @@ export const catalogoOperations = {
         JOIN TASY.categoria_convenio c ON c.cd_convenio = v.cd_convenio
           AND c.cd_categoria = :cdCategoria AND c.ie_situacao = 'A'
         WHERE p.ie_situacao = 'A' AND p.ds_procedimento IS NOT NULL
+          AND p.ie_origem_proced IN (4, 8)
           AND (:busca IS NULL OR INSTR(UPPER(p.ds_procedimento), UPPER(:busca)) > 0
             OR TRIM(TO_CHAR(p.cd_procedimento)) LIKE TRIM(:busca) || '%')
         ORDER BY p.ds_procedimento, p.cd_procedimento, p.ie_origem_proced

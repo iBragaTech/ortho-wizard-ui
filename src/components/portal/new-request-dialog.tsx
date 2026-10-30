@@ -456,7 +456,7 @@ export function NewRequestDialog({
                   </p>
                 )}
               </div>
-              <div className="grid gap-2 sm:col-span-2 sm:w-1/2 sm:justify-self-center">
+              <div className="grid gap-2">
                 <Label htmlFor="email">
                   E-mail
                   <RequiredMark />

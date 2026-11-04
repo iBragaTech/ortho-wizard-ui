@@ -89,7 +89,7 @@ export function NewRequestDialog({
   const [catalogContext, setCatalogContext] = useState({ cdConvenio: "", cdCategoria: "" });
   const [ctiOpcao, setCtiOpcao] = useState<"possui" | "reserva" | "nao">("nao");
   const [sangue, setSangue] = useState<string[]>([]);
-  const [multidisciplinar, setMultidisciplinar] = useState<string[]>([]);
+  const [multidisciplinar, setMultidisciplinar] = useState<EquipeItem[]>([]);
   const create = useCreateRequest();
   const { user } = useSession();
   const origem = user?.perfil === "Médico" ? "medico" : origemProp;
@@ -213,7 +213,9 @@ export function NewRequestDialog({
           form.anatomo && `Anátomo Patológico: ${form.anatomo}`,
           sangue.length && `Reserva de sangue: ${sangue.join("; ")}`,
           multidisciplinar.length &&
-            `Equipe multidisciplinar/Fisioterapia: ${multidisciplinar.join("; ")}`,
+            `Equipe multidisciplinar/Fisioterapia: ${multidisciplinar
+              .map((item) => (item.quantidade ? `${item.nome} ${item.quantidade}` : item.nome))
+              .join("; ")}`,
           blockTime.value && `Tempo de bloco: ${blockTime.value}`,
         ]
           .filter(Boolean)
@@ -276,7 +278,9 @@ export function NewRequestDialog({
                 opme: opmeTexto,
                 anatomoPatologico: form.anatomo,
                 reservaSangue: sangue.join("; "),
-                equipeMultidisciplinar: multidisciplinar.join("; "),
+                equipeMultidisciplinar: multidisciplinar
+                  .map((item) => (item.quantidade ? `${item.nome} ${item.quantidade}` : item.nome))
+                  .join("; "),
                 fisioterapia: null,
                 tempoBloco: blockTime.value,
                 obsMedico: form.obsMedico,
@@ -649,10 +653,8 @@ export function NewRequestDialog({
                 <Label htmlFor="multidisciplinar">
                   {isMedico ? "Equipe multidisciplinar" : "Equipe multidisciplinar/Fisioterapia"}
                 </Label>
-                <TagInput
+                <MultidisciplinarSelect
                   id="multidisciplinar"
-                  placeholder="Ex.: Fisioterapia 2x/dia"
-                  hint="Pressione Enter para adicionar mais itens"
                   value={multidisciplinar}
                   onChange={setMultidisciplinar}
                 />

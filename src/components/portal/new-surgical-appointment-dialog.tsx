@@ -256,9 +256,9 @@ export function NewSurgicalAppointmentDialog({ trigger }: { trigger: ReactNode }
     if (form.origemPaciente === "Outros" && !form.origemOutros.trim())
       return void toast.error("Descreva a origem do paciente.");
     if (!form.convenio.trim()) return void toast.error("Informe o convênio.");
-    if (!form.dataCirurgia) return void toast.error("Informe a data da cirurgia.");
+    if (!form.dataCirurgia) return void toast.error("Informe a data prevista da cirurgia.");
     if (form.dataCirurgia.slice(0, 10) < today())
-      return void toast.error("A data da cirurgia não pode estar no passado.");
+      return void toast.error("A data prevista da cirurgia não pode estar no passado.");
     if (!form.duracaoPrevistaMin || form.duracaoPrevistaMin < 1)
       return void toast.error("Informe a duração prevista em minutos.");
     if (!form.porte) return void toast.error("Informe o porte da cirurgia.");
@@ -471,7 +471,7 @@ export function NewSurgicalAppointmentDialog({ trigger }: { trigger: ReactNode }
               </Field>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field label={<span>Data da cirurgia <RequiredMark /></span>}>
+              <Field label={<span>Data prevista da cirurgia <RequiredMark /></span>}>
                 <Input
                   type="datetime-local"
                   min={nowLocal()}

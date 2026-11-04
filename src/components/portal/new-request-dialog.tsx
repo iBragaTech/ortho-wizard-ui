@@ -175,6 +175,10 @@ export function NewRequestDialog({
       toast.error("Informe quantidades inteiras entre 1 e 10.000.");
       return;
     }
+    if (multidisciplinar.some((item) => !item.quantidade || Number(item.quantidade) < 1)) {
+      toast.error("Informe a quantidade de sessões de cada serviço da equipe multidisciplinar.");
+      return;
+    }
     const opmeTexto = opme.map((item) => `${item.codigo} - ${item.nome}`).join("; ");
     const materiaisTexto = materiais.map((item) => `${item.codigo} - ${item.nome}`).join("; ");
     const convenioTexto = form.convenio.trim() ? `Convênio: ${form.convenio.trim()}` : "";

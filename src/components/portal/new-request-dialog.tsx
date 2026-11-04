@@ -38,6 +38,7 @@ import {
   type TasyProcedureItem,
 } from "@/components/portal/tasy-procedure-select";
 import { TasyPatientSearch } from "@/components/portal/tasy-patient-search";
+import { MultidisciplinarSelect, type EquipeItem } from "@/components/portal/multidisciplinar-select";
 import { TagInput } from "@/components/portal/tag-input";
 import { isValidCpf, telefonePessoaTasy } from "@/lib/data/tasy";
 import { getTasyClient } from "@/lib/data/tasy-supabase";

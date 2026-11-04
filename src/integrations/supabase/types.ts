@@ -215,6 +215,7 @@ export type Database = {
           nome: string
           perfil: Database["public"]["Enums"]["user_profile"]
           senha_hash: string | null
+          telefone: string | null
           ultimo_acesso: string | null
           updated_at: string
         }
@@ -226,6 +227,7 @@ export type Database = {
           nome: string
           perfil: Database["public"]["Enums"]["user_profile"]
           senha_hash?: string | null
+          telefone?: string | null
           ultimo_acesso?: string | null
           updated_at?: string
         }
@@ -237,6 +239,7 @@ export type Database = {
           nome?: string
           perfil?: Database["public"]["Enums"]["user_profile"]
           senha_hash?: string | null
+          telefone?: string | null
           ultimo_acesso?: string | null
           updated_at?: string
         }
@@ -332,6 +335,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      atualizar_meu_perfil: {
+        Args: {
+          p_email: string
+          p_id: string
+          p_nome: string
+          p_telefone: string
+        }
+        Returns: {
+          email: string
+          id: string
+          nome: string
+          telefone: string
+        }[]
+      }
       criar_agendamento_cirurgico:
         | {
             Args: {
@@ -391,6 +408,7 @@ export type Database = {
           id: string
           nome: string
           perfil: Database["public"]["Enums"]["user_profile"]
+          telefone: string
         }[]
       }
     }

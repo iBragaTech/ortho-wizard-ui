@@ -92,9 +92,6 @@ export function MultidisciplinarSelect({ id, value, onChange }: Multidisciplinar
           </SelectContent>
         </Select>
       )}
-      <Label className="sr-only" htmlFor={id}>
-        Equipe multidisciplinar
-      </Label>
     </div>
   );
 }

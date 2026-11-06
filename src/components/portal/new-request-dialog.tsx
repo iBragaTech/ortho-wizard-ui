@@ -38,6 +38,7 @@ import {
   type TasyProcedureItem,
 } from "@/components/portal/tasy-procedure-select";
 import { TasyPatientSearch } from "@/components/portal/tasy-patient-search";
+import { MultidisciplinarSelect, type EquipeItem } from "@/components/portal/multidisciplinar-select";
 import { TagInput } from "@/components/portal/tag-input";
 import { isValidCpf, telefonePessoaTasy } from "@/lib/data/tasy";
 import { getTasyClient } from "@/lib/data/tasy-supabase";
@@ -89,7 +90,7 @@ export function NewRequestDialog({
   const [catalogContext, setCatalogContext] = useState({ cdConvenio: "", cdCategoria: "" });
   const [ctiOpcao, setCtiOpcao] = useState<"possui" | "reserva" | "nao">("nao");
   const [sangue, setSangue] = useState<string[]>([]);
-  const [multidisciplinar, setMultidisciplinar] = useState<string[]>([]);
+  const [multidisciplinar, setMultidisciplinar] = useState<EquipeItem[]>([]);
   const create = useCreateRequest();
   const { user } = useSession();
   const origem = user?.perfil === "Médico" ? "medico" : origemProp;
@@ -174,6 +175,10 @@ export function NewRequestDialog({
       toast.error("Informe quantidades inteiras entre 1 e 10.000.");
       return;
     }
+    if (multidisciplinar.some((item) => !item.quantidade || Number(item.quantidade) < 1)) {
+      toast.error("Informe a quantidade de sessões de cada serviço da equipe multidisciplinar.");
+      return;
+    }
     const opmeTexto = opme.map((item) => `${item.codigo} - ${item.nome}`).join("; ");
     const materiaisTexto = materiais.map((item) => `${item.codigo} - ${item.nome}`).join("; ");
     const convenioTexto = form.convenio.trim() ? `Convênio: ${form.convenio.trim()}` : "";
@@ -213,7 +218,9 @@ export function NewRequestDialog({
           form.anatomo && `Anátomo Patológico: ${form.anatomo}`,
           sangue.length && `Reserva de sangue: ${sangue.join("; ")}`,
           multidisciplinar.length &&
-            `Equipe multidisciplinar/Fisioterapia: ${multidisciplinar.join("; ")}`,
+            `Equipe multidisciplinar/Fisioterapia: ${multidisciplinar
+              .map((item) => (item.quantidade ? `${item.nome} ${item.quantidade}` : item.nome))
+              .join("; ")}`,
           blockTime.value && `Tempo de bloco: ${blockTime.value}`,
         ]
           .filter(Boolean)
@@ -276,7 +283,9 @@ export function NewRequestDialog({
                 opme: opmeTexto,
                 anatomoPatologico: form.anatomo,
                 reservaSangue: sangue.join("; "),
-                equipeMultidisciplinar: multidisciplinar.join("; "),
+                equipeMultidisciplinar: multidisciplinar
+                  .map((item) => (item.quantidade ? `${item.nome} ${item.quantidade}` : item.nome))
+                  .join("; "),
                 fisioterapia: null,
                 tempoBloco: blockTime.value,
                 obsMedico: form.obsMedico,
@@ -645,14 +654,12 @@ export function NewRequestDialog({
                   onChange={setSangue}
                 />
               </div>
-              <div className="grid gap-2">
+              <div className="grid content-start gap-2">
                 <Label htmlFor="multidisciplinar">
                   {isMedico ? "Equipe multidisciplinar" : "Equipe multidisciplinar/Fisioterapia"}
                 </Label>
-                <TagInput
+                <MultidisciplinarSelect
                   id="multidisciplinar"
-                  placeholder="Ex.: Fisioterapia 2x/dia"
-                  hint="Pressione Enter para adicionar mais itens"
                   value={multidisciplinar}
                   onChange={setMultidisciplinar}
                 />

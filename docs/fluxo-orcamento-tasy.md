@@ -87,8 +87,10 @@ W_CONSULTA_PRECO e COMMIT. Precisa de operação própria e tratamento de concor
 e identificação do resultado. Não deve ser exposta como consulta SQL livre nem
 executada na rota somente de leitura dos catálogos.
 
-Situação atual: os valores do portal ainda são manuais. Falta integrar e homologar
-o cálculo. A composição dos totais deve ser confirmada com o hospital: não assumir
+Situação atual: ao criar um orçamento, a integração chama
+`TASY.CALCULAR_ORCAMENTO_PACIENTE` para preencher os valores das linhas no Tasy.
+A consulta independente de referências por item e a composição dos totais exibidos
+no portal ainda dependem de homologação. Não assumir
 que VL_PROCEDIMENTO seja valor hospitalar líquido nem somá-lo indiscriminadamente
 às parcelas VL_MEDICO, VL_ANESTESISTA, VL_AUXILIARES ou VL_MATERIAIS.
 

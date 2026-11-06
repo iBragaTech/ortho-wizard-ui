@@ -61,7 +61,12 @@ export function createTasyClient(options: {
   baseUrl: string;
   getAccessToken: () => Promise<string | null>;
 }) {
-  const url = new URL(options.baseUrl);
+  // Local portal deployments may use a same-origin path such as `/portal-api`.
+  // `fetch` accepts that path directly, but URL validation needs an origin.
+  const url = new URL(
+    options.baseUrl,
+    typeof window === "undefined" ? "http://localhost" : window.location.origin,
+  );
   const local = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
   const privateNetwork =
     /^(10(?:\.\d{1,3}){3}|192\.168(?:\.\d{1,3}){2}|172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})$/.test(

@@ -14,8 +14,82 @@ export function canonicalJson(value) {
   return JSON.stringify(value);
 }
 
-// Exports a quotation draft, not a priced/finalized quote. No calculation routines
-// are called here: some of them COMMIT independently of the caller.
+async function calculateBudget(c, id, principal, primary) {
+  await c.execute(
+    `BEGIN
+      TASY.CALCULAR_ORCAMENTO_PACIENTE(
+        NM_USUARIO_P => :usuario,
+        CD_ESTABELECIMENTO_P => :estab,
+        NR_SEQ_ORCAMENTO_P => :orcamento
+      );
+    END;`,
+    {
+      usuario: principal.tasyUsername,
+      estab: principal.tasyEstablishment,
+      orcamento: Number(id),
+    },
+  );
+  const result = await c.execute(
+    `SELECT vl_procedimento AS "vlProcedimento"
+     FROM TASY.orcamento_paciente_proc
+     WHERE nr_sequencia_orcamento=:id AND nr_sequencia=:itemId`,
+    { id, itemId: primary },
+  );
+  if (result.rows?.length !== 1 || result.rows[0].vlProcedimento == null)
+    throw new ApiError(
+      409,
+      "PROCEDURE_PRICE_NOT_CALCULATED",
+      "O Tasy não confirmou o valor do procedimento após calcular o orçamento.",
+    );
+}
+
+async function recordExportLog(c, { snapshot, principal, id, hash }) {
+  const result = await c.execute(
+    `INSERT INTO TASY."AEBMG_PAINEL_ORÇAMENTO_LOG"
+     (NR_ORCAMENTO,ID_PORTAL,ID_USUARIO_PORTAL,NM_USUARIO,CD_ESTABELECIMENTO,
+      CD_PERFIL,HASH_CONTEUDO,SNAPSHOT_PORTAL,CABECALHO_TASY,PROCEDIMENTOS_TASY,MATERIAIS_TASY)
+     SELECT h.nr_sequencia_orcamento,:portal,:actor,:usuario,:estab,:perfil,:hash,:snapshot,
+       JSON_OBJECT(h.* RETURNING CLOB),
+       COALESCE((SELECT JSON_ARRAYAGG(JSON_OBJECT(p.* RETURNING CLOB)
+         ORDER BY p.nr_sequencia RETURNING CLOB)
+         FROM TASY.orcamento_paciente_proc p WHERE p.nr_sequencia_orcamento=h.nr_sequencia_orcamento), TO_CLOB('[]')),
+       COALESCE((SELECT JSON_ARRAYAGG(JSON_OBJECT(m.* RETURNING CLOB)
+         ORDER BY m.nr_sequencia RETURNING CLOB)
+         FROM TASY.orcamento_paciente_mat m WHERE m.nr_sequencia_orcamento=h.nr_sequencia_orcamento), TO_CLOB('[]'))
+     FROM TASY.orcamento_paciente h WHERE h.nr_sequencia_orcamento=:id`,
+    {
+      id,
+      portal: snapshot.id,
+      actor: snapshot.actorId,
+      usuario: principal.tasyUsername,
+      estab: principal.tasyEstablishment,
+      perfil: principal.tasyProfile,
+      hash,
+      snapshot: { val: canonicalJson(snapshot), type: oracledb.CLOB },
+    },
+  );
+  if (result.rowsAffected !== 1)
+    throw new ApiError(
+      503,
+      "INITIAL_LOG_NOT_SAVED",
+      "O registro inicial do orçamento não foi gravado. O envio foi desfeito.",
+    );
+}
+
+async function recordExportHistory(c, { snapshot, principal, id, medicalFee }) {
+  const note =
+    `Portal ${snapshot.id}; usuario portal ${snapshot.actorId}; aguardando cotacao. ` +
+    `Honorario medico no VL_MEDICO do procedimento principal=${medicalFee ?? "nao informado"}; valor hospitalar informado no portal (nao precificado no ERP)=${snapshot.data.valorHospitalar ?? "nao informado"}.`;
+  await c.execute(
+    `INSERT INTO TASY.orcamento_historico
+    (nr_sequencia,nr_sequencia_orcamento,dt_atualizacao,nm_usuario,dt_atualizacao_nrec,nm_usuario_nrec,dt_historico,ds_historico,dt_liberacao)
+    VALUES (TASY.ORCAMENTO_HISTORICO_SEQ.NEXTVAL,:id,SYSDATE,:usuario,SYSDATE,:usuario,SYSDATE,:nota,SYSDATE)`,
+    { id, usuario: principal.tasyUsername, nota: note },
+  );
+}
+
+// The Tasy calculation procedure commits independently. Keep the portal ID linked
+// before calling it and make post-calculation audit writes recoverable on retry.
 export function createBudgetExporter({ pool, enabled = false, audit = () => {} }) {
   return async (snapshot, principal) => {
     if (!enabled)
@@ -106,7 +180,37 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
         ).rows?.[0];
         if (previous?.hash !== hash || !previous.id)
           throw new ApiError(409, "EXPORT_CONFLICT", "Envio anterior requer conferência no Tasy.");
+        const logged = await c.execute(
+          `SELECT 1 AS "found" FROM TASY."AEBMG_PAINEL_ORÇAMENTO_LOG" WHERE NR_ORCAMENTO=:id`,
+          { id: previous.id },
+        );
         await c.rollback();
+        if (!logged.rows?.length) {
+          const primaryRow = (
+            await c.execute(
+              `SELECT nr_sequencia AS "id" FROM TASY.orcamento_paciente_proc
+               WHERE nr_sequencia_orcamento=:id AND cd_procedimento=:codigo
+                 AND ie_origem_proced=:origem AND nr_seq_proc_princ IS NULL`,
+              {
+                id: previous.id,
+                codigo: selection.procedimentos[0].codigo,
+                origem: selection.procedimentos[0].origem,
+              },
+            )
+          ).rows?.[0];
+          if (!primaryRow?.id)
+            throw new ApiError(409, "EXPORT_CONFLICT", "Envio anterior requer conferência no Tasy.");
+          committing = true;
+          await calculateBudget(c, previous.id, principal, primaryRow.id);
+          await recordExportHistory(c, {
+            snapshot,
+            principal,
+            id: previous.id,
+            medicalFee,
+          });
+          await recordExportLog(c, { snapshot, principal, id: previous.id, hash });
+          await c.commit();
+        }
         return { nrOrcamento: previous.id, recuperado: true };
       }
       const patient = (
@@ -198,8 +302,8 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
         await c.execute(
           `INSERT INTO TASY.orcamento_paciente_proc
           (nr_sequencia,nr_sequencia_orcamento,cd_procedimento,ie_origem_proced,qt_procedimento,
-           dt_atualizacao,nm_usuario,nr_seq_proc_princ,vl_medico)
-          VALUES (:itemId,:id,:codigo,:origem,:quantidade,SYSDATE,:usuario,:principal,:vlMedico)`,
+           dt_atualizacao,nm_usuario,nr_seq_proc_princ,vl_procedimento,vl_medico)
+          VALUES (:itemId,:id,:codigo,:origem,:quantidade,SYSDATE,:usuario,:principal,:vlProcedimento,:vlMedico)`,
           {
             itemId,
             id,
@@ -208,6 +312,7 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
             quantidade: item.quantidade,
             usuario: principal.tasyUsername,
             principal: primary ?? null,
+            vlProcedimento: 0,
             // The amount entered in the portal belongs to the primary procedure
             // once; do not multiply by quantity or repeat it on additional items.
             vlMedico: primary === undefined ? medicalFee : null,
@@ -231,6 +336,12 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
           },
         );
       }
+      await c.execute(
+        "UPDATE TASY.AEBMG_PORTAL_ORCAMENTO_ENVIO SET NR_ORCAMENTO=:orc WHERE ID_PORTAL=:id",
+        { orc: id, id: snapshot.id },
+      );
+      committing = true;
+      await calculateBudget(c, id, principal, primary);
       if (medicalFee !== null) {
         const saved = await c.execute(
           `SELECT vl_medico AS "vlMedico" FROM TASY.orcamento_paciente_proc
@@ -244,43 +355,9 @@ export function createBudgetExporter({ pool, enabled = false, audit = () => {} }
             "O Tasy não confirmou o honorário no procedimento principal. O envio foi desfeito.",
           );
       }
-      const note =
-        `Portal ${snapshot.id}; usuario portal ${snapshot.actorId}; aguardando cotacao. ` +
-        `Honorario medico no VL_MEDICO do procedimento principal=${medicalFee ?? "nao informado"}; valor hospitalar informado no portal (nao precificado no ERP)=${snapshot.data.valorHospitalar ?? "nao informado"}.`;
-      await c.execute(
-        `INSERT INTO TASY.orcamento_historico
-        (nr_sequencia,nr_sequencia_orcamento,dt_atualizacao,nm_usuario,dt_atualizacao_nrec,nm_usuario_nrec,dt_historico,ds_historico,dt_liberacao)
-        VALUES (TASY.ORCAMENTO_HISTORICO_SEQ.NEXTVAL,:id,SYSDATE,:usuario,SYSDATE,:usuario,SYSDATE,:nota,SYSDATE)`,
-        { id, usuario: principal.tasyUsername, nota: note },
-      );
-      await c.execute(
-        "UPDATE TASY.AEBMG_PORTAL_ORCAMENTO_ENVIO SET NR_ORCAMENTO=:orc WHERE ID_PORTAL=:id",
-        { orc: id, id: snapshot.id },
-      );
-      // Preserve both the creation payload and the rows actually saved by Tasy
-      // triggers, before the transaction becomes visible to other users.
-      await c.execute(
-        `INSERT INTO TASY."AEBMG_PAINEL_ORÇAMENTO_LOG"
-         (NR_ORCAMENTO,ID_PORTAL,ID_USUARIO_PORTAL,NM_USUARIO,CD_ESTABELECIMENTO,
-          CD_PERFIL,HASH_CONTEUDO,SNAPSHOT_PORTAL,CABECALHO_TASY,PROCEDIMENTOS_TASY,MATERIAIS_TASY)
-         SELECT h.nr_sequencia_orcamento,:portal,:actor,:usuario,:estab,:perfil,:hash,:snapshot,
-           JSON_OBJECT(h.* RETURNING CLOB),
-           COALESCE((SELECT JSON_ARRAYAGG(JSON_OBJECT(p.* RETURNING CLOB)
-             ORDER BY p.nr_sequencia RETURNING CLOB)
-             FROM TASY.orcamento_paciente_proc p WHERE p.nr_sequencia_orcamento=h.nr_sequencia_orcamento), TO_CLOB('[]')),
-           COALESCE((SELECT JSON_ARRAYAGG(JSON_OBJECT(m.* RETURNING CLOB)
-             ORDER BY m.nr_sequencia RETURNING CLOB)
-             FROM TASY.orcamento_paciente_mat m WHERE m.nr_sequencia_orcamento=h.nr_sequencia_orcamento), TO_CLOB('[]'))
-         FROM TASY.orcamento_paciente h WHERE h.nr_sequencia_orcamento=:id`,
-        {
-          id, portal: snapshot.id, actor: snapshot.actorId, usuario: principal.tasyUsername,
-          estab: principal.tasyEstablishment, perfil: principal.tasyProfile, hash,
-          snapshot: { val: canonicalJson(snapshot), type: oracledb.CLOB },
-        },
-      ).then((result) => {
-        if (result.rowsAffected !== 1)
-          throw new ApiError(503, "INITIAL_LOG_NOT_SAVED", "O registro inicial do orçamento não foi gravado. O envio foi desfeito.");
-      });
+      // Preserve the creation payload and the rows after native Tasy calculation.
+      await recordExportHistory(c, { snapshot, principal, id, medicalFee });
+      await recordExportLog(c, { snapshot, principal, id, hash });
       committing = true;
       await c.commit();
       return { nrOrcamento: id, recuperado: false };

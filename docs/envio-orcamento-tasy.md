@@ -11,10 +11,15 @@ O usuário, estabelecimento e perfil são obtidos do vínculo Tasy validado no s
 O campo `honorariosMedicos` do portal é gravado em
 `ORCAMENTO_PACIENTE_PROC.VL_MEDICO` do **procedimento principal**. O valor é enviado
 uma única vez, sem multiplicação pela quantidade e sem repeti-lo nos procedimentos
-adicionais. Zero é preservado; honorário não informado permanece nulo. Antes do
-commit, a integração confere se o Tasy manteve o valor gravado. Se ele for alterado
-por uma regra do ERP, a inclusão é desfeita e a solicitação fica disponível para
-conferência e reconciliação.
+adicionais. Zero é preservado; honorário não informado permanece nulo. Cada linha de
+procedimento é inserida com `VL_PROCEDIMENTO=0`; depois de inserir todos os itens, a API
+chama `TASY.CALCULAR_ORCAMENTO_PACIENTE` com usuário, estabelecimento e número do
+orçamento e confirma que o procedimento principal recebeu `VL_PROCEDIMENTO`.
+
+Essa procedure confirma a transação no próprio Tasy. Por isso a API associa o número
+Tasy ao identificador do portal antes da chamada. Se a conexão cair depois do cálculo,
+repetir o envio da mesma solicitação retoma a gravação do histórico e do log sem criar
+outro orçamento.
 
 A seção **Registro no Tasy**, nos detalhes da solicitação, mostra o número retornado.
 Solicitações anteriores à ativação podem ser incluídas pelo botão dessa seção.
@@ -23,8 +28,9 @@ Não é necessário aprovar por Custos para fazer a inclusão inicial.
 A análise e aprovação de Custos continuam no portal. O conteúdo inicial enviado
 permanece preservado; revisões posteriores de itens, valores e status do portal
 não são sincronizadas automaticamente com o orçamento já criado no Tasy.
-O envio não executa rotinas de fechamento nem confirma preços finais.
-As triggers nativas continuam ativas e podem preencher valores conforme as regras do ERP.
+O envio executa o cálculo dos valores do orçamento, mas não executa rotinas de
+fechamento ou aprovação. As triggers nativas continuam ativas e podem preencher
+valores conforme as regras do ERP.
 
 ## Persistência, repetição e falhas
 
